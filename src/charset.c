@@ -473,10 +473,13 @@ gchar *convert_to_utf8 (const gchar *string)
 }
 
 /*
- * Convert a string from the filename system encoding to UTF-8.
- *  - conversion OK : returns the UTF-8 string (new allocated)
- *  - conversion KO : tries others encodings else returns an 'escaped' string
- */
+ * filename_to_display:
+ * @string: the string to convert
+ *
+ * Convert a string from the GLib filename encoding to UTF-8. If the conversion
+ * failed, an escaped string will be returned instead.
+ *
+ * Returns: a newly-allocated UTF-8 string. */
 gchar *
 filename_to_display (const gchar *string)
 {
@@ -485,39 +488,19 @@ filename_to_display (const gchar *string)
 
     g_return_val_if_fail (string != NULL, NULL);
 
-    if (g_utf8_validate(string, -1, NULL))
+    ret = g_filename_to_utf8 (string, -1, NULL, NULL, &error);
+
+    if (error)
     {
-        // String already in UTF-8
-        ret = g_strdup(string);
-    }else
-    {
-        const gchar *char_encoding;
+        gchar *escaped_str = g_strescape (string, NULL);
+        Log_Print (LOG_ERROR,
+                   _("The filename '%s' could not be converted into UTF-8 (%s)"),
+                   escaped_str,
+                   error && error->message ? error->message : _("Invalid UTF-8"));
+        g_clear_error (&error);
 
-        // Get encoding associated to the locale without using UTF-8 (ex , if LANG=fr_FR.UTF-8 it will return ISO-8859-1)
-        char_encoding = get_encoding_from_locale(get_locale());
-        if (char_encoding)
-        {
-            //g_print("> char_encoding: %s\n",char_encoding);
-            error = NULL;
-            ret = g_convert(string, -1, "UTF-8", char_encoding, NULL, NULL, &error);
-        }
-
-        if (!ret)
-        {
-            // Failing that, try ISO-8859-1
-            error = NULL;
-            ret = g_convert(string, -1, "UTF-8", "ISO-8859-1", NULL, NULL, &error);
-        }
-
-        if (!ret)
-        {
-            gchar *escaped_str = g_strescape(string, NULL);
-            Log_Print(LOG_ERROR,_("The filename '%s' couldn't be converted into UTF-8 (%s)."),
-                        escaped_str, error && error->message ? error->message : _("Invalid UTF-8"));
-            g_clear_error(&error);
-
-            ret = escaped_str;
-        }
+        /* ret is NULL if error is set. */
+        ret = escaped_str;
     }
 
 #ifdef G_OS_WIN32
