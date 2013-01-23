@@ -173,6 +173,7 @@ Section "Core ${PRODUCT_NAME} Files" SecProgram
   File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libatk-1.0-0.dll"
   File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libcairo-2.dll"
   File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libffi-6.dll"
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libFLAC-8.dll"
   File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libgcc_s_sjlj-1.dll"
   File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libgdk-win32-2.0-0.dll"
   File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libgdk_pixbuf-2.0-0.dll"
