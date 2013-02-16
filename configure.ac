@@ -324,6 +324,8 @@ dnl Checks for library functions.
 dnl -------------------------------
 AC_CHECK_FUNCS([ftruncate gettimeofday mkstemp truncate])
 
+GLIB_GSETTINGS
+
 AC_CONFIG_FILES([ Makefile
                   doc/version.xml
                   po/Makefile.in

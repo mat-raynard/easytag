@@ -137,6 +137,10 @@ desktop_in_files = data/easytag.desktop.in
 $(desktop_in_files:.desktop.in=.desktop): data/.dstamp
 desktop_DATA = $(desktop_in_files:.desktop.in=.desktop)
 
+gsettings_SCHEMAS = data/org.gnome.EasyTAG.gschema.xml
+data/data/org.gnome.EasyTAG.gschema.valid: data/.dstamp
+@GSETTINGS_RULES@
+
 if ENABLE_MAN
 doc/easytag.1: doc/easytag.xml Makefile
 	$(AM_V_GEN)$(XSLTPROC) --nonet --param man.charmap.use.subset 0 \
@@ -209,6 +213,7 @@ uninstall-update-icon-cache:
 
 dist_noinst_DATA = \
 	$(desktop_in_files) \
+	$(gsettings_SCHEMAS) \
 	$(easytag_headers) \
 	src/id3lib/patch_id3lib_3.8.3_UTF16_writing_bug.diff \
 	src/libapetag/COPYING.LGPL \

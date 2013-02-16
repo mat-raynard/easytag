@@ -1,4 +1,5 @@
 data/easytag.desktop.in
+data/org.gnome.EasyTAG.gschema.xml
 src/about.c
 src/ape_tag.c
 src/application.c
