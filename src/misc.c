@@ -472,7 +472,10 @@ gboolean Parse_Date (void)
     struct tm t0;
 
     /* Early return. */
-    if (!DATE_AUTO_COMPLETION) return FALSE;
+    if (!g_settings_get_boolean (ETSettings, "tag-date-autocomplete"))
+    {
+        return FALSE;
+    }
 
     /* Get the info entered by user */
     year = gtk_entry_get_text(GTK_ENTRY(YearEntry));
@@ -552,9 +555,12 @@ void Load_Track_List_To_UI (void)
     for (i=1; i<=len; i++)
     {
 
-        if (NUMBER_TRACK_FORMATED)
+        if (g_settings_get_boolean (ETSettings, "tag-number-padded"))
         {
-            text = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,i);
+            text = g_strdup_printf ("%.*d",
+                                    g_settings_get_uint (ETSettings,
+                                                         "tag-number-length"),
+                                    i);
         } else
         {
             text = g_strdup_printf("%.2d",i);
@@ -1288,8 +1294,8 @@ void Open_Write_Playlist_Window (void)
     Add_String_To_Combo_List(PlayListNameMaskModel, PLAYLIST_NAME);
     gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(PlayListNameMaskCombo))), PLAYLIST_NAME);
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(playlist_use_mask_name),PLAYLIST_USE_MASK_NAME);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(playlist_use_dir_name),PLAYLIST_USE_DIR_NAME);
+    g_settings_bind (ETSettings, "playlist-use-mask", playlist_use_mask_name,
+                     "active", G_SETTINGS_BIND_DEFAULT);
 
     // Mask status icon
     MaskStatusIconBox = Create_Pixmap_Icon_With_Event_Box("easytag-forbidden");
@@ -1321,7 +1327,9 @@ void Open_Write_Playlist_Window (void)
 
     playlist_only_selected_files = gtk_check_button_new_with_label(_("Include only the selected files"));
     gtk_box_pack_start(GTK_BOX(vbox),playlist_only_selected_files,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(playlist_only_selected_files),PLAYLIST_ONLY_SELECTED_FILES);
+    g_settings_bind (ETSettings, "playlist-selected-only",
+                     playlist_only_selected_files, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(playlist_only_selected_files,_("If activated, only the selected files will be "
         "written in the playlist file. Else, all the files will be written."));
 
@@ -1333,9 +1341,9 @@ void Open_Write_Playlist_Window (void)
     gtk_box_pack_start(GTK_BOX(vbox),playlist_full_path,FALSE,FALSE,0);
     playlist_relative_path = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(playlist_full_path),
         _("Use relative path for files in playlist"));
+    g_settings_bind (ETSettings, "playlist-relative", playlist_relative_path,
+                     "active", G_SETTINGS_BIND_DEFAULT);
     gtk_box_pack_start(GTK_BOX(vbox),playlist_relative_path,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(playlist_full_path),PLAYLIST_FULL_PATH);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(playlist_relative_path),PLAYLIST_RELATIVE_PATH);
 
     // Separator line
     Separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
@@ -1344,7 +1352,9 @@ void Open_Write_Playlist_Window (void)
     // Create playlist in parent directory
     playlist_create_in_parent_dir = gtk_check_button_new_with_label(_("Create playlist in the parent directory"));
     gtk_box_pack_start(GTK_BOX(vbox),playlist_create_in_parent_dir,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(playlist_create_in_parent_dir),PLAYLIST_CREATE_IN_PARENT_DIR);
+    g_settings_bind (ETSettings, "playlist-parent-directory",
+                     playlist_create_in_parent_dir, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(playlist_create_in_parent_dir,_("If activated, the playlist will be created "
         "in the parent directory."));
 
@@ -1354,7 +1364,9 @@ void Open_Write_Playlist_Window (void)
     /* This makes no sense under Win32, so we do not display it. */
     gtk_box_pack_start(GTK_BOX(vbox),playlist_use_dos_separator,FALSE,FALSE,0);
 #endif /* !G_OS_WIN32 */
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(playlist_use_dos_separator),PLAYLIST_USE_DOS_SEPARATOR);
+    g_settings_bind (ETSettings, "playlist-dos-separator",
+                     playlist_use_dos_separator, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(playlist_use_dos_separator,_("This option replaces the UNIX directory "
         "separator '/' into DOS separator '\\'."));
 
@@ -1485,14 +1497,6 @@ void Write_Playlist_Window_Apply_Changes (void)
         /* List of variables also set in the function 'Playlist_Write_Button_Pressed' */
         if (PLAYLIST_NAME) g_free(PLAYLIST_NAME);
         PLAYLIST_NAME                 = g_strdup(gtk_entry_get_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(PlayListNameMaskCombo)))));
-        PLAYLIST_USE_MASK_NAME        = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_use_mask_name));
-        PLAYLIST_USE_DIR_NAME         = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_use_dir_name));
-
-        PLAYLIST_ONLY_SELECTED_FILES  = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_only_selected_files));
-        PLAYLIST_FULL_PATH            = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_full_path));
-        PLAYLIST_RELATIVE_PATH        = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_relative_path));
-        PLAYLIST_CREATE_IN_PARENT_DIR = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_create_in_parent_dir));
-        PLAYLIST_USE_DOS_SEPARATOR    = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_use_dos_separator));
 
         PLAYLIST_CONTENT_NONE         = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_content_none));
         PLAYLIST_CONTENT_FILENAME     = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_content_filename));
@@ -1545,14 +1549,6 @@ Playlist_Write_Button_Pressed (void)
     /* List of variables also set in the function 'Write_Playlist_Window_Apply_Changes' */
     /***if (PLAYLIST_NAME) g_free(PLAYLIST_NAME);
     PLAYLIST_NAME                 = g_strdup(gtk_entry_get_text(GTK_ENTRY(GTK_BIN(PlayListNameMaskCombo)->child)));
-    PLAYLIST_USE_MASK_NAME        = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_use_mask_name));
-    PLAYLIST_USE_DIR_NAME         = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_use_dir_name));
-
-    PLAYLIST_ONLY_SELECTED_FILES  = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_only_selected_files));
-    PLAYLIST_FULL_PATH            = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_full_path));
-    PLAYLIST_RELATIVE_PATH        = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_relative_path));
-    PLAYLIST_CREATE_IN_PARENT_DIR = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_create_in_parent_dir));
-    PLAYLIST_USE_DOS_SEPARATOR    = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_use_dos_separator));
 
     PLAYLIST_CONTENT_NONE         = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_content_none));
     PLAYLIST_CONTENT_FILENAME     = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_content_filename));
@@ -1561,11 +1557,12 @@ Playlist_Write_Button_Pressed (void)
     PLAYLIST_CONTENT_MASK_VALUE   = g_strdup(gtk_entry_get_text(GTK_ENTRY(GTK_BIN(PlayListContentMaskCombo)->child)));***/
     Write_Playlist_Window_Apply_Changes();
 
-    // Path of the playlist file (may be truncated later if PLAYLIST_CREATE_IN_PARENT_DIR is TRUE)
+    /* Path of the playlist file (may be truncated later if
+     * ETSettings:playlist-parent-directory is TRUE). */
     playlist_path_utf8 = filename_to_display(Browser_Get_Current_Path());
 
     /* Build the playlist filename. */
-    if (PLAYLIST_USE_MASK_NAME)
+    if (g_settings_get_boolean (ETSettings, "playlist-use-mask"))
     {
 
         if (!ETCore->ETFileList)
@@ -1614,8 +1611,9 @@ Playlist_Write_Button_Pressed (void)
 
     }
 
-    // Must be placed after "Build the playlist filename", as we can truncate the path!
-    if (PLAYLIST_CREATE_IN_PARENT_DIR)
+    /* Must be placed after "Build the playlist filename", as we can truncate
+     * the path! */
+    if (g_settings_get_boolean (ETSettings, "playlist-parent-directory"))
     {
         if ( (strcmp(playlist_path_utf8,G_DIR_SEPARATOR_S) != 0) )
         {
@@ -1641,8 +1639,8 @@ Playlist_Write_Button_Pressed (void)
     playlist_name = filename_from_display(playlist_name_utf8);
     playlist_basename_utf8 = g_path_get_basename(playlist_name_utf8);
 
-    // Check if file exists
-    if (CONFIRM_WRITE_PLAYLIST)
+    /* Check if file exists. */
+    if (g_settings_get_boolean (ETSettings, "confirm-write-playlist"))
     {
         if ( (file=fopen(playlist_name,"r")) != NULL )
         {
@@ -1796,7 +1794,7 @@ Write_Playlist (const gchar *playlist_name)
         fprintf(file,"#EXTM3U\r\n");
     }
 
-    if (PLAYLIST_ONLY_SELECTED_FILES)
+    if (g_settings_get_boolean (ETSettings, "playlist-selected-only"))
     {
         GList *selfilelist = NULL;
         GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(BrowserList));
@@ -1823,7 +1821,7 @@ Write_Playlist (const gchar *playlist_name)
         filename = ((File_Name *)etfile->FileNameCur->data)->value;
         duration = ((ET_File_Info *)etfile->ETFileInfo)->duration;
 
-        if (PLAYLIST_RELATIVE_PATH)
+        if (g_settings_get_boolean (ETSettings, "playlist-relative"))
         {
             // Keep only files in this directory and sub-dirs
             if ( strncmp(filename,basedir,strlen(basedir))==0 )
@@ -1851,7 +1849,8 @@ Write_Playlist (const gchar *playlist_name)
                 }
 
                 // 3) Write the file path
-                if (PLAYLIST_USE_DOS_SEPARATOR)
+                if (g_settings_get_boolean (ETSettings,
+                                            "playlist-dos-separator"))
                 {
                     gchar *filename_conv = g_strdup(filename+strlen(basedir)+1);
                     Playlist_Convert_Forwardslash_Into_Backslash(filename_conv);
@@ -1862,7 +1861,7 @@ Write_Playlist (const gchar *playlist_name)
                     fprintf(file,"%s\r\n",filename+strlen(basedir)+1); // Must be written in system encoding (not UTF-8)
                 }
             }
-        }else // PLAYLIST_FULL_PATH
+        } else /* !ETSettings:playlist-relative */
         {
             // 2) Write the header
             if (PLAYLIST_CONTENT_NONE)
@@ -1886,7 +1885,7 @@ Write_Playlist (const gchar *playlist_name)
             }
 
             // 3) Write the file path
-            if (PLAYLIST_USE_DOS_SEPARATOR)
+            if (g_settings_get_boolean (ETSettings, "playlist-dos-separator"))
             {
                 gchar *filename_conv = g_strdup(filename);
                 Playlist_Convert_Forwardslash_Into_Backslash(filename_conv);
@@ -1901,7 +1900,7 @@ Write_Playlist (const gchar *playlist_name)
     }
     fclose(file);
 
-    if (PLAYLIST_ONLY_SELECTED_FILES)
+    if (g_settings_get_boolean (ETSettings, "playlist-selected-only"))
         g_list_free(etfilelist);
     g_free(playlist_name_utf8);
     g_free(basedir);
@@ -2011,8 +2010,10 @@ void Open_Search_File_Window (void)
     SearchInTag = gtk_check_button_new_with_label(_("the Tag"));
     gtk_grid_attach (GTK_GRID (Table), SearchInFilename, 1, 1, 1, 1);
     gtk_grid_attach (GTK_GRID (Table), SearchInTag, 2, 1, 1, 1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(SearchInFilename),SEARCH_IN_FILENAME);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(SearchInTag),SEARCH_IN_TAG);
+    g_settings_bind (ETSettings, "search-filename", SearchInFilename,
+                     "active", G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "search-tag", SearchInTag,
+                     "active", G_SETTINGS_BIND_DEFAULT);
 
     Separator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
     et_grid_attach_full (GTK_GRID (Table), Separator, 3, 1, 1, 1, FALSE, FALSE,
@@ -2022,7 +2023,8 @@ void Open_Search_File_Window (void)
     SearchCaseSensitive = gtk_check_button_new_with_label(_("Case sensitive"));
     et_grid_attach_full (GTK_GRID (Table), SearchCaseSensitive, 4, 1, 1, 1,
                          TRUE, FALSE, 0, 0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(SearchCaseSensitive),SEARCH_CASE_SENSITIVE);
+    g_settings_bind (ETSettings, "search-case-sensitive", SearchCaseSensitive,
+                     "active", G_SETTINGS_BIND_DEFAULT);
 
     // Results list
     ScrollWindow = gtk_scrolled_window_new(NULL,NULL);
@@ -2249,7 +2251,7 @@ void Open_Search_File_Window (void)
 
     gtk_widget_show_all(SearchFileWindow);
 
-    if (SET_SEARCH_WINDOW_POSITION)
+    if (g_settings_get_boolean (ETSettings, "search-remember-location"))
         gtk_window_move(GTK_WINDOW(SearchFileWindow), SEARCH_WINDOW_X, SEARCH_WINDOW_Y);
     //else
     //    gtk_window_set_position(GTK_WINDOW(SearchFileWindow), GTK_WIN_POS_CENTER_ON_PARENT); // Must use gtk_window_set_transient_for to work
@@ -2293,10 +2295,6 @@ void Search_File_Window_Apply_Changes (void)
             SEARCH_WINDOW_WIDTH  = width;
             SEARCH_WINDOW_HEIGHT = height;
         }
-
-        SEARCH_IN_FILENAME    = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(SearchInFilename));
-        SEARCH_IN_TAG         = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(SearchInTag));
-        SEARCH_CASE_SENSITIVE = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(SearchCaseSensitive));
     }
 }
 
@@ -2568,7 +2566,7 @@ Add_Row_To_Search_Result_List (ET_File *ETFile, const gchar *string_to_search)
         {
             if ( SearchResultList_Text[column] && strlen(string_to_search) && strstr(SearchResultList_Text[column],string_to_search) )
             {
-                if (CHANGED_FILES_DISPLAYED_TO_BOLD)
+                if (g_settings_get_boolean (ETSettings, "file-changed-bold"))
                     SearchResultList_Weight[column] = PANGO_WEIGHT_BOLD;
                 else
                     SearchResultList_Color[column] = &RED;
@@ -2590,7 +2588,7 @@ Add_Row_To_Search_Result_List (ET_File *ETFile, const gchar *string_to_search)
 
             if ( list_text && strlen(string_to_search2) && strstr(list_text,string_to_search2) )
             {
-                if (CHANGED_FILES_DISPLAYED_TO_BOLD)
+                if (g_settings_get_boolean (ETSettings, "file-changed-bold"))
                     SearchResultList_Weight[column] = PANGO_WEIGHT_BOLD;
                 else
                     SearchResultList_Color[column] = &RED;
@@ -3028,7 +3026,8 @@ void Open_Load_Filename_Window (void)
 
     LoadFileRunScanner = gtk_check_button_new_with_label(_("Run the current scanner for each file"));
     gtk_box_pack_start(GTK_BOX(VBox),LoadFileRunScanner,FALSE,TRUE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(LoadFileRunScanner),LOAD_FILE_RUN_SCANNER);
+    g_settings_bind (ETSettings, "load-filenames-run-scanner",
+                     LoadFileRunScanner, "active", G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(LoadFileRunScanner,_("When activating this option, after loading the "
         "filenames, the current selected scanner will be ran (the scanner window must be opened)."));
 
@@ -3101,8 +3100,6 @@ void Load_Filename_Window_Apply_Changes (void)
             LOAD_FILE_WINDOW_WIDTH  = width;
             LOAD_FILE_WINDOW_HEIGHT = height;
         }
-
-        LOAD_FILE_RUN_SCANNER = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(LoadFileRunScanner));
     }
 }
 

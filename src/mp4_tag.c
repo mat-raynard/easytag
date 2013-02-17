@@ -138,7 +138,12 @@ gboolean Mp4tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
     track = taglib_tag_track(tag);
 
     if (track != 0)
-        FileTag->track = NUMBER_TRACK_FORMATED ? g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,(gint)track) : g_strdup_printf("%d",(gint)track);
+        FileTag->track = g_settings_get_boolean (ETSettings, "tag-number-padded")
+                         ? g_strdup_printf ("%.*d",
+                                            g_settings_get_uint (ETSettings,
+                                                                 "tag-number-length"),
+                                            (gint)track)
+                         : g_strdup_printf ("%d", (gint)track);
     /* TODO: No total track support in the TagLib C API! */
 
     /*********

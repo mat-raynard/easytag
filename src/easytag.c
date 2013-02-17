@@ -219,14 +219,15 @@ command_line (GApplication *application,
         /* FIXME: Should manage directory ".." in path. */
         while (pathsplit[ps_index])
         {
-            /* Activate hidden directories in browser if path contains a dir
-             * like ".hidden_dir". */
-            if ( (g_ascii_strcasecmp (pathsplit[ps_index],"..")   != 0)
-            &&   (g_ascii_strncasecmp(pathsplit[ps_index],".", 1) == 0)
-            &&   (strlen(pathsplit[ps_index]) > 1) )
-                BROWSE_HIDDEN_DIR = 1;
-                /* If user saves the config for this session, this value will
-                 * be saved to 1. */
+            /* Activate hidden directories in browser if path contains a
+             * dir like ".hidden_dir". */
+            if ((g_ascii_strcasecmp (pathsplit[ps_index], "..") != 0)
+                && (g_ascii_strncasecmp (pathsplit[ps_index], ".", 1) == 0)
+                && (strlen (pathsplit[ps_index]) > 1))
+            {
+                g_settings_set_boolean (ETSettings, "browse-show-hidden",
+                                        TRUE);
+            }
 
             if (pathsplit[ps_index]
             && g_ascii_strcasecmp(pathsplit[ps_index],".") != 0
@@ -339,7 +340,6 @@ activate (GApplication *application, gpointer user_data)
     /* Display_Config(); // <- for debugging */
 
 
-
     /* Initialization */
     ET_Core_Create();
     Main_Stop_Button_Pressed = FALSE;
@@ -430,7 +430,7 @@ activate (GApplication *application, gpointer user_data)
 
     gtk_widget_show(MainWindow);
 
-    if (SET_MAIN_WINDOW_POSITION)
+    if (g_settings_get_boolean (ETSettings, "remember-location"))
         gtk_window_move(GTK_WINDOW(MainWindow), MAIN_WINDOW_X, MAIN_WINDOW_Y);
 
     /* Load the default dir when the UI is created and displayed
@@ -590,8 +590,9 @@ Create_File_Area (void)
     gtk_widget_show(HBox);
     gtk_widget_show(FileIndex);
     gtk_widget_show(FileEntry);
-    if (SHOW_HEADER_INFO)
-        gtk_widget_show_all(HeaderInfosTable);
+    gtk_widget_show_all(HeaderInfosTable);
+    g_settings_bind (ETSettings, "file-show-header", HeaderInfosTable,
+                     "visible", G_SETTINGS_BIND_GET);
     return FileFrame;
 }
 
@@ -1426,8 +1427,10 @@ Mini_Button_Clicked (GObject *object)
             path1 = g_path_get_dirname(FileNameCur->value);
             if ( path && path1 && strcmp(path,path1)!=0 )
                 i = 0;
-            if (NUMBER_TRACK_FORMATED)
-                string_to_set = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,++i);
+            if (g_settings_get_boolean (ETSettings, "tag-number-padded"))
+                string_to_set = g_strdup_printf ("%.*d",
+                                                 g_settings_get_uint (ETSettings, "tag-number-length"),
+                                                 ++i);
             else
                 string_to_set = g_strdup_printf("%d",++i);
 
@@ -1464,8 +1467,10 @@ Mini_Button_Clicked (GObject *object)
             etfile        = (ET_File *)etfilelist->data;
             filename_utf8 = ((File_Name *)etfile->FileNameNew->data)->value_utf8;
             path_utf8     = g_path_get_dirname(filename_utf8);
-            if (NUMBER_TRACK_FORMATED)
-                string_to_set = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,ET_Get_Number_Of_Files_In_Directory(path_utf8));
+            if (g_settings_get_boolean (ETSettings, "tag-number-padded"))
+                string_to_set = g_strdup_printf ("%.*d",
+                                                 g_settings_get_uint (ETSettings, "tag-number-length"),
+                                                 ET_Get_Number_Of_Files_In_Directory (path_utf8));
             else
                 string_to_set = g_strdup_printf("%d",ET_Get_Number_Of_Files_In_Directory(path_utf8));
             g_free(path_utf8);
@@ -1776,7 +1781,7 @@ void Action_Select_First_File (void)
     Scan_Rename_File_Generate_Preview();
     Scan_Fill_Tag_Generate_Preview();
 
-    if (SET_FOCUS_TO_FIRST_TAG_FIELD)
+    if (!g_settings_get_boolean (ETSettings, "tag-preserve-focus"))
         gtk_widget_grab_focus(GTK_WIDGET(TitleEntry));
 }
 
@@ -1810,7 +1815,7 @@ void Action_Select_Prev_File (void)
     Scan_Rename_File_Generate_Preview();
     Scan_Fill_Tag_Generate_Preview();
 
-    if (SET_FOCUS_TO_FIRST_TAG_FIELD)
+    if (!g_settings_get_boolean (ETSettings, "tag-preserve-focus"))
         gtk_widget_grab_focus(GTK_WIDGET(TitleEntry));
 }
 
@@ -1844,7 +1849,7 @@ void Action_Select_Next_File (void)
     Scan_Rename_File_Generate_Preview();
     Scan_Fill_Tag_Generate_Preview();
 
-    if (SET_FOCUS_TO_FIRST_TAG_FIELD)
+    if (!g_settings_get_boolean (ETSettings, "tag-preserve-focus"))
         gtk_widget_grab_focus(GTK_WIDGET(TitleEntry));
 }
 
@@ -1875,7 +1880,7 @@ void Action_Select_Last_File (void)
     Scan_Rename_File_Generate_Preview();
     Scan_Fill_Tag_Generate_Preview();
 
-    if (SET_FOCUS_TO_FIRST_TAG_FIELD)
+    if (!g_settings_get_boolean (ETSettings, "tag-preserve-focus"))
         gtk_widget_grab_focus(GTK_WIDGET(TitleEntry));
 }
 
@@ -2669,7 +2674,8 @@ Save_File (ET_File *ETFile, gboolean multiple_files,
         GtkWidget *msgdialog_check_button = NULL;
         gint response;
 
-        if (CONFIRM_WRITE_TAG && !SF_HideMsgbox_Write_Tag)
+        if (g_settings_get_boolean (ETSettings, "confirm-write-tags")
+            && !SF_HideMsgbox_Write_Tag)
         {
             // ET_Display_File_Data_To_UI(ETFile);
 
@@ -2744,7 +2750,8 @@ Save_File (ET_File *ETFile, gboolean multiple_files,
         GtkWidget *msgdialog_check_button = NULL;
         gint response;
 
-        if (CONFIRM_RENAME_FILE && !SF_HideMsgbox_Rename_File)
+        if (g_settings_get_boolean (ETSettings, "confirm-rename-file")
+            && !SF_HideMsgbox_Rename_File)
         {
             gchar *msgdialog_title = NULL;
             gchar *msg = NULL;
@@ -3411,7 +3418,8 @@ Delete_File (ET_File *ETFile, gboolean multiple_files)
     /*
      * Remove the file
      */
-    if (CONFIRM_DELETE_FILE && !SF_HideMsgbox_Delete_File)
+    if (g_settings_get_boolean (ETSettings, "confirm-delete-file")
+        && !SF_HideMsgbox_Delete_File)
     {
         if (multiple_files)
         {
@@ -3613,16 +3621,18 @@ gboolean Read_Directory (gchar *path_real)
     /* Open the window to quit recursion (since 27/04/2007 : not only into recursion mode) */
     Set_Busy_Cursor();
     uiaction = gtk_ui_manager_get_action(UIManager, "/ToolBar/Stop");
-    g_object_set(uiaction, "sensitive", BROWSE_SUBDIR, NULL);
-    //if (BROWSE_SUBDIR)
-        Open_Quit_Recursion_Function_Window();
+    g_settings_bind (ETSettings, "browse-subdir", uiaction, "sensitive",
+                     G_SETTINGS_BIND_GET);
+    Open_Quit_Recursion_Function_Window();
 
     /* Read the directory recursively */
     msg = g_strdup_printf(_("Search in progress…"));
     Statusbar_Message(msg,FALSE);
     g_free(msg);
-    // Search the supported files
-    FileList = Read_Directory_Recursively(FileList,path_real,BROWSE_SUBDIR);
+    /* Search the supported files. */
+    FileList = Read_Directory_Recursively (FileList, path_real,
+                                           g_settings_get_boolean (ETSettings,
+                                                                   "browse-subdir"));
     nbrfile = g_list_length(FileList);
 
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ProgressBar), 0.0);
@@ -3684,7 +3694,7 @@ gboolean Read_Directory (gchar *path_real)
         //}
 
         /* Prepare message for the status bar */
-        if (BROWSE_SUBDIR)
+        if (g_settings_get_boolean (ETSettings, "browse-subdir"))
             msg = g_strdup_printf(_("Found %d file(s) in this directory and subdirectories."),ETCore->ETFileDisplayedList_Length);
         else
             msg = g_strdup_printf(_("Found %d file(s) in this directory."),ETCore->ETFileDisplayedList_Length);
@@ -3705,7 +3715,7 @@ gboolean Read_Directory (gchar *path_real)
         Browser_Label_Set_Text(_("No files")); /* See in ET_Display_Filename_To_UI */
 
         /* Prepare message for the status bar */
-        if (BROWSE_SUBDIR)
+        if (g_settings_get_boolean (ETSettings, "browse-subdir"))
             msg = g_strdup(_("No file found in this directory and subdirectories"));
         else
             msg = g_strdup(_("No file found in this directory"));
@@ -3750,9 +3760,12 @@ Read_Directory_Recursively (GList *file_list, const gchar *path_real,
             return file_list;
         }
 
-        // We don't read the directories '.' and '..', but may read hidden directories like '.mydir'
-        if ( (g_ascii_strcasecmp (dirent->d_name,"..")   != 0)
-        &&  ((g_ascii_strncasecmp(dirent->d_name,".", 1) != 0) || (BROWSE_HIDDEN_DIR && strlen(dirent->d_name) > 1)) )
+        /* We do not read the directories '.' and '..', but may read hidden
+         * directories like '.mydir'. */
+        if ((g_ascii_strcasecmp (dirent->d_name, "..") != 0)
+            && ((g_ascii_strncasecmp (dirent->d_name, ".", 1) != 0)
+            || (g_settings_get_boolean (ETSettings, "browse-show-hidden")
+            && strlen (dirent->d_name) > 1)))
         {
             if (path_real[strlen(path_real)-1]!=G_DIR_SEPARATOR)
                 filename = g_strconcat(path_real,G_DIR_SEPARATOR_S,dirent->d_name,NULL);
@@ -4198,7 +4211,7 @@ void Tag_Area_Display_Controls (ET_File *ETFile)
     switch (ETFile->ETFileDescription->TagType)
     {
         case ID3_TAG:
-            if (!FILE_WRITING_ID3V2_WRITE_TAG)
+            if (!g_settings_get_boolean (ETSettings, "id3v2-enabled"))
             {
                 // ID3v1 : Hide specifics ID3v2 fields if not activated!
                 gtk_widget_hide(GTK_WIDGET(DiscNumberLabel));
@@ -4455,7 +4468,7 @@ Init_Load_Default_Dir (void)
     ET_Core_Initialize();
 
     // Open the scanner window
-    if (OPEN_SCANNER_WINDOW_ON_STARTUP)
+    if (g_settings_get_boolean (ETSettings, "scan-startup"))
         Open_ScannerWindow(SCANNER_TYPE); // Open the last selected scanner
 
     if (INIT_DIRECTORY)
@@ -4911,7 +4924,8 @@ void Quit_MainWindow (void)
     Save_Path_Entry_List(BrowserEntryModel, MISC_COMBO_TEXT);
 
     /* Check if all files have been saved before exit */
-    if (CONFIRM_WHEN_UNSAVED_FILES && ET_Check_If_All_Files_Are_Saved() != TRUE)
+    if (g_settings_get_boolean (ETSettings, "confirm-when-unsaved-files")
+        && ET_Check_If_All_Files_Are_Saved() != TRUE)
     {
         /* Some files haven't been saved */
         msgbox = gtk_message_dialog_new(GTK_WINDOW(MainWindow),
@@ -4938,7 +4952,7 @@ void Quit_MainWindow (void)
                 return;
         }
 
-    } else if (CONFIRM_BEFORE_EXIT)
+    } else if (g_settings_get_boolean (ETSettings, "confirm-quit"))
     {
         msgbox = gtk_message_dialog_new(GTK_WINDOW(MainWindow),
                                          GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,

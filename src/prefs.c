@@ -55,7 +55,6 @@ static void OptionsWindow_Cancel_Button (void);
 static gboolean OptionsWindow_Key_Press (GtkWidget *window, GdkEvent *event);
 static gboolean Check_Config (void);
 
-static void Set_Default_Comment_Check_Button_Toggled (void);
 static void Number_Track_Formatted_Toggled (void);
 static void Number_Track_Formatted_Spin_Button_Changed (GtkWidget *Label,
                                                         GtkWidget *SpinButton);
@@ -92,9 +91,9 @@ void Open_OptionsWindow (void)
     GtkWidget *VBox, *vbox;
     GtkWidget *HBox, *hbox, *id3v1v2hbox;
     GtkWidget *Separator;
-    gchar temp[MAX_STRING_LEN];
     gchar *path_utf8;
     gchar *program_path;
+    gchar *default_comment;
 
     /* Check if already opened */
     if (OptionsWindow)
@@ -194,7 +193,8 @@ void Open_OptionsWindow (void)
     /* Load directory on startup */
     LoadOnStartup = gtk_check_button_new_with_label(_("Load on startup the default directory or the directory passed as argument"));
     gtk_box_pack_start(GTK_BOX(vbox),LoadOnStartup,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(LoadOnStartup),LOAD_ON_STARTUP);
+    g_settings_bind (ETSettings, "load-on-startup", LoadOnStartup, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(LoadOnStartup,_("Automatically search files, when EasyTAG starts, "
         "into the default directory. Note that this path may be overridden by the parameter "
         "passed to easytag (easytag /path_to/mp3_files)."));
@@ -202,7 +202,8 @@ void Open_OptionsWindow (void)
     /* Browse subdirectories */
     BrowseSubdir = gtk_check_button_new_with_label(_("Search subdirectories"));
     gtk_box_pack_start(GTK_BOX(vbox),BrowseSubdir,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(BrowseSubdir),BROWSE_SUBDIR);
+    g_settings_bind (ETSettings, "browse-subdir", BrowseSubdir, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(BrowseSubdir,_("Search subdirectories for files when reading "
         "a directory into the tree."));
 
@@ -210,7 +211,9 @@ void Open_OptionsWindow (void)
     OpenSelectedBrowserNode = gtk_check_button_new_with_label(_("Show subdirectories when selecting "
         "a directory"));
     gtk_box_pack_start(GTK_BOX(vbox),OpenSelectedBrowserNode,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(OpenSelectedBrowserNode),OPEN_SELECTED_BROWSER_NODE);
+    g_settings_bind (ETSettings, "browse-expand-children",
+                     OpenSelectedBrowserNode, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(OpenSelectedBrowserNode,_("This expands the selected node into the file "
         "browser to display the sub-directories."));
 
@@ -219,7 +222,8 @@ void Open_OptionsWindow (void)
 #ifndef G_OS_WIN32 /* Always true and not user modifiable on win32 */
     gtk_box_pack_start(GTK_BOX(vbox),BrowseHiddendir,FALSE,FALSE,0);
 #endif /* !G_OS_WIN32 */
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(BrowseHiddendir),BROWSE_HIDDEN_DIR);
+    g_settings_bind (ETSettings, "browse-show-hidden", BrowseHiddendir,
+                     "active", G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(BrowseHiddendir,_("Search hidden directories for files "
         "(directories starting by a '.')."));
 
@@ -245,10 +249,11 @@ void Open_OptionsWindow (void)
     gtk_container_add(GTK_CONTAINER(Frame),vbox);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 2);
 
-    // Show header infos
+    /* Show header information. */
     ShowHeaderInfos = gtk_check_button_new_with_label(_("Show header information of file"));
     gtk_box_pack_start(GTK_BOX(vbox),ShowHeaderInfos,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ShowHeaderInfos),SHOW_HEADER_INFO);
+    g_settings_bind (ETSettings, "file-show-header", ShowHeaderInfos, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(ShowHeaderInfos,_("If activated, information about the file as "
         "the bitrate, the time, the size, will be displayed under the filename entry."));
 
@@ -261,14 +266,16 @@ void Open_OptionsWindow (void)
 
     ChangedFilesDisplayedToRed = gtk_radio_button_new_with_label(NULL,_("Red color"));
     gtk_box_pack_start(GTK_BOX(hbox),ChangedFilesDisplayedToRed,FALSE,FALSE,4);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChangedFilesDisplayedToRed),CHANGED_FILES_DISPLAYED_TO_RED);
 
     // Set "new" Gtk+-2.0ish black/bold style for changed items
     ChangedFilesDisplayedToBold = gtk_radio_button_new_with_label(
         gtk_radio_button_get_group(GTK_RADIO_BUTTON(ChangedFilesDisplayedToRed)),_("Bold style"));
     gtk_box_pack_start(GTK_BOX(hbox),ChangedFilesDisplayedToBold,FALSE,FALSE,2);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ChangedFilesDisplayedToBold),CHANGED_FILES_DISPLAYED_TO_BOLD);
-
+    g_settings_bind (ETSettings, "file-changed-bold",
+                     ChangedFilesDisplayedToBold, "active",
+                     G_SETTINGS_BIND_DEFAULT);
+    g_signal_connect (ChangedFilesDisplayedToBold, "notify::active",
+                      Browser_List_Refresh_Whole_List, NULL);
 
     /* Sorting List Options */
     Frame = gtk_frame_new (_("Sorting List Options"));
@@ -406,7 +413,8 @@ void Open_OptionsWindow (void)
     // Show / hide log view
     ShowLogView = gtk_check_button_new_with_label(_("Show log view in main window"));
     gtk_box_pack_start(GTK_BOX(vbox),ShowLogView,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ShowLogView),SHOW_LOG_VIEW);
+    g_settings_bind (ETSettings, "log-show", ShowLogView, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(ShowLogView,_("If activated, the log view would be "
                                             "visible in the main window."));
    
@@ -419,7 +427,8 @@ void Open_OptionsWindow (void)
     
     LogMaxLinesSpinButton = gtk_spin_button_new_with_range(10.0,1500.0,10.0);
     gtk_box_pack_start(GTK_BOX(hbox),LogMaxLinesSpinButton,FALSE,FALSE,0);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(LogMaxLinesSpinButton),(gfloat)LOG_MAX_LINES);
+    g_settings_bind (ETSettings, "log-lines", LogMaxLinesSpinButton,
+                     "value", G_SETTINGS_BIND_DEFAULT);
     /* g_signal_connect(G_OBJECT(NumberTrackFormated),"toggled",G_CALLBACK(Number_Track_Formatted_Toggled),NULL);
      * g_signal_emit_by_name(G_OBJECT(NumberTrackFormated),"toggled");
        gtk_tooltips_set_tip(Tips,GTK_BIN(FilePlayerCombo)->child,_("Enter the program used to "
@@ -451,7 +460,9 @@ void Open_OptionsWindow (void)
 
     ReplaceIllegalCharactersInFilename = gtk_check_button_new_with_label(_("Replace illegal characters in filename (for Windows and CD-Rom)"));
     gtk_box_pack_start(GTK_BOX(vbox),ReplaceIllegalCharactersInFilename,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ReplaceIllegalCharactersInFilename),REPLACE_ILLEGAL_CHARACTERS_IN_FILENAME);
+    g_settings_bind (ETSettings, "rename-replace-illegal-chars",
+                     ReplaceIllegalCharactersInFilename, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(ReplaceIllegalCharactersInFilename,_("Convert illegal characters for "
         "FAT32/16 and ISO9660 + Joliet filesystems ('\\', ':', ';', '*', '?', '\"', '<', '>', '|') "
         "of the filename to avoid problem when renaming the file. This is useful when renaming the "
@@ -484,7 +495,9 @@ void Open_OptionsWindow (void)
     /* Preserve modification time */
     PreserveModificationTime = gtk_check_button_new_with_label(_("Preserve modification time of the file"));
     gtk_box_pack_start(GTK_BOX(vbox),PreserveModificationTime,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(PreserveModificationTime),PRESERVE_MODIFICATION_TIME);
+    g_settings_bind (ETSettings, "file-preserve-modification-time",
+                     PreserveModificationTime, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(PreserveModificationTime,_("Preserve the modification time "
         "(in file properties) when saving the file."));
 
@@ -492,7 +505,9 @@ void Open_OptionsWindow (void)
     UpdateParentDirectoryModificationTime = gtk_check_button_new_with_label(_("Update modification time "
         "of the parent directory of the file (recommended when using Amarok)"));
     gtk_box_pack_start(GTK_BOX(vbox),UpdateParentDirectoryModificationTime,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(UpdateParentDirectoryModificationTime),UPDATE_PARENT_DIRECTORY_MODIFICATION_TIME);
+    g_settings_bind (ETSettings, "file-update-parent-modification-time",
+                     UpdateParentDirectoryModificationTime, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(UpdateParentDirectoryModificationTime,_("The modification time "
         "of the parent directory of the file will be updated when saving tag the file. At the "
         "present time it is automatically done only when renaming a file.\nThis feature is "
@@ -577,7 +592,8 @@ void Open_OptionsWindow (void)
 
     DateAutoCompletion = gtk_check_button_new_with_label(_("Auto completion of date if not complete"));
     gtk_box_pack_start(GTK_BOX(vbox),DateAutoCompletion,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(DateAutoCompletion),DATE_AUTO_COMPLETION);
+    g_settings_bind (ETSettings, "tag-date-autocomplete", DateAutoCompletion,
+                     "active", G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(DateAutoCompletion,_("Try to complete the year field if you enter "
         "only the last numerals of the date (for instance, if the current year is 2005: "
         "5 => 2005, 4 => 2004, 6 => 1996, 95 => 1995…)."));
@@ -587,14 +603,17 @@ void Open_OptionsWindow (void)
 
     NumberTrackFormated = gtk_check_button_new_with_label(_("Write the track field with the following number of digits:"));
     gtk_box_pack_start(GTK_BOX(hbox),NumberTrackFormated,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(NumberTrackFormated),NUMBER_TRACK_FORMATED);
+    g_settings_bind (ETSettings, "tag-number-padded", NumberTrackFormated,
+                     "active", G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(NumberTrackFormated,_("If activated, the track field is written using "
         "the number '0' as padding to obtain a number with 'n' digits (for example, with two digits: '05', "
         "'09', '10'…). Else it keeps the 'raw' track value."));
 
     NumberTrackFormatedSpinButton = gtk_spin_button_new_with_range(2.0,6.0,1.0);
     gtk_box_pack_start(GTK_BOX(hbox),NumberTrackFormatedSpinButton,FALSE,FALSE,0);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(NumberTrackFormatedSpinButton),(gfloat)NUMBER_TRACK_FORMATED_SPIN_BUTTON);
+    g_settings_bind (ETSettings, "tag-number-length",
+                     NumberTrackFormatedSpinButton, "value",
+                     G_SETTINGS_BIND_DEFAULT);
     g_signal_connect(G_OBJECT(NumberTrackFormated),"toggled",G_CALLBACK(Number_Track_Formatted_Toggled),NULL);
     g_signal_emit_by_name(G_OBJECT(NumberTrackFormated),"toggled");
 
@@ -608,30 +627,12 @@ void Open_OptionsWindow (void)
     gtk_box_pack_start(GTK_BOX(vbox),Separator,FALSE,FALSE,0);
 
     /* Tag field focus */
-    Table = et_grid_new (2, 3);
-    gtk_box_pack_start(GTK_BOX(vbox),Table,FALSE,FALSE,0);
-    /*gtk_grid_set_row_spacing (GTK_GRID (Table), 2);*/
-    gtk_grid_set_column_spacing (GTK_GRID (Table), 2);
+    SetFocusToSameTagField = gtk_check_button_new_with_label (_("Keep focus on the same tag field when switching files"));
+    gtk_box_pack_start (GTK_BOX (vbox), SetFocusToSameTagField, FALSE, FALSE,
+                        0);
+    g_settings_bind (ETSettings, "tag-preserve-focus", SetFocusToSameTagField,
+                     "active", G_SETTINGS_BIND_DEFAULT);
 
-    Label = gtk_label_new(_("Tag field focus when switching files in list with "
-        "shortcuts Page Up/Page Down:"));
-    gtk_grid_attach (GTK_GRID (Table), Label, 0, 0, 2, 1);
-    gtk_misc_set_alignment(GTK_MISC(Label),0,0.5);
-
-    Label = gtk_label_new("    ");
-    gtk_grid_attach (GTK_GRID (Table), Label, 0, 1, 1, 1);
-
-    SetFocusToSameTagField = gtk_radio_button_new_with_label(NULL,
-        _("Keep focus to the same tag field"));
-    gtk_grid_attach (GTK_GRID (Table), SetFocusToSameTagField, 1, 1, 1, 1);
-    //gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(SetFocusToSameTagField),SET_FOCUS_TO_SAME_TAG_FIELD);
-
-    SetFocusToFirstTagField = gtk_radio_button_new_with_label(
-        gtk_radio_button_get_group(GTK_RADIO_BUTTON(SetFocusToSameTagField)),
-        _("Return focus to the first tag field (i.e. 'Title' field)"));
-    gtk_grid_attach (GTK_GRID (Table), SetFocusToFirstTagField, 1, 2, 1, 1);
-    //gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(SetFocusToFirstTagField),SET_FOCUS_TO_FIRST_TAG_FIELD);
-    
     /* Tag Splitting */
     Frame = gtk_frame_new (_("Tag Splitting"));
     gtk_box_pack_start(GTK_BOX(VBox),Frame,FALSE,FALSE,0);
@@ -660,13 +661,22 @@ void Open_OptionsWindow (void)
     gtk_grid_attach (GTK_GRID (Table), VorbisSplitFieldComposer, 1, 2, 1, 1);
     gtk_grid_attach (GTK_GRID (Table), VorbisSplitFieldOrigArtist, 1, 3, 1, 1);
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(VorbisSplitFieldTitle), VORBIS_SPLIT_FIELD_TITLE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(VorbisSplitFieldArtist), VORBIS_SPLIT_FIELD_ARTIST);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(VorbisSplitFieldAlbum), VORBIS_SPLIT_FIELD_ALBUM);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(VorbisSplitFieldGenre), VORBIS_SPLIT_FIELD_GENRE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(VorbisSplitFieldComment), VORBIS_SPLIT_FIELD_COMMENT);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(VorbisSplitFieldComposer), VORBIS_SPLIT_FIELD_COMPOSER);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(VorbisSplitFieldOrigArtist), VORBIS_SPLIT_FIELD_ORIG_ARTIST);
+    g_settings_bind (ETSettings, "ogg-split-title", VorbisSplitFieldTitle,
+                     "active", G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "ogg-split-artist", VorbisSplitFieldArtist,
+                     "active", G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "ogg-split-album", VorbisSplitFieldAlbum,
+                     "active", G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "ogg-split-genre", VorbisSplitFieldGenre,
+                     "active", G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "ogg-split-comment", VorbisSplitFieldComment,
+                     "active", G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "ogg-split-composer",
+                     VorbisSplitFieldComposer, "active",
+                     G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "ogg-split-original-artist",
+                     VorbisSplitFieldOrigArtist, "active",
+                     G_SETTINGS_BIND_DEFAULT);
 
     /*
      * ID3 Tag Settings
@@ -698,7 +708,8 @@ void Open_OptionsWindow (void)
     /* Write ID3 tags in FLAC files */
     WriteId3TagsInFlacFiles = gtk_check_button_new_with_label(_("Write ID3 tags in FLAC files (in addition to FLAC tag)"));
     gtk_grid_attach (GTK_GRID (Table), WriteId3TagsInFlacFiles, 0, 0, 1, 1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(WriteId3TagsInFlacFiles),WRITE_ID3_TAGS_IN_FLAC_FILE);
+    g_settings_bind (ETSettings, "flac-write-id3", WriteId3TagsInFlacFiles,
+                     "active", G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(WriteId3TagsInFlacFiles,_("If activated, ID3 tags will be "
         "also added in the FLAC file (according the two rules above, plus the FLAC tag). "
         "Else ID3 tags will be stripped."));
@@ -706,7 +717,8 @@ void Open_OptionsWindow (void)
     /* Strip tag when fields (managed by EasyTAG) are empty */
     StripTagWhenEmptyFields = gtk_check_button_new_with_label(_("Strip tags if all fields are set to blank"));
     gtk_grid_attach (GTK_GRID (Table), StripTagWhenEmptyFields, 0, 1, 1, 1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(StripTagWhenEmptyFields),STRIP_TAG_WHEN_EMPTY_FIELDS);
+    g_settings_bind (ETSettings, "id3-strip-empty", StripTagWhenEmptyFields,
+                     "active", G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(StripTagWhenEmptyFields,_("As ID3v2 tags may contain other data than "
         "Title, Artist, Album, Year, Track, Genre or Comment (as an attached image, lyrics…), "
         "this option allows you to strip the whole tag when these seven standard data fields have "
@@ -715,28 +727,35 @@ void Open_OptionsWindow (void)
     /* Convert old ID3v2 tag version */
     ConvertOldId3v2TagVersion = gtk_check_button_new_with_label(_("Automatically convert old ID3v2 tag versions"));
     gtk_grid_attach (GTK_GRID (Table), ConvertOldId3v2TagVersion, 0, 2, 1, 1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ConvertOldId3v2TagVersion),CONVERT_OLD_ID3V2_TAG_VERSION);
+    g_settings_bind (ETSettings, "id3v2-convert-old",
+                     ConvertOldId3v2TagVersion, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(ConvertOldId3v2TagVersion,_("If activated, an old ID3v2 tag version (as "
         "ID3v2.2) will be updated to the ID3v2.3 version."));
 
     /* Use CRC32 */
     FileWritingId3v2UseCrc32 = gtk_check_button_new_with_label(_("Use CRC32"));
     gtk_grid_attach (GTK_GRID (Table), FileWritingId3v2UseCrc32, 1, 0, 1, 1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(FileWritingId3v2UseCrc32),FILE_WRITING_ID3V2_USE_CRC32);
+    g_settings_bind (ETSettings, "id3v2-crc32", FileWritingId3v2UseCrc32,
+                     "active", G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(FileWritingId3v2UseCrc32,_("Set CRC32 in the ID3v2 tags"));
 
     /* Use Compression */
     FileWritingId3v2UseCompression = gtk_check_button_new_with_label(_("Use Compression"));
     gtk_grid_attach (GTK_GRID (Table), FileWritingId3v2UseCompression, 1, 1, 1,
                      1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(FileWritingId3v2UseCompression),FILE_WRITING_ID3V2_USE_COMPRESSION);
+    g_settings_bind (ETSettings, "id3v2-compression",
+                     FileWritingId3v2UseCompression, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(FileWritingId3v2UseCompression,_("Set Compression in the ID3v2 tags"));
 	
     /* Write Genre in text */
     FileWritingId3v2TextOnlyGenre = gtk_check_button_new_with_label(_("Write Genre in text only"));
     gtk_grid_attach (GTK_GRID (Table), FileWritingId3v2TextOnlyGenre, 1, 2, 1,
                      1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(FileWritingId3v2TextOnlyGenre),FILE_WRITING_ID3V2_TEXT_ONLY_GENRE);
+    g_settings_bind (ETSettings, "id3v2-text-only-genre",
+                     FileWritingId3v2TextOnlyGenre, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(FileWritingId3v2TextOnlyGenre,_("Don't use ID3v1 number references in genre tag. Enable this if you see numbers as genre in your music player."));	
 
     /* Character Set for writing ID3 tag */
@@ -762,7 +781,8 @@ void Open_OptionsWindow (void)
     /* Write ID3v2 tag */
     FileWritingId3v2WriteTag = gtk_check_button_new_with_label(_("Write ID3v2 tag"));
     gtk_grid_attach (GTK_GRID (Table), FileWritingId3v2WriteTag, 0, 0, 5, 1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(FileWritingId3v2WriteTag),FILE_WRITING_ID3V2_WRITE_TAG);
+    g_settings_bind (ETSettings, "id3v2-enabled", FileWritingId3v2WriteTag,
+                     "active", G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(FileWritingId3v2WriteTag,_("If activated, an ID3v2.4 tag will be added or "
         "updated at the beginning of the MP3 files. Else it will be stripped."));
     g_signal_connect_after(G_OBJECT(FileWritingId3v2WriteTag),"toggled",
@@ -800,8 +820,9 @@ void Open_OptionsWindow (void)
 
     // Unicode
     FileWritingId3v2UseUnicodeCharacterSet = gtk_radio_button_new_with_label(NULL, _("Unicode "));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(FileWritingId3v2UseUnicodeCharacterSet),
-        FILE_WRITING_ID3V2_USE_UNICODE_CHARACTER_SET);
+    g_settings_bind (ETSettings, "id3v2-enable-unicode",
+                     FileWritingId3v2UseUnicodeCharacterSet, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_grid_attach (GTK_GRID (Table), FileWritingId3v2UseUnicodeCharacterSet,
                      1, 3, 1, 1);
 
@@ -826,8 +847,6 @@ void Open_OptionsWindow (void)
         _("Other"));
     gtk_grid_attach (GTK_GRID (Table),
                      FileWritingId3v2UseNoUnicodeCharacterSet, 1, 4, 1, 1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(FileWritingId3v2UseNoUnicodeCharacterSet),
-        !FILE_WRITING_ID3V2_USE_UNICODE_CHARACTER_SET);
 
     FileWritingId3v2NoUnicodeCharacterSetCombo = gtk_combo_box_text_new();
     gtk_widget_set_tooltip_text (FileWritingId3v2NoUnicodeCharacterSetCombo,
@@ -891,7 +910,8 @@ void Open_OptionsWindow (void)
     /* Write ID3v1 tag */
     FileWritingId3v1WriteTag = gtk_check_button_new_with_label(_("Write ID3v1.x tag"));
     gtk_grid_attach (GTK_GRID (Table), FileWritingId3v1WriteTag, 0, 0, 4, 1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(FileWritingId3v1WriteTag),FILE_WRITING_ID3V1_WRITE_TAG);
+    g_settings_bind (ETSettings, "id3v1-enabled", FileWritingId3v1WriteTag,
+                     "active", G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(FileWritingId3v1WriteTag,_("If activated, an ID3v1 tag will be added or "
         "updated at the end of the MP3 files. Else it will be stripped."));
     g_signal_connect_after(G_OBJECT(FileWritingId3v1WriteTag),"toggled",
@@ -962,8 +982,9 @@ void Open_OptionsWindow (void)
     // "File Reading Charset" Check Button + Combo
     UseNonStandardId3ReadingCharacterSet = gtk_check_button_new_with_label(_(
         "Non-standard:"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(UseNonStandardId3ReadingCharacterSet),
-        USE_NON_STANDARD_ID3_READING_CHARACTER_SET);
+    g_settings_bind (ETSettings, "id3-override-read-encoding",
+                     UseNonStandardId3ReadingCharacterSet, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_grid_attach (GTK_GRID (Table), UseNonStandardId3ReadingCharacterSet, 0,
                      0, 1, 1);
     gtk_widget_set_tooltip_text(UseNonStandardId3ReadingCharacterSet,
@@ -1072,7 +1093,9 @@ void Open_OptionsWindow (void)
     PFSDontUpperSomeWords = gtk_check_button_new_with_label(_("Don't uppercase "
         "first letter of words for some prepositions and articles."));
     gtk_box_pack_start(GTK_BOX(vbox),PFSDontUpperSomeWords, FALSE, FALSE, 0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(PFSDontUpperSomeWords), PFS_DONT_UPPER_SOME_WORDS);
+    g_settings_bind (ETSettings, "process-uppercase-prepositions",
+                     PFSDontUpperSomeWords, "active",
+                     G_SETTINGS_BIND_DEFAULT | G_SETTINGS_BIND_INVERT_BOOLEAN);
     gtk_widget_set_tooltip_text(PFSDontUpperSomeWords, _("Don't convert first "
         "letter of words like prepositions, articles and words like feat., "
         "when using the scanner 'First letter uppercase of each word' (for "
@@ -1087,7 +1110,8 @@ void Open_OptionsWindow (void)
 
     OpenScannerWindowOnStartup = gtk_check_button_new_with_label(_("Open the Scanner Window on startup"));
     gtk_box_pack_start(GTK_BOX(vbox),OpenScannerWindowOnStartup,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(OpenScannerWindowOnStartup),OPEN_SCANNER_WINDOW_ON_STARTUP);
+    g_settings_bind (ETSettings, "scan-startup", OpenScannerWindowOnStartup,
+                     "active", G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(OpenScannerWindowOnStartup,_("Activate this option to open automatically "
         "the scanner window when EasyTAG starts."));
 
@@ -1102,7 +1126,8 @@ void Open_OptionsWindow (void)
     // Overwrite text into tag fields
     OverwriteTagField = gtk_check_button_new_with_label(_("Overwrite fields when scanning tags"));
     gtk_box_pack_start(GTK_BOX(vbox),OverwriteTagField,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(OverwriteTagField),OVERWRITE_TAG_FIELD);
+    g_settings_bind (ETSettings, "fill-overwrite-tag-fields",
+                     OverwriteTagField, "active", G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(OverwriteTagField,_("If activated, the scanner will replace existing text "
         "in fields by the new one. If deactivated, only blank fields of the tag will be filled."));
 
@@ -1116,29 +1141,33 @@ void Open_OptionsWindow (void)
     gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,0);
     SetDefaultComment = gtk_check_button_new_with_label(_("Set this text as default comment:"));
     gtk_box_pack_start(GTK_BOX(hbox),SetDefaultComment,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(SetDefaultComment),SET_DEFAULT_COMMENT);
+    g_settings_bind (ETSettings, "fill-set-default-comment", SetDefaultComment,
+                     "active", G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(SetDefaultComment,_("Activate this option if you want to put the "
         "following string into the comment field when using the 'Fill Tag' scanner."));
     DefaultComment = gtk_combo_box_new_with_model_and_entry(GTK_TREE_MODEL(DefaultCommentModel));
     gtk_combo_box_set_entry_text_column(GTK_COMBO_BOX(DefaultComment),MISC_COMBO_TEXT);
     gtk_box_pack_start(GTK_BOX(hbox),DefaultComment,FALSE,FALSE,0);
     gtk_widget_set_size_request(GTK_WIDGET(DefaultComment), 250, -1);
-    g_signal_connect(G_OBJECT(SetDefaultComment),"toggled",
-            G_CALLBACK(Set_Default_Comment_Check_Button_Toggled),NULL);
-    if (DEFAULT_COMMENT==NULL)
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(SetDefaultComment),FALSE);
-    Set_Default_Comment_Check_Button_Toggled();
+    g_settings_bind (ETSettings, "fill-set-default-comment", DefaultComment,
+                     "sensitive", G_SETTINGS_BIND_GET);
+
     /* History list */
     Load_Default_Tag_Comment_Text_List(DefaultCommentModel, MISC_COMBO_TEXT);
-    Add_String_To_Combo_List(DefaultCommentModel, DEFAULT_COMMENT);
-    if (DEFAULT_COMMENT)
-        gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(DefaultComment))), DEFAULT_COMMENT);
+    default_comment = g_settings_get_string (ETSettings,
+                                             "fill-default-comment");
+    Add_String_To_Combo_List (DefaultCommentModel, default_comment);
+    g_free (default_comment);
+    g_settings_bind (ETSettings, "fill-default-comment",
+                     gtk_bin_get_child (GTK_BIN (DefaultComment)), "text",
+                     G_SETTINGS_BIND_DEFAULT);
 
     // CRC32 comment
     Crc32Comment = gtk_check_button_new_with_label(_("Use CRC32 as the default "
         "comment (for files with ID3 tags only)."));
     gtk_box_pack_start(GTK_BOX(vbox),Crc32Comment,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(Crc32Comment),SET_CRC32_COMMENT);
+    g_settings_bind (ETSettings, "fill-crc32-comment", Crc32Comment, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(Crc32Comment,_("Calculates the CRC-32 value of the file "
         "and writes it into the comment field when using the 'Fill Tag' scanner."));
     g_signal_connect_swapped(G_OBJECT(SetDefaultComment), "toggled",
@@ -1178,32 +1207,33 @@ void Open_OptionsWindow (void)
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(CddbServerNameAutomaticSearch), "at.freedb.org");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(CddbServerNameAutomaticSearch), "au.freedb.org");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(CddbServerNameAutomaticSearch), "ca.freedb.org");
-    //gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(CddbServerNameAutomaticSearch), "ca2.freedb.org");
-    //gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(CddbServerNameAutomaticSearch), "de.freedb.org");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(CddbServerNameAutomaticSearch), "es.freedb.org");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(CddbServerNameAutomaticSearch), "fi.freedb.org");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(CddbServerNameAutomaticSearch), "ru.freedb.org");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(CddbServerNameAutomaticSearch), "uk.freedb.org");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(CddbServerNameAutomaticSearch), "us.freedb.org");
-    if (CDDB_SERVER_NAME_AUTOMATIC_SEARCH)
-        gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(CddbServerNameAutomaticSearch))),CDDB_SERVER_NAME_AUTOMATIC_SEARCH);
+    g_settings_bind (ETSettings, "cddb-automatic-search-hostname",
+                     gtk_bin_get_child (GTK_BIN (CddbServerNameAutomaticSearch)),
+                     "text", G_SETTINGS_BIND_DEFAULT);
 
     Label = gtk_label_new (_("Port:"));
     gtk_box_pack_start(GTK_BOX(hbox),Label,FALSE,FALSE,2);
-    CddbServerPortAutomaticSearch = gtk_entry_new();
+    CddbServerPortAutomaticSearch = gtk_spin_button_new_with_range (0.0,
+                                                                    65535.0,
+                                                                    1.0);
+    g_settings_bind (ETSettings, "cddb-automatic-search-port",
+                     CddbServerPortAutomaticSearch, "value",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_size_request(GTK_WIDGET(CddbServerPortAutomaticSearch), 45, -1);
-    gtk_entry_set_max_length(GTK_ENTRY(CddbServerPortAutomaticSearch),5);
     gtk_box_pack_start(GTK_BOX(hbox),CddbServerPortAutomaticSearch,FALSE,FALSE,0);
-    sprintf(temp,"%i",CDDB_SERVER_PORT_AUTOMATIC_SEARCH);
-    gtk_entry_set_text(GTK_ENTRY(CddbServerPortAutomaticSearch),temp);
-    g_signal_connect(G_OBJECT(CddbServerPortAutomaticSearch),"insert_text",G_CALLBACK(Insert_Only_Digit),NULL);
 
     Label = gtk_label_new (_("CGI Path:"));
     gtk_box_pack_start(GTK_BOX(hbox),Label,FALSE,FALSE,2);
     CddbServerCgiPathAutomaticSearch = gtk_entry_new();
     gtk_box_pack_start(GTK_BOX(hbox),CddbServerCgiPathAutomaticSearch,FALSE,FALSE,0);
-    if (CDDB_SERVER_CGI_PATH_AUTOMATIC_SEARCH)
-        gtk_entry_set_text(GTK_ENTRY(CddbServerCgiPathAutomaticSearch),CDDB_SERVER_CGI_PATH_AUTOMATIC_SEARCH);
+    g_settings_bind (ETSettings, "cddb-automatic-search-path",
+                     CddbServerCgiPathAutomaticSearch, "text",
+                     G_SETTINGS_BIND_DEFAULT);
 
     // 2sd automatic search server
     hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,2);
@@ -1213,25 +1243,28 @@ void Open_OptionsWindow (void)
     CddbServerNameAutomaticSearch2 = gtk_combo_box_text_new_with_entry();
     gtk_box_pack_start(GTK_BOX(hbox),CddbServerNameAutomaticSearch2,FALSE,FALSE,0);
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(CddbServerNameAutomaticSearch2), "freedb.musicbrainz.org");
-    if (CDDB_SERVER_NAME_AUTOMATIC_SEARCH2)
-        gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(CddbServerNameAutomaticSearch2))),CDDB_SERVER_NAME_AUTOMATIC_SEARCH2);
+    g_settings_bind (ETSettings, "cddb-automatic-search-hostname2",
+                     gtk_bin_get_child (GTK_BIN (CddbServerNameAutomaticSearch2)),
+                     "text", G_SETTINGS_BIND_DEFAULT);
 
     Label = gtk_label_new (_("Port:"));
     gtk_box_pack_start(GTK_BOX(hbox),Label,FALSE,FALSE,2);
-    CddbServerPortAutomaticSearch2 = gtk_entry_new();
+    CddbServerPortAutomaticSearch2 = gtk_spin_button_new_with_range (0.0,
+                                                                     65535.0,
+                                                                     1.0);
+    g_settings_bind (ETSettings, "cddb-automatic-search-port2",
+                     CddbServerPortAutomaticSearch2, "value",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_size_request(GTK_WIDGET(CddbServerPortAutomaticSearch2), 45, -1);
-    gtk_entry_set_max_length(GTK_ENTRY(CddbServerPortAutomaticSearch2),5);
     gtk_box_pack_start(GTK_BOX(hbox),CddbServerPortAutomaticSearch2,FALSE,FALSE,0);
-    sprintf(temp,"%i",CDDB_SERVER_PORT_AUTOMATIC_SEARCH2);
-    gtk_entry_set_text(GTK_ENTRY(CddbServerPortAutomaticSearch2),temp);
-    g_signal_connect(G_OBJECT(CddbServerPortAutomaticSearch2),"insert_text",G_CALLBACK(Insert_Only_Digit),NULL);
 
     Label = gtk_label_new (_("CGI Path:"));
     gtk_box_pack_start(GTK_BOX(hbox),Label,FALSE,FALSE,2);
     CddbServerCgiPathAutomaticSearch2 = gtk_entry_new();
     gtk_box_pack_start(GTK_BOX(hbox),CddbServerCgiPathAutomaticSearch2,FALSE,FALSE,0);
-    if (CDDB_SERVER_CGI_PATH_AUTOMATIC_SEARCH2)
-        gtk_entry_set_text(GTK_ENTRY(CddbServerCgiPathAutomaticSearch2) ,CDDB_SERVER_CGI_PATH_AUTOMATIC_SEARCH2);
+    g_settings_bind (ETSettings, "cddb-automatic-search-path2",
+                     CddbServerCgiPathAutomaticSearch2, "text",
+                     G_SETTINGS_BIND_DEFAULT);
 
     // CDDB Server Settings (Manual Search)
     Frame = gtk_frame_new (_("Server Settings for Manual Search"));
@@ -1248,25 +1281,28 @@ void Open_OptionsWindow (void)
     gtk_box_pack_start(GTK_BOX(hbox),CddbServerNameManualSearch,FALSE,FALSE,0);
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(CddbServerNameManualSearch), "www.freedb.org");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(CddbServerNameManualSearch), "www.gnudb.org");
-    if (CDDB_SERVER_NAME_MANUAL_SEARCH)
-        gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(CddbServerNameManualSearch))),CDDB_SERVER_NAME_MANUAL_SEARCH);
+    g_settings_bind (ETSettings, "cddb-manual-search-hostname",
+                     gtk_bin_get_child (GTK_BIN (CddbServerNameManualSearch)),
+                     "text", G_SETTINGS_BIND_DEFAULT);
 
     Label = gtk_label_new (_("Port:"));
     gtk_box_pack_start(GTK_BOX(hbox),Label,FALSE,FALSE,2);
-    CddbServerPortManualSearch = gtk_entry_new();
+    CddbServerPortManualSearch = gtk_spin_button_new_with_range (0.0, 65535.0,
+                                                                 1.0);
+    g_settings_bind (ETSettings, "cddb-manual-search-port",
+                     CddbServerPortManualSearch, "value",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_size_request(GTK_WIDGET(CddbServerPortManualSearch), 45, -1);
     gtk_entry_set_max_length(GTK_ENTRY(CddbServerPortManualSearch),5);
     gtk_box_pack_start(GTK_BOX(hbox),CddbServerPortManualSearch,FALSE,FALSE,0);
-    sprintf(temp,"%i",CDDB_SERVER_PORT_MANUAL_SEARCH);
-    gtk_entry_set_text(GTK_ENTRY(CddbServerPortManualSearch),temp);
-    g_signal_connect(G_OBJECT(CddbServerPortManualSearch),"insert_text",G_CALLBACK(Insert_Only_Digit),NULL);
 
     Label = gtk_label_new (_("CGI Path:"));
     gtk_box_pack_start(GTK_BOX(hbox),Label,FALSE,FALSE,2);
     CddbServerCgiPathManualSearch = gtk_entry_new();
     gtk_box_pack_start(GTK_BOX(hbox),CddbServerCgiPathManualSearch,FALSE,FALSE,0);
-    if (CDDB_SERVER_CGI_PATH_MANUAL_SEARCH)
-        gtk_entry_set_text(GTK_ENTRY(CddbServerCgiPathManualSearch) ,CDDB_SERVER_CGI_PATH_MANUAL_SEARCH);
+    g_settings_bind (ETSettings, "cddb-manual-search-path",
+                     CddbServerCgiPathManualSearch, "text",
+                     G_SETTINGS_BIND_DEFAULT);
 
     // Local access for CDDB (Automatic Search)
     Frame = gtk_frame_new (_("Local CD Data Base"));
@@ -1326,7 +1362,8 @@ void Open_OptionsWindow (void)
 
     CddbUseProxy = gtk_check_button_new_with_label(_("Use a proxy"));
     gtk_grid_attach (GTK_GRID (Table), CddbUseProxy, 0, 0, 5, 1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(CddbUseProxy),CDDB_USE_PROXY);
+    g_settings_bind (ETSettings, "cddb-proxy-enabled", CddbUseProxy, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(CddbUseProxy,_("Set active the settings of the proxy server."));
 
     Label = gtk_label_new("     ");
@@ -1337,37 +1374,35 @@ void Open_OptionsWindow (void)
     gtk_misc_set_alignment(GTK_MISC(Label),1,0.5);
     CddbProxyName = gtk_entry_new();
     gtk_grid_attach (GTK_GRID (Table), CddbProxyName, 2, 1, 1, 1);
-    if (CDDB_PROXY_NAME)
-        gtk_entry_set_text(GTK_ENTRY(CddbProxyName),CDDB_PROXY_NAME);
+    g_settings_bind (ETSettings, "cddb-proxy-hostname", CddbProxyName, "text",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(CddbProxyName,_("Name of the proxy server."));
     Label = gtk_label_new (_("Port:"));
     gtk_grid_attach (GTK_GRID (Table), Label, 3, 1, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(Label),1,0.5);
-    CddbProxyPort = gtk_entry_new();
+    CddbProxyPort = gtk_spin_button_new_with_range (0.0, 65535.0, 1.0);
+    g_settings_bind (ETSettings, "cddb-proxy-port", CddbProxyPort, "value",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_size_request(GTK_WIDGET(CddbProxyPort), 45, -1);
-    gtk_entry_set_max_length(GTK_ENTRY(CddbProxyPort),5);
     gtk_grid_attach (GTK_GRID (Table), CddbProxyPort, 4, 1, 1, 1);
     gtk_widget_set_tooltip_text(CddbProxyPort,_("Port of the proxy server."));
-    sprintf(temp,"%i",CDDB_PROXY_PORT);
-    gtk_entry_set_text(GTK_ENTRY(CddbProxyPort),temp);
-    g_signal_connect(G_OBJECT(CddbProxyPort),"insert_text",G_CALLBACK(Insert_Only_Digit),NULL);
     g_signal_connect(G_OBJECT(CddbUseProxy),"toggled",G_CALLBACK(Cddb_Use_Proxy_Toggled),NULL);
     Label = gtk_label_new(_("User Name:"));
     gtk_grid_attach (GTK_GRID (Table), Label, 1, 2, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(Label),1,0.5);
     CddbProxyUserName = gtk_entry_new();
-    if (CDDB_PROXY_USER_NAME)
-        gtk_entry_set_text(GTK_ENTRY(CddbProxyUserName),CDDB_PROXY_USER_NAME);
+    g_settings_bind (ETSettings, "cddb-proxy-username", CddbProxyUserName,
+                     "text", G_SETTINGS_BIND_DEFAULT);
     gtk_grid_attach (GTK_GRID (Table), CddbProxyUserName, 2, 2, 1, 1);
     gtk_widget_set_tooltip_text(CddbProxyUserName,_("Name of user for the the proxy server."));
     Label = gtk_label_new(_("User Password:"));
     gtk_grid_attach (GTK_GRID (Table), Label, 3, 2, 1, 1);
     gtk_misc_set_alignment(GTK_MISC(Label),1,0.5);
     CddbProxyUserPassword = gtk_entry_new();
-    if (CDDB_PROXY_USER_PASSWORD)
-        gtk_entry_set_text(GTK_ENTRY(CddbProxyUserPassword),CDDB_PROXY_USER_PASSWORD);
+    gtk_entry_set_visibility (GTK_ENTRY (CddbProxyUserPassword), FALSE);
+    g_settings_bind (ETSettings, "cddb-proxy-password", CddbProxyUserPassword,
+                     "text", G_SETTINGS_BIND_DEFAULT);
     gtk_grid_attach (GTK_GRID (Table), CddbProxyUserPassword, 4, 2, 1, 1);
-    gtk_entry_set_visibility(GTK_ENTRY(CddbProxyUserPassword),FALSE);
     gtk_widget_set_tooltip_text(CddbProxyUserPassword,_("Password of user for the the proxy server."));
     Cddb_Use_Proxy_Toggled();
 
@@ -1383,7 +1418,8 @@ void Open_OptionsWindow (void)
     CddbFollowFile = gtk_check_button_new_with_label(_("Select corresponding audio "
         "file (according position or DLM if activated below)"));
     gtk_box_pack_start(GTK_BOX(vbox),CddbFollowFile,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(CddbFollowFile),CDDB_FOLLOW_FILE);
+    g_settings_bind (ETSettings, "cddb-follow-file", CddbFollowFile, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(CddbFollowFile,_("If activated, when selecting a "
         "line in the list of tracks name, the corresponding audio file in the "
         "main list will be also selected."));
@@ -1392,7 +1428,8 @@ void Open_OptionsWindow (void)
     CddbUseDLM = gtk_check_button_new_with_label(_("Use the Levenshtein algorithm "
         "(DLM) to match lines (using title) with audio files (using filename)"));
     gtk_box_pack_start(GTK_BOX(vbox),CddbUseDLM,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(CddbUseDLM),CDDB_USE_DLM);
+    g_settings_bind (ETSettings, "cddb-dlm-enabled", CddbUseDLM, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(CddbUseDLM,_("When activating this option, the "
         "Levenshtein algorithm (DLM: Damerau-Levenshtein Metric) will be used "
         "to match the CDDB title against every filename in the current folder, "
@@ -1415,30 +1452,36 @@ void Open_OptionsWindow (void)
 
     ConfirmBeforeExit = gtk_check_button_new_with_label(_("Confirm exit from program"));
     gtk_box_pack_start(GTK_BOX(VBox),ConfirmBeforeExit,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ConfirmBeforeExit),CONFIRM_BEFORE_EXIT);
+    g_settings_bind (ETSettings, "confirm-quit", ConfirmBeforeExit, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     gtk_widget_set_tooltip_text(ConfirmBeforeExit,_("If activated, opens a dialog box to ask "
         "confirmation before exiting the program."));
 
     ConfirmWriteTag = gtk_check_button_new_with_label(_("Confirm writing of file tag"));
     gtk_box_pack_start(GTK_BOX(VBox),ConfirmWriteTag,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ConfirmWriteTag),CONFIRM_WRITE_TAG);
+    g_settings_bind (ETSettings, "confirm-write-tags", ConfirmWriteTag,
+                     "active", G_SETTINGS_BIND_DEFAULT);
 
     ConfirmRenameFile = gtk_check_button_new_with_label(_("Confirm renaming of file"));
     gtk_box_pack_start(GTK_BOX(VBox),ConfirmRenameFile,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ConfirmRenameFile),CONFIRM_RENAME_FILE);
+    g_settings_bind (ETSettings, "confirm-rename-file", ConfirmRenameFile,
+                     "active", G_SETTINGS_BIND_DEFAULT);
 
     ConfirmDeleteFile = gtk_check_button_new_with_label(_("Confirm deleting of file"));
     gtk_box_pack_start(GTK_BOX(VBox),ConfirmDeleteFile,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ConfirmDeleteFile),CONFIRM_DELETE_FILE);
+    g_settings_bind (ETSettings, "confirm-delete-file", ConfirmDeleteFile,
+                     "active", G_SETTINGS_BIND_DEFAULT);
 
     ConfirmWritePlayList = gtk_check_button_new_with_label(_("Confirm writing of playlist"));
     gtk_box_pack_start(GTK_BOX(VBox),ConfirmWritePlayList,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ConfirmWritePlayList),CONFIRM_WRITE_PLAYLIST);
+    g_settings_bind (ETSettings, "confirm-write-playlist",
+                     ConfirmWritePlayList, "active", G_SETTINGS_BIND_DEFAULT);
 
     ConfirmWhenUnsavedFiles = gtk_check_button_new_with_label(_("Confirm changing directory when there are unsaved changes"));
     gtk_box_pack_start(GTK_BOX(VBox),ConfirmWhenUnsavedFiles,FALSE,FALSE,0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ConfirmWhenUnsavedFiles),CONFIRM_WHEN_UNSAVED_FILES);
-
+    g_settings_bind (ETSettings, "confirm-when-unsaved-files",
+                     ConfirmWhenUnsavedFiles, "active",
+                     G_SETTINGS_BIND_DEFAULT);
 
     /*
      * Buttons box of Option Window
@@ -1475,13 +1518,8 @@ void Open_OptionsWindow (void)
     gtk_widget_show_all(OptionsWindow);
 
     /* Load the default page */
-    gtk_notebook_set_current_page(GTK_NOTEBOOK(OptionsNoteBook), OPTIONS_NOTEBOOK_PAGE);
-}
-
-
-static void Set_Default_Comment_Check_Button_Toggled (void)
-{
-    gtk_widget_set_sensitive(DefaultComment,gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(SetDefaultComment)));
+    g_settings_bind (ETSettings, "preferences-page", OptionsNoteBook, "page",
+                     G_SETTINGS_BIND_DEFAULT);
 }
 
 void Number_Track_Formatted_Toggled (void)
@@ -1716,9 +1754,6 @@ void OptionsWindow_Apply_Changes (void)
             OPTIONS_WINDOW_WIDTH  = width;
             OPTIONS_WINDOW_HEIGHT = height;
         }
-
-        /* Get the last visible notebook page */
-        OPTIONS_NOTEBOOK_PAGE = gtk_notebook_get_current_page(GTK_NOTEBOOK(OptionsNoteBook));
 
         /* Save combobox history lists before exit */
         Save_Default_Path_To_MP3_List     (DefaultPathModel, MISC_COMBO_TEXT);

@@ -47,8 +47,6 @@ static GList *ActionPairsList = NULL;
  * Prototypes *
  **************/
 
-static void Check_Menu_Item_Toggled_Browse_Hidden_Dir (GtkWidget *checkmenuitem);
-static void Check_Menu_Item_Toggled_Browse_Subdir (GtkWidget *checkmenuitem);
 static void Init_Menu_Bar (void);
 static void Statusbar_Remove_Timer (void);
 
@@ -263,12 +261,15 @@ void Create_UI (GtkWidget **ppmenubar, GtkWidget **pptoolbar)
 
     GtkToggleActionEntry ToggleActionEntries[] =
     {
-        //{ AM_BROWSE_SUBDIR,      GTK_STOCK_INDEX,        _("Browse _Subdirectories"),                         NULL, _("Browse _Sub-directories"),                         NULL,                                    FALSE },
-        { AM_BROWSE_SUBDIR,      NULL,                   _("Browse _Subdirectories"),                         NULL, _("Browse subdirectories"),                         NULL,                                    BROWSE_SUBDIR },
+        { AM_BROWSE_SUBDIR, NULL, _("Browse _Subdirectories"), NULL,
+          _("Browse subdirectories"), NULL,
+          g_settings_get_boolean (ETSettings, "browse-subdir") },
 #ifndef G_OS_WIN32 /* No sense here for Win32, "hidden" means : starts with a
                     * '.'
                     */
-        { AM_BROWSER_HIDDEN_DIR, NULL,                   _("Show Hidden Directories"),                         NULL, _("Show hidden directories"),                         G_CALLBACK(Browser_Tree_Rebuild),     BROWSE_HIDDEN_DIR },
+        { AM_BROWSER_HIDDEN_DIR, NULL, _("Show Hidden Directories"), NULL,
+          _("Show hidden directories"), G_CALLBACK(Browser_Tree_Rebuild),
+          g_settings_get_boolean (ETSettings, "browse-show-hidden") },
 #endif /* !G_OS_WIN32 */
     };
 
@@ -349,66 +350,19 @@ Init_Menu_Bar (void)
     CheckMenuItemBrowseSubdirMainMenu = gtk_ui_manager_get_widget(UIManager, "/MenuBar/BrowserMenu/BrowseSubdir");
     if (CheckMenuItemBrowseSubdirMainMenu)
     {
-        // Link to update BROWSE_SUBDIR when changed
-        g_signal_connect(G_OBJECT(CheckMenuItemBrowseSubdirMainMenu),"toggled",
-            G_CALLBACK(Check_Menu_Item_Toggled_Browse_Subdir),NULL);
+        g_settings_bind (ETSettings, "browse-subdir",
+                         CheckMenuItemBrowseSubdirMainMenu, "active",
+                         G_SETTINGS_BIND_DEFAULT);
     }
 
     CheckMenuItemBrowseHiddenDirMainMenu = gtk_ui_manager_get_widget(UIManager, "/MenuBar/BrowserMenu/BrowseHiddenDir");
     if (CheckMenuItemBrowseHiddenDirMainMenu)
     {
-        // Link to update BROWSE_HIDDEN_DIR when changed
-        g_signal_connect(G_OBJECT(CheckMenuItemBrowseHiddenDirMainMenu),"toggled",
-            G_CALLBACK(Check_Menu_Item_Toggled_Browse_Hidden_Dir),NULL);
+        g_settings_bind (ETSettings, "browse-show-hidden",
+                         CheckMenuItemBrowseHiddenDirMainMenu, "active",
+                         G_SETTINGS_BIND_DEFAULT);
     }
-
-    /* If entry not implemented */
-    //{GtkWidget *widget = gtk_item_factory_get_widget_by_action(ItemFactory,FILENAME_FROM_TXT);
-    //if (widget) gtk_widget_set_sensitive(widget,FALSE);}
 }
-
-/*
- * Callback to update state of check button to browse subdir into menu
- */
-static void
-Check_Menu_Item_Toggled_Browse_Subdir (GtkWidget *checkmenuitem)
-{
-    BROWSE_SUBDIR = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(checkmenuitem));
-    Check_Menu_Item_Update_Browse_Subdir();
-}
-void Check_Menu_Item_Update_Browse_Subdir (void)
-{
-    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(CheckMenuItemBrowseSubdirMainMenu),BROWSE_SUBDIR);
-}
-
-/*
- * Callback to update state of check button to show hiddendirectories into menu
- */
-static void
-Check_Menu_Item_Toggled_Browse_Hidden_Dir (GtkWidget *checkmenuitem)
-{
-    BROWSE_HIDDEN_DIR = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(checkmenuitem));
-    Check_Menu_Item_Update_Browse_Hidden_Dir();
-
-    // Reload directory, in case we have changed BROWSE_HIDDEN_DIR
-    //Browser_Tree_Rebuild(NULL); // Commented, as already done in GtkToggleActionEntry for AM_BROWSER_HIDDEN_DIR
-}
-
-void
-Check_Menu_Item_Update_Browse_Hidden_Dir (void)
-{
-#ifndef G_OS_WIN32
-    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(CheckMenuItemBrowseHiddenDirMainMenu),BROWSE_HIDDEN_DIR);
-#endif /* !G_OS_WIN32 */
-}
-
-
-
-
-
-
-
-
 
 /*
  * Status bar functions

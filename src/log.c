@@ -162,11 +162,10 @@ GtkWidget *Create_Log_Area (void)
     // Load pending messages in the Log list
     Log_Print_Tmp_List();
 
-    if (SHOW_LOG_VIEW)
-        //gtk_widget_show_all(ScrollWindowLogList);
-        gtk_widget_show_all(Frame);
+    gtk_widget_show_all(Frame);
+    g_settings_bind (ETSettings, "log-show", Frame, "visible",
+                     G_SETTINGS_BIND_GET);
 
-    //return ScrollWindowLogList;
     return Frame;
 }
 
@@ -268,8 +267,9 @@ void Log_Print (Log_Error_Type error_type, gchar const *format, ...)
         gchar *time = Log_Format_Date();
 
         // Remove lines that exceed the limit
-        if (LogListNbrRows > LOG_MAX_LINES - 1
-        &&  gtk_tree_model_get_iter_first(GTK_TREE_MODEL(logListModel), &iter))
+        if (LogListNbrRows > g_settings_get_uint (ETSettings, "log-lines")
+            - 1 && gtk_tree_model_get_iter_first (GTK_TREE_MODEL (logListModel),
+                                                  &iter))
         {
             gtk_list_store_remove(GTK_LIST_STORE(logListModel), &iter);
         }

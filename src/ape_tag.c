@@ -111,14 +111,19 @@ gboolean Ape_Tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
         string = Try_To_Validate_Utf8_String(string);
 
         string1 = g_utf8_strchr(string, -1, '/');    // strchr don't like NULL string
-        if (NUMBER_TRACK_FORMATED)
+        if (g_settings_get_boolean (ETSettings, "tag-number-padded"))
         {
             if (string1)
             {
-                FileTag->track_total = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON, atoi(string1 + 1));
+                FileTag->track_total = g_strdup_printf ("%.*d",
+                                                        g_settings_get_uint (ETSettings, "tag-number-length"),
+                                                        atoi (string1 + 1));
                 *string1 = '\0';
             }
-            FileTag->track = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON, atoi(string));
+            FileTag->track = g_strdup_printf ("%.*d",
+                                              g_settings_get_uint (ETSettings,
+                                                                   "tag-number-length"),
+                                              atoi(string));
         } else
         {
             if (string1)

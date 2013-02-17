@@ -135,19 +135,19 @@ gboolean Id3tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
 
     if ((tagsize = id3_tag_query((id3_byte_t const *)string1, ID3_TAG_QUERYSIZE)) <= ID3_TAG_QUERYSIZE)
     {
-        // ID3v2 tag not found!
-        update = FILE_WRITING_ID3V2_WRITE_TAG;
+        /* ID3v2 tag not found! */
+        update = g_settings_get_boolean (ETSettings, "id3v2-enabled");
     }else
     {
         /* ID3v2 tag found */
-        if (FILE_WRITING_ID3V2_WRITE_TAG == 0)
+        if (g_settings_get_boolean (ETSettings, "id3v2-enabled") == 0)
         {
             // To delete the tag
             update = 1;
         }else
         {
             /* Determine version if user want to upgrade old tags */
-            if (CONVERT_OLD_ID3V2_TAG_VERSION
+            if (g_settings_get_boolean (ETSettings, "id3v2-convert-old")
             && (string1 = g_realloc (string1, tagsize))
             && (read(tmpfile, &string1[ID3_TAG_QUERYSIZE], tagsize - ID3_TAG_QUERYSIZE) == tagsize - ID3_TAG_QUERYSIZE)
             && (tag = id3_tag_parse((id3_byte_t const *)string1, tagsize))
@@ -181,13 +181,13 @@ gboolean Id3tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
     && (string1[2] == 'G')
        )
     {
-        // ID3v1 tag found!
-        if (!FILE_WRITING_ID3V1_WRITE_TAG)
+        /* ID3v1 tag found! */
+        if (!g_settings_get_boolean (ETSettings, "id3v1-enabled"))
             update = 1;
     }else
     {
-        // ID3v1 tag not found!
-        if (FILE_WRITING_ID3V1_WRITE_TAG)
+        /* ID3v1 tag not found! */
+        if (g_settings_get_boolean (ETSettings, "id3v1-enabled"))
             update = 1;
     }
 
@@ -260,14 +260,18 @@ gboolean Id3tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
         {
             string2 = g_utf8_strchr(string1,-1,'/');
 
-            if (NUMBER_TRACK_FORMATED)
+            if (g_settings_get_boolean (ETSettings, "tag-number-padded"))
             {
                 if (string2)
                 {
-                    FileTag->track_total = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(string2+1)); // Just to have numbers like this : '01', '05', '12', ...
-                    *string2 = '\0'; // To cut string1
+                    /* Just to have numbers like this : '01', '05', '12', ...*/
+                    FileTag->track_total = g_strdup_printf ("%.*d", g_settings_get_uint (ETSettings, "tag-number-length"), atoi (string2+1));
+                    *string2 = '\0'; /* To cut string1. */
                 }
-                FileTag->track = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(string1)); // Just to have numbers like this : '01', '05', '12', ...
+                /* Just to have numbers like this : '01', '05', '12', ... */
+                FileTag->track = g_strdup_printf ("%.*d",
+                                                  g_settings_get_uint (ETSettings, "tag-number-length"),
+                                                  atoi (string1));
             }else
             {
                 if (string2)
@@ -538,10 +542,10 @@ etag_guess_byteorder(const id3_ucs4_t *ustr, gchar **ret) /* XXX */
         return 0;
     }
 
-    if (USE_NON_STANDARD_ID3_READING_CHARACTER_SET)
+    if (g_settings_get_boolean (ETSettings, "id3-override-read-encoding"))
         charset = FILE_READING_ID3V1V2_CHARACTER_SET;
-    else if (!FILE_WRITING_ID3V2_USE_UNICODE_CHARACTER_SET) /* XXX */
-        charset = FILE_WRITING_ID3V2_NO_UNICODE_CHARACTER_SET;
+    else if (!g_settings_get_boolean (ETSettings, "id3v2-enable-unicode"))
+        charset = FILE_WRITING_ID3V2_NO_UNICODE_CHARACTER_SET; /* XXX */
     else g_get_charset(&charset);
 
     if (!charset)
@@ -629,7 +633,8 @@ etag_ucs42gchar(const id3_ucs4_t *usrc, unsigned is_latin,
 
     retval = 0, retstr = NULL;
 
-    if (is_latin && USE_NON_STANDARD_ID3_READING_CHARACTER_SET)
+    if (is_latin && g_settings_get_boolean (ETSettings,
+                                            "id3-override-read-encoding"))
     {
         if ((latinstr = (gchar *)id3_ucs4_latin1duplicate(usrc)))
         {
@@ -697,7 +702,8 @@ libid3tag_Get_Frame_Str(const struct id3_frame *frame, unsigned etag_field_type,
                     if (!(etag_field_type & EASYTAG_ID3_FIELD_LATIN1FULL))
                         continue;
                 latinstr = g_strdup(field_type == ID3_FIELD_TYPE_LATIN1 ? (gchar *)id3_field_getlatin1(field) : (gchar *)id3_field_getfulllatin1(field));
-                if (USE_NON_STANDARD_ID3_READING_CHARACTER_SET)
+                if (g_settings_get_boolean (ETSettings,
+                                            "id3-override-read-encoding"))
                 {
                     tmpstr = convert_string(latinstr, FILE_READING_ID3V1V2_CHARACTER_SET, "UTF-8", FALSE);
                     g_free (latinstr);
@@ -789,8 +795,8 @@ gboolean Id3tag_Write_File_v24Tag (ET_File *ETFile)
 
     v1tag = v2tag = NULL;
 
-    // Write ID3v2 tag
-    if (FILE_WRITING_ID3V2_WRITE_TAG)
+    /* Write ID3v2 tag. */
+    if (g_settings_get_boolean (ETSettings, "id3v2-enabled"))
     {
         struct id3_file *file;
         struct id3_tag *tmptag;
@@ -849,14 +855,14 @@ gboolean Id3tag_Write_File_v24Tag (ET_File *ETFile)
                         //ID3_TAG_OPTION_UNSYNCHRONISATION); // Taglib doesn't support frames with unsynchronisation (patch from Alexey Illarionov) http://bugs.kde.org/show_bug.cgi?id=138829
                         0);
         
-        if (FILE_WRITING_ID3V2_USE_CRC32)
+        if (g_settings_get_boolean (ETSettings, "id3v2-crc32"))
             id3_tag_options(v2tag, ID3_TAG_OPTION_CRC, ~0);
-        if (FILE_WRITING_ID3V2_USE_COMPRESSION)
+        if (g_settings_get_boolean (ETSettings, "id3v2-compression"))
             id3_tag_options(v2tag, ID3_TAG_OPTION_COMPRESSION, ~0);
     }
 
-    // Write ID3v1 tag
-    if (FILE_WRITING_ID3V1_WRITE_TAG)
+    /* Write ID3v1 tag. */
+    if (g_settings_get_boolean (ETSettings, "id3v1-enabled"))
     {
         v1tag = id3_tag_new();
         if (!v1tag)
@@ -920,7 +926,8 @@ gboolean Id3tag_Write_File_v24Tag (ET_File *ETFile)
     if (FileTag->genre)
         genre_value = Id3tag_String_To_Genre(FileTag->genre);
 
-    if ((genre_value == ID3_INVALID_GENRE)||(FILE_WRITING_ID3V2_TEXT_ONLY_GENRE))
+    if ((genre_value == ID3_INVALID_GENRE)
+        || g_settings_get_boolean (ETSettings, "id3v2-text-only-genre"))
         string1 = g_strdup(FileTag->genre);
     else
         string1 = g_strdup_printf("(%d)",genre_value);
@@ -1135,7 +1142,7 @@ id3taglib_set_field(struct id3_frame *frame,
     if (str)
     {
         /* Prepare str for writing according to easytag charset coversion settings */
-        if ((FILE_WRITING_ID3V2_USE_UNICODE_CHARACTER_SET == 0)
+        if ((!g_settings_get_boolean (ETSettings, "id3v2-enable-unicode"))
         || (type == ID3_FIELD_TYPE_LATIN1)
         || (type == ID3_FIELD_TYPE_LATIN1FULL)
         || id3v1)

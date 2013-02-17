@@ -322,8 +322,10 @@ Scan_Tag_With_Mask (ET_File *ETFile)
         // Get the target entry for this code
         dest = Scan_Return_File_Tag_Field_From_Mask_Code(FileTag,mask_item->code);
 
-        // We display the text affected to the code
-        if ( dest && ( OVERWRITE_TAG_FIELD || *dest==NULL || strlen(*dest)==0 ) )
+        /* We display the text affected to the code. */
+        if (dest && (g_settings_get_boolean (ETSettings,
+                                             "fill-overwrite-tag-fields")
+                     || *dest == NULL || strlen (*dest) == 0))
             ET_Set_Field_File_Tag_Item(dest,mask_item->string);
 
         if (!fill_tag_list->next) break;
@@ -331,12 +333,22 @@ Scan_Tag_With_Mask (ET_File *ETFile)
     }
     Scan_Free_File_Fill_Tag_List(fill_tag_list);
 
-    // Set the default text to comment
-    if (SET_DEFAULT_COMMENT && (OVERWRITE_TAG_FIELD || FileTag->comment==NULL || strlen(FileTag->comment)==0 ) )
-        ET_Set_Field_File_Tag_Item((void *)&FileTag->comment,DEFAULT_COMMENT);
+    /* Set the default text to comment. */
+    if (g_settings_get_boolean (ETSettings, "fill-set-default-comment")
+        && (g_settings_get_boolean (ETSettings, "fill-overwrite-tag-fields")
+	    || FileTag->comment == NULL || strlen (FileTag->comment) == 0 ))
+    {
+        gchar *default_comment = g_settings_get_string (ETSettings,
+                                                        "fill-default-comment");
+        ET_Set_Field_File_Tag_Item ((void *)&FileTag->comment,
+                                    default_comment);
+        g_free (default_comment);
+    }
 
-    // Set CRC-32 value as default comment (for files with ID3 tag only ;-)
-    if (SET_CRC32_COMMENT && (OVERWRITE_TAG_FIELD || FileTag->comment==NULL || strlen(FileTag->comment)==0 ) )
+    /* Set CRC-32 value as default comment (for files with ID3 tag only). */
+    if (g_settings_get_boolean (ETSettings, "fill-crc32-comment")
+        && (g_settings_get_boolean (ETSettings, "fill-overwrite-tag-fields")
+            || FileTag->comment == NULL || strlen (FileTag->comment) == 0 ))
     {
         guint32 crc32_value;
         gchar *buffer;
@@ -1503,7 +1515,7 @@ void Scan_Process_Fields_First_Letters_Uppercase (gchar *string)
     gboolean set_to_upper_case, set_to_upper_case_tmp;
     // There have to be space at the end of words to seperate them from prefix
     // Chicago Manual of Style "Heading caps" Capitalization Rules (CMS 1993, 282) (http://www.docstyles.com/cmscrib.htm#Note2)
-    gchar *exempt[] =
+    const gchar *exempt[] =
     {
         "a ",       "a_",
         "against ", "against_",
@@ -1529,10 +1541,6 @@ void Scan_Process_Fields_First_Letters_Uppercase (gchar *string)
         NULL
     };
 
-    if (!PFS_DONT_UPPER_SOME_WORDS)
-    {
-        exempt[0] = NULL;
-    }
     Scan_Process_Fields_All_Downcase(string);
 
     if (!g_utf8_validate(string,-1,NULL))
@@ -1593,7 +1601,14 @@ void Scan_Process_Fields_First_Letters_Uppercase (gchar *string)
             c = g_utf8_get_char(word);
             strncpy(word, utf8_character, g_unichar_to_utf8(g_unichar_toupper(c), utf8_character));
 
-            // Set lowercase the first character of this word if found in the exempt words list
+            if (g_settings_get_boolean (ETSettings,
+                                        "process-uppercase-prepositions"))
+            {
+                break;
+            }
+
+            /* Lowercase the first character of this word if found in the
+             * exempt words list. */
             for (i=0; exempt[i]!=NULL; i++)
             {
                 if (g_ascii_strncasecmp(exempt[i], word, strlen(exempt[i])) == 0)
@@ -2415,7 +2430,8 @@ void Open_ScannerWindow (gint scanner_type)
     gtk_box_pack_start(GTK_BOX(HBox1),MaskEditorButton,FALSE,FALSE,0);
     gtk_button_set_relief(GTK_BUTTON(MaskEditorButton),GTK_RELIEF_NONE);
     gtk_widget_set_tooltip_text(MaskEditorButton,_("Show / Hide Masks Editor"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(MaskEditorButton),SCAN_MASK_EDITOR_BUTTON);
+    g_settings_bind (ETSettings, "scan-mask-editor-show", MaskEditorButton,
+                     "active", G_SETTINGS_BIND_DEFAULT);
     g_signal_connect(G_OBJECT(MaskEditorButton),"toggled",G_CALLBACK(Scan_Toggle_Mask_Editor_Button),NULL);
 
     /* Legend button */
@@ -2425,7 +2441,8 @@ void Open_ScannerWindow (gint scanner_type)
     gtk_box_pack_start(GTK_BOX(HBox1),LegendButton,FALSE,FALSE,0);
     gtk_button_set_relief(GTK_BUTTON(LegendButton),GTK_RELIEF_NONE);
     gtk_widget_set_tooltip_text(LegendButton,_("Show / Hide Legend"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(LegendButton),SCAN_LEGEND_BUTTON);
+    g_settings_bind (ETSettings, "scan-legend-show", LegendButton, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     g_signal_connect(G_OBJECT(LegendButton),"toggled",G_CALLBACK(Scan_Toggle_Legend_Button),NULL);
 
     /* Close button */
@@ -2695,10 +2712,6 @@ void Open_ScannerWindow (gint scanner_type)
     gtk_box_pack_start(GTK_BOX(hbox),ProcessFieldsConvertFrom,   FALSE,FALSE,0);
     gtk_box_pack_start(GTK_BOX(hbox),ProcessFieldsConvertLabelTo,FALSE,FALSE,0);
     gtk_box_pack_start(GTK_BOX(hbox),ProcessFieldsConvertTo,     FALSE,FALSE,0);
-    if (PROCESS_FIELDS_CONVERT_FROM)
-        gtk_entry_set_text(GTK_ENTRY(ProcessFieldsConvertFrom),PROCESS_FIELDS_CONVERT_FROM);
-    if (PROCESS_FIELDS_CONVERT_TO)
-        gtk_entry_set_text(GTK_ENTRY(ProcessFieldsConvertTo),PROCESS_FIELDS_CONVERT_TO);
     /* List creation for check buttons in group */
     pf_cb_group1 = g_list_append (pf_cb_group1,ProcessFieldsConvertIntoSpace);
     pf_cb_group1 = g_list_append (pf_cb_group1,ProcessFieldsConvertSpace);
@@ -2711,7 +2724,14 @@ void Open_ScannerWindow (gint scanner_type)
     /* Set check buttons to init value */
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvertIntoSpace),PF_CONVERT_INTO_SPACE);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvertSpace),PF_CONVERT_SPACE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvert),PF_CONVERT);
+    g_settings_bind (ETSettings, "process-convert-characters",
+                     ProcessFieldsConvert, "active", G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "process-convert-characters-from",
+                     ProcessFieldsConvertFrom, "text",
+                     G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "process-convert-characters-to",
+                     ProcessFieldsConvertTo, "text", G_SETTINGS_BIND_DEFAULT);
+
     /* Tooltips */
     gtk_widget_set_tooltip_text(ProcessFieldsConvertIntoSpace,
         _("The underscore character or the string '%20' are replaced by one space. "
@@ -2753,11 +2773,18 @@ void Open_ScannerWindow (gint scanner_type)
     g_signal_connect(G_OBJECT(ProcessFieldsFirstLettersUppercase),"toggled",G_CALLBACK(Process_Fields_First_Letters_Check_Button_Toggled),NULL);
     g_signal_connect(G_OBJECT(ProcessFieldsDetectRomanNumerals),"toggled",G_CALLBACK(Process_Fields_Check_Button_Toggled),NULL);
     /* Set check buttons to init value */
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsAllUppercase),PF_CONVERT_ALL_UPPERCASE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsAllDowncase),PF_CONVERT_ALL_DOWNCASE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsFirstLetterUppercase),PF_CONVERT_FIRST_LETTER_UPPERCASE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsFirstLettersUppercase),PF_CONVERT_FIRST_LETTERS_UPPERCASE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsDetectRomanNumerals),PF_DETECT_ROMAN_NUMERALS);
+    g_settings_bind (ETSettings, "process-uppercase-all",
+                     ProcessFieldsAllUppercase, "active",
+                     G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "process-lowercase-all",
+                     ProcessFieldsAllDowncase, "active",
+                     G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "process-uppercase-first-letters",
+                     ProcessFieldsFirstLettersUppercase, "active",
+                     G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "process-detect-roman-numerals",
+                     ProcessFieldsDetectRomanNumerals, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     /* Tooltips */
     gtk_widget_set_tooltip_text(ProcessFieldsAllUppercase,
         _("Convert all words in all fields to upper case. "
@@ -2795,9 +2822,15 @@ void Open_ScannerWindow (gint scanner_type)
     g_signal_connect(G_OBJECT(ProcessFieldsInsertSpace), "toggled",G_CALLBACK(Process_Fields_Check_Button_Toggled),pf_cb_group3);
     g_signal_connect(G_OBJECT(ProcessFieldsOnlyOneSpace),"toggled",G_CALLBACK(Process_Fields_Check_Button_Toggled),pf_cb_group3);
     /* Set check buttons to init value */
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsRemoveSpace),PF_REMOVE_SPACE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsInsertSpace),PF_INSERT_SPACE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsOnlyOneSpace),PF_ONLY_ONE_SPACE);
+    g_settings_bind (ETSettings, "process-remove-spaces",
+                     ProcessFieldsRemoveSpace, "active",
+                     G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "process-insert-capital-spaces",
+                     ProcessFieldsInsertSpace, "active",
+                     G_SETTINGS_BIND_DEFAULT);
+    g_settings_bind (ETSettings, "process-remove-duplicate-spaces",
+                     ProcessFieldsOnlyOneSpace, "active",
+                     G_SETTINGS_BIND_DEFAULT);
     /* Tooltips */
     gtk_widget_set_tooltip_text(ProcessFieldsRemoveSpace,
         _("All spaces between words are removed. "
@@ -3134,9 +3167,6 @@ void ScannerWindow_Apply_Changes (void)
         // The scanner selected
         SCANNER_TYPE = gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo));
 
-        SCAN_MASK_EDITOR_BUTTON   = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(MaskEditorButton));
-        SCAN_LEGEND_BUTTON        = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(LegendButton));
-
         /* Group: select entries to process */
         PROCESS_FILENAME_FIELD    = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFileNameField));
         PROCESS_TITLE_FIELD       = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessTitleField));
@@ -3151,27 +3181,9 @@ void ScannerWindow_Apply_Changes (void)
         PROCESS_URL_FIELD         = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessURLField));
         PROCESS_ENCODED_BY_FIELD  = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessEncodedByField));
 
-        if (PROCESS_FIELDS_CONVERT_FROM) g_free(PROCESS_FIELDS_CONVERT_FROM);
-        PROCESS_FIELDS_CONVERT_FROM = g_strdup(gtk_entry_get_text(GTK_ENTRY(ProcessFieldsConvertFrom)));
-        if (PROCESS_FIELDS_CONVERT_TO) g_free(PROCESS_FIELDS_CONVERT_TO);
-        PROCESS_FIELDS_CONVERT_TO   = g_strdup(gtk_entry_get_text(GTK_ENTRY(ProcessFieldsConvertTo)));
-
         /* Group: convert one character */
         PF_CONVERT_INTO_SPACE     = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvertIntoSpace));
         PF_CONVERT_SPACE          = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvertSpace));
-        PF_CONVERT                = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvert));
-
-        /* Group: capitalize */
-        PF_CONVERT_ALL_UPPERCASE           = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsAllUppercase));
-        PF_CONVERT_ALL_DOWNCASE            = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsAllDowncase));
-        PF_CONVERT_FIRST_LETTER_UPPERCASE  = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsFirstLetterUppercase));
-        PF_CONVERT_FIRST_LETTERS_UPPERCASE = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsFirstLettersUppercase));
-        PF_DETECT_ROMAN_NUMERALS           = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsDetectRomanNumerals));
-
-        /* Group: remove/insert space */
-        PF_REMOVE_SPACE   = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsRemoveSpace));
-        PF_INSERT_SPACE   = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsInsertSpace));
-        PF_ONLY_ONE_SPACE = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsOnlyOneSpace));
 
         // Save default masks...
         if (SCAN_TAG_DEFAULT_MASK) g_free(SCAN_TAG_DEFAULT_MASK);
@@ -4095,7 +4107,8 @@ Scanner_Option_Menu_Activate_Item (GtkWidget *combo, gpointer data)
 static void
 Scan_Set_Scanner_Window_Init_Position (void)
 {
-    if (ScannerWindow && SET_SCANNER_WINDOW_POSITION)
+    if (ScannerWindow && g_settings_get_boolean (ETSettings,
+                                                 "scan-remember-location"))
     {
         gtk_widget_realize(ScannerWindow);
         gtk_window_move(GTK_WINDOW(ScannerWindow),SCANNER_WINDOW_X,SCANNER_WINDOW_Y);

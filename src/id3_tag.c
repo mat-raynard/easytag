@@ -131,7 +131,7 @@ Id3tag_Write_File_v23Tag (ET_File *ETFile)
     // When writing the first MP3 file, we check if the version of id3lib of the
     // system doesn't contain a bug when writting Unicode tags
     if (flag_first_check
-    && (FILE_WRITING_ID3V2_USE_UNICODE_CHARACTER_SET) )
+        && g_settings_get_boolean (ETSettings, "id3v2-enable-unicode"))
     {
         flag_first_check = FALSE;
         flag_id3lib_bugged = Id3tag_Check_If_Id3lib_Is_Bugged();
@@ -293,8 +293,10 @@ Id3tag_Write_File_v23Tag (ET_File *ETFile)
         ID3Tag_AttachFrame(id3_tag,id3_frame);
 
         genre_value = Id3tag_String_To_Genre(FileTag->genre);
-        // If genre not defined don't write genre value between brackets! (priority problem noted with some tools)
-        if ((genre_value == ID3_INVALID_GENRE)||(FILE_WRITING_ID3V2_TEXT_ONLY_GENRE))
+        /* If genre not defined do not write genre value between brackets!
+         * (priority problem noted with some tools). */
+        if ((genre_value == ID3_INVALID_GENRE)
+            || g_settings_get_boolean (ETSettings, "id3v2-text-only-genre"))
             genre_string_tmp = g_strdup_printf("%s",FileTag->genre);
         else
             genre_string_tmp = g_strdup_printf("(%d)",genre_value);
@@ -489,10 +491,11 @@ Id3tag_Write_File_v23Tag (ET_File *ETFile)
      * equal to 0, id3lib-3.7.12 doesn't update the tag */
     number_of_frames = ID3Tag_NumFrames(id3_tag);
 
-    /* If all fields (managed in the UI) are empty and option STRIP_TAG_WHEN_EMPTY_FIELDS
-     * is set to 1, we strip the ID3v1.x and ID3v2 tags. Else, write ID3v2 and/or ID3v1
+    /* If all fields (managed in the UI) are empty and option id3-strip-empty
+     * is set to 1, we strip the ID3v1.x and ID3v2 tags. Else, write ID3v2
+     * and/or ID3v1.
      */
-    if ( STRIP_TAG_WHEN_EMPTY_FIELDS
+    if (g_settings_get_boolean (ETSettings, "id3-strip-empty")
     && !has_title      && !has_artist   && !has_album_artist && !has_album       && !has_year      && !has_track
     && !has_genre      && !has_composer && !has_orig_artist && !has_copyright && !has_url
     && !has_encoded_by && !has_picture  && !has_comment     && !has_disc_number)//&& !has_song_len )
@@ -522,7 +525,8 @@ Id3tag_Write_File_v23Tag (ET_File *ETFile)
         /*
          * ID3v2 tag
          */
-        if (FILE_WRITING_ID3V2_WRITE_TAG && number_of_frames!=0)
+        if (g_settings_get_boolean (ETSettings, "id3v2-enabled")
+            && number_of_frames != 0)
         {
             error_update_id3v2 = ID3Tag_UpdateByTagType(id3_tag,ID3TT_ID3V2);
             if (error_update_id3v2 != ID3E_NoError)
@@ -540,7 +544,8 @@ Id3tag_Write_File_v23Tag (ET_File *ETFile)
                  * by Id3tag_Check_If_Id3lib_Is_Bugged) we didn't make the following
                  * test => OK */
                 if (flag_id3lib_bugged
-                && ( FILE_WRITING_ID3V2_USE_UNICODE_CHARACTER_SET ))
+                    && (g_settings_get_boolean (ETSettings,
+                                                "id3v2-enable-unicode")))
                 {
                     File_Tag  *FileTag_tmp = ET_File_Tag_Item_New();
                     if (Id3tag_Read_File_Tag(filename,FileTag_tmp) == TRUE
@@ -588,7 +593,8 @@ Id3tag_Write_File_v23Tag (ET_File *ETFile)
          * Must be set after ID3v2 or ID3Tag_UpdateByTagType cause damage to unicode strings
          */
         // id3lib writes incorrectly the ID3v2 tag if unicode used when writing ID3v1 tag
-        if (FILE_WRITING_ID3V1_WRITE_TAG && number_of_frames!=0)
+        if (g_settings_get_boolean (ETSettings, "id3v1-enabled")
+            && number_of_frames != 0)
         {
             // By default id3lib converts id3tag to ISO-8859-1 (single byte character set)
             // Note : converting UTF-16 string (two bytes character set) to ISO-8859-1
@@ -835,7 +841,9 @@ gchar *Id3tag_Get_Field (const ID3Frame *id3_frame, ID3_FieldID id3_fieldid)
 
         if (enc != ID3TE_UTF16 && enc != ID3TE_UTF8) // Encoding is ISO-8859-1?
         {
-            if (USE_NON_STANDARD_ID3_READING_CHARACTER_SET) // Override with another character set?
+            /* Override with another character set? */
+            if (g_settings_get_boolean (ETSettings,
+                                        "id3-override-read-encoding"))
             {
                 // Encoding set by user to ???.
                 if ( strcmp(FILE_READING_ID3V1V2_CHARACTER_SET,"ISO-8859-1") == 0 )
@@ -965,7 +973,7 @@ ID3_TextEnc Id3tag_Set_Field (const ID3Frame *id3_frame, ID3_FieldID id3_fieldid
          * We prioritize the rule selected in options. If the encoding of the
          * field is ISO-8859-1, we can write it to another single byte encoding.
          */
-        if (FILE_WRITING_ID3V2_USE_UNICODE_CHARACTER_SET)
+        if (g_settings_get_boolean (ETSettings, "id3v2-enable-unicode"))
         {
             // Check if we can write the tag using ISO-8859-1 instead of UTF-16...
             if ( (string_converted = g_convert(string, strlen(string), "ISO-8859-1",
@@ -1317,9 +1325,11 @@ gboolean Id3tag_Check_If_Id3lib_Is_Bugged (void)
     g_output_stream_close (G_OUTPUT_STREAM (ostream), NULL, NULL);
     g_object_unref (ostream);
 
-    // Save state of switches as we must force to Unicode before writting
-    use_unicode = FILE_WRITING_ID3V2_USE_UNICODE_CHARACTER_SET;
-    FILE_WRITING_ID3V2_USE_UNICODE_CHARACTER_SET = TRUE;
+    /* Save state of switches as we must force to Unicode before writing.
+     * FIXME! */
+    g_settings_delay (ETSettings);
+    use_unicode = g_settings_get_boolean (ETSettings, "id3v2-enable-unicode");
+    g_settings_set_boolean (ETSettings, "id3v2-enable-unicode", TRUE);
 
     id3_tag = ID3Tag_New();
     path = g_file_get_path (file);
@@ -1337,8 +1347,8 @@ gboolean Id3tag_Check_If_Id3lib_Is_Bugged (void)
     ID3Tag_UpdateByTagType(id3_tag,ID3TT_ID3V2);
     ID3Tag_Delete(id3_tag);
 
-    FILE_WRITING_ID3V2_USE_UNICODE_CHARACTER_SET = use_unicode;
-
+    g_settings_set_boolean (ETSettings, "id3v2-enable-unicode", use_unicode);
+    g_settings_revert (ETSettings);
 
     id3_tag = ID3Tag_New();
     ID3Tag_Link_1 (id3_tag, path);

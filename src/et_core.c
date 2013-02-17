@@ -3427,8 +3427,12 @@ ET_Save_File_Tag_From_UI (File_Tag *FileTag)
 
     if ( g_utf8_strlen(buffer, -1) > 0  )
     {
-        if (NUMBER_TRACK_FORMATED) {
-            FileTag->track = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(buffer));
+        if (g_settings_get_boolean (ETSettings, "tag-number-padded"))
+        {
+            FileTag->track = g_strdup_printf ("%.*d",
+                                              g_settings_get_uint (ETSettings,
+                                                                   "tag-number-length"),
+                                              atoi (buffer));
             g_free(buffer);
         } else
             FileTag->track = buffer;
@@ -3444,9 +3448,11 @@ ET_Save_File_Tag_From_UI (File_Tag *FileTag)
 
     if ( g_utf8_strlen(buffer, -1) > 0  )
     {
-        if (NUMBER_TRACK_FORMATED)
+        if (g_settings_get_boolean (ETSettings, "tag-number-padded"))
         {
-            FileTag->track_total = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(buffer));
+            FileTag->track_total = g_strdup_printf ("%.*d",
+                                                    g_settings_get_uint (ETSettings, "tag-number-length"),
+                                                    atoi (buffer));
             g_free(buffer);
         } else
             FileTag->track_total = buffer;
@@ -3658,8 +3664,11 @@ ET_Save_File_Tag_Internal (ET_File *ETFile, File_Tag *FileTag)
     {
         gchar *tmp_str;
 
-        if (NUMBER_TRACK_FORMATED)
-            FileTag->track = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(FileTagCur->track));
+        if (g_settings_get_boolean (ETSettings, "tag-number-padded"))
+            FileTag->track = g_strdup_printf ("%.*d",
+                                              g_settings_get_uint (ETSettings,
+                                                                   "tag-number-length"),
+                                              atoi (FileTagCur->track));
         else
             FileTag->track = g_strdup(FileTagCur->track);
         // This field must contain only digits
@@ -3676,8 +3685,10 @@ ET_Save_File_Tag_Internal (ET_File *ETFile, File_Tag *FileTag)
     /* Track Total */
     if ( FileTagCur->track_total && g_utf8_strlen(FileTagCur->track_total, -1)>0 )
     {
-        if (NUMBER_TRACK_FORMATED)
-            FileTag->track_total = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(FileTagCur->track_total));
+        if (g_settings_get_boolean (ETSettings, "tag-number-padded"))
+            FileTag->track_total = g_strdup_printf ("%.*d",
+                                                    g_settings_get_uint (ETSettings, "tag-number-length"),
+                                                    atoi (FileTagCur->track_total));
         else
             FileTag->track_total = g_strdup(FileTagCur->track_total);
         Strip_String(FileTag->track_total);
@@ -3851,7 +3862,8 @@ gboolean ET_Save_File_Tag_To_HD (ET_File *ETFile)
         chmod(cur_filename,statbuf.st_mode & (S_IRWXU|S_IRWXG|S_IRWXO));
         chown(cur_filename,statbuf.st_uid,statbuf.st_gid);
 #endif /* !G_OS_WIN32 */
-        if (PRESERVE_MODIFICATION_TIME)
+        if (g_settings_get_boolean (ETSettings,
+                                    "file-preserve-modification-time"))
         {
             utimbufbuf.actime  = statbuf.st_atime; // Last access time
             utimbufbuf.modtime = statbuf.st_mtime; // Last modification time
@@ -3867,10 +3879,13 @@ gboolean ET_Save_File_Tag_To_HD (ET_File *ETFile)
     if (state==TRUE)
     {
 
-        // Update date and time of the parent directory of the file after changing the tag
-        // value (ex: needed for Amarok for refreshing). Note that when renaming a file the
-        // parent directory is automatically updated.
-        if (UPDATE_PARENT_DIRECTORY_MODIFICATION_TIME)
+        /* Update date and time of the parent directory of the file after
+         * changing the tag value (ex: needed for Amarok for refreshing). Note
+         * that when renaming a file the parent directory is automatically
+         * updated.
+         */
+        if (g_settings_get_boolean (ETSettings,
+                                    "file-update-parent-modification-time"))
         {
             gchar *path = g_path_get_dirname(cur_filename);
             utime(g_path_get_dirname(cur_filename),NULL);
@@ -4719,8 +4734,9 @@ gboolean ET_File_Name_Convert_Character (gchar *filename_utf8)
         *character = '-';
 #endif /* G_OS_WIN32 */
 
-    // Convert other illegal characters on FAT32/16 filesystems and ISO9660 and Joliet (CD-ROM filesystems)
-    if (REPLACE_ILLEGAL_CHARACTERS_IN_FILENAME)
+    /* Convert other illegal characters on FAT32/16 filesystems and ISO9660 and
+     * Joliet (CD-ROM filesystems). */
+    if (g_settings_get_boolean (ETSettings, "rename-replace-illegal-chars"))
     {
         // Commented as we display unicode values as "\351" for "é"
         //while ( (character=g_utf8_strchr(filename_utf8, -1, '\\'))!=NULL )

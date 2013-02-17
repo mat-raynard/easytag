@@ -340,9 +340,10 @@ gboolean Flac_Tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
                             field_value_tmp = g_strndup(field_value, field_len);
                             field_value = Try_To_Validate_Utf8_String(field_value_tmp);
                             g_free(field_value_tmp);
-                            if (NUMBER_TRACK_FORMATED)
+                            if (g_settings_get_boolean (ETSettings,
+                                                        "tag-number-padded"))
                             {
-                                FileTag->track_total = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(field_value));
+                                FileTag->track_total = g_strdup_printf("%.*d", g_settings_get_uint (ETSettings, "tag-number-length"), atoi (field_value));
                             }else
                             {
                                 FileTag->track_total = g_strdup(field_value);
@@ -369,15 +370,16 @@ gboolean Flac_Tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
                             field_value = Try_To_Validate_Utf8_String(field_value_tmp);
                             g_free(field_value_tmp);
                             string = g_utf8_strchr(field_value, -1, '/');
-                            if (NUMBER_TRACK_FORMATED)
+                            if (g_settings_get_boolean (ETSettings,
+                                                        "tag-number-padded"))
                             {
                                 // If track_total not filled before, try now...
                                 if (string && !FileTag->track_total)
                                 {
-                                    FileTag->track_total = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(string+1));
+                                    FileTag->track_total = g_strdup_printf ("%.*d", g_settings_get_uint (ETSettings, "tag-number-length"), atoi (string+1));
                                     *string = '\0';
                                 }
-                                FileTag->track = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(field_value));
+                                FileTag->track = g_strdup_printf ("%.*d", g_settings_get_uint (ETSettings, "tag-number-length"), atoi (field_value));
                             }else
                             {
                                 if (string && !FileTag->track_total)
@@ -933,22 +935,26 @@ gboolean Flac_Tag_Write_File_Tag (ET_File *ETFile)
         /*********
          * Title *
          *********/
-        Flac_Set_Tag(vc_block,"TITLE=",FileTag->title, VORBIS_SPLIT_FIELD_TITLE);
+        Flac_Set_Tag (vc_block, "TITLE=", FileTag->title,
+                      g_settings_get_boolean (ETSettings, "ogg-split-title"));
 
         /**********
          * Artist *
          **********/
-        Flac_Set_Tag(vc_block,"ARTIST=",FileTag->artist,VORBIS_SPLIT_FIELD_ARTIST);
+        Flac_Set_Tag (vc_block, "ARTIST=", FileTag->artist,
+                      g_settings_get_boolean (ETSettings, "ogg-split-artist"));
 
         /****************
          * Album Artist *
          ****************/
-        Flac_Set_Tag(vc_block,"ALBUMARTIST=",FileTag->album_artist,VORBIS_SPLIT_FIELD_ARTIST);
+        Flac_Set_Tag (vc_block, "ALBUMARTIST=", FileTag->album_artist,
+                      g_settings_get_boolean (ETSettings, "ogg-split-artist"));
 
         /*********
          * Album *
          *********/
-        Flac_Set_Tag(vc_block,"ALBUM=",FileTag->album,VORBIS_SPLIT_FIELD_ALBUM);
+        Flac_Set_Tag (vc_block, "ALBUM=", FileTag->album,
+                      g_settings_get_boolean (ETSettings, "ogg-split-album"));
 
         /***************
          * Disc Number *
@@ -969,22 +975,29 @@ gboolean Flac_Tag_Write_File_Tag (ET_File *ETFile)
         /*********
          * Genre *
          *********/
-        Flac_Set_Tag(vc_block,"GENRE=",FileTag->genre,VORBIS_SPLIT_FIELD_GENRE);
+        Flac_Set_Tag (vc_block, "GENRE=", FileTag->genre,
+                      g_settings_get_boolean (ETSettings, "ogg-split-genre"));
 
         /***********
          * Comment *
          ***********/
-        Flac_Set_Tag(vc_block,"DESCRIPTION=",FileTag->comment,VORBIS_SPLIT_FIELD_COMMENT);
+        Flac_Set_Tag (vc_block, "DESCRIPTION=", FileTag->comment,
+                      g_settings_get_boolean (ETSettings,
+                                              "ogg-split-comment"));
 
         /************
          * Composer *
          ************/
-        Flac_Set_Tag(vc_block,"COMPOSER=",FileTag->composer,VORBIS_SPLIT_FIELD_COMPOSER);
+        Flac_Set_Tag (vc_block, "COMPOSER=", FileTag->composer,
+                      g_settings_get_boolean (ETSettings,
+                                              "ogg-split-composer"));
 
         /*******************
          * Original artist *
          *******************/
-        Flac_Set_Tag(vc_block,"PERFORMER=",FileTag->orig_artist,VORBIS_SPLIT_FIELD_ORIG_ARTIST);
+        Flac_Set_Tag (vc_block, "PERFORMER=", FileTag->orig_artist,
+                      g_settings_get_boolean (ETSettings,
+                                              "ogg-split-original-artist"));
 
         /*************
          * Copyright *
@@ -1085,8 +1098,10 @@ gboolean Flac_Tag_Write_File_Tag (ET_File *ETFile)
     // Move all PADDING blocks to the end on the metadata, and merge them into a single block.
     FLAC__metadata_chain_sort_padding(chain);
  
-    // Write tag
-    if ( !FLAC__metadata_chain_write(chain, /*padding*/TRUE, PRESERVE_MODIFICATION_TIME) )
+    /* Write tag. */
+    if (!FLAC__metadata_chain_write(chain, /*padding*/TRUE,
+                                    g_settings_get_boolean (ETSettings,
+                                                            "file-preserve-modification-time")))
     {
         // Error with "FLAC__metadata_chain_write"
         FLAC__Metadata_ChainStatus status = FLAC__metadata_chain_status(chain);
@@ -1110,7 +1125,7 @@ gboolean Flac_Tag_Write_File_Tag (ET_File *ETFile)
     /*
      * Write also the ID3 tags (ID3v1 and/or ID3v2) if wanted (as needed by some players)
      */
-    if (WRITE_ID3_TAGS_IN_FLAC_FILE)
+    if (g_settings_get_boolean (ETSettings, "flac-write-id3"))
     {
         Id3tag_Write_File_Tag(ETFile);
     }else

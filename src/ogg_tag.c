@@ -302,25 +302,34 @@ gboolean Ogg_Tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
      *************************/
     if ( (string = vorbis_comment_query(vc,"TRACKNUMBER",0)) != NULL && g_utf8_strlen(string, -1) > 0 )
     {
-        if (NUMBER_TRACK_FORMATED)
+        if (g_settings_get_boolean (ETSettings, "tag-number-padded"))
         {
             // Ckeck if TRACKTOTAL used, else takes it in TRACKNUMBER
             if ( (string1 = vorbis_comment_query(vc,"TRACKTOTAL",0)) != NULL && g_utf8_strlen(string1, -1) > 0 )
             {
-                FileTag->track_total = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(string1));
+                FileTag->track_total = g_strdup_printf ("%.*d",
+                                                        g_settings_get_uint (ETSettings, "tag-number-length"),
+                                                        atoi (string1));
             }else
             if ( (string1 = g_utf8_strchr(string, -1, '/')) )
             {
-                FileTag->track_total = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(string1+1));
+                FileTag->track_total = g_strdup_printf ("%.*d",
+                                                        g_settings_get_uint (ETSettings, "tag-number-length"),
+                                                        atoi (string1 + 1));
                 *string1 = '\0';
             }
-            FileTag->track = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(string));
+            FileTag->track = g_strdup_printf ("%.*d",
+                                              g_settings_get_uint (ETSettings,
+                                                                   "tag-number-length"),
+                                                                   atoi (string));
         }else
         {
             // Ckeck if TRACKTOTAL used, else takes it in TRACKNUMBER
             if ( (string1 = vorbis_comment_query(vc,"TRACKTOTAL",0)) != NULL && g_utf8_strlen(string1, -1) > 0 )
             {
-                FileTag->track_total = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(string1));
+                FileTag->track_total = g_strdup_printf ("%.*d",
+                                                        g_settings_get_uint (ETSettings, "tag-number-length"),
+                                                        atoi (string1));
             }else
             if ( (string1 = g_utf8_strchr(string, -1, '/')) )
             {
@@ -702,22 +711,26 @@ gboolean Ogg_Tag_Write_File_Tag (ET_File *ETFile)
     /*********
      * Title *
      *********/
-    Ogg_Set_Tag(vc,"TITLE=",FileTag->title,VORBIS_SPLIT_FIELD_TITLE);
+    Ogg_Set_Tag (vc, "TITLE=", FileTag->title,
+                 g_settings_get_boolean (ETSettings, "ogg-split-title"));
 
     /**********
      * Artist *
      **********/
-    Ogg_Set_Tag(vc,"ARTIST=",FileTag->artist, VORBIS_SPLIT_FIELD_ARTIST);
+    Ogg_Set_Tag (vc, "ARTIST=", FileTag->artist,
+                 g_settings_get_boolean (ETSettings, "ogg-split-artist"));
 
     /****************
      * Album Artist *
      ****************/
-    Ogg_Set_Tag(vc,"ALBUMARTIST=",FileTag->album_artist, VORBIS_SPLIT_FIELD_ARTIST);
+    Ogg_Set_Tag (vc, "ALBUMARTIST=", FileTag->album_artist,
+                 g_settings_get_boolean (ETSettings, "ogg-split-artist"));
 
     /*********
      * Album *
      *********/
-    Ogg_Set_Tag(vc,"ALBUM=",FileTag->album, VORBIS_SPLIT_FIELD_ALBUM);
+    Ogg_Set_Tag (vc, "ALBUM=", FileTag->album,
+                 g_settings_get_boolean (ETSettings, "ogg-split-album"));
 
     /***************
      * Disc Number *
@@ -739,23 +752,28 @@ gboolean Ogg_Tag_Write_File_Tag (ET_File *ETFile)
     /*********
      * Genre *
      *********/
-    Ogg_Set_Tag(vc,"GENRE=",FileTag->genre,VORBIS_SPLIT_FIELD_GENRE);
+    Ogg_Set_Tag (vc, "GENRE=", FileTag->genre,
+                 g_settings_get_boolean (ETSettings, "ogg-split-genre"));
 
     /***********
      * Comment *
      ***********/
     /* Format of new specification. */
-    Ogg_Set_Tag(vc,"DESCRIPTION=",FileTag->comment,VORBIS_SPLIT_FIELD_COMMENT);
+    Ogg_Set_Tag (vc, "DESCRIPTION=", FileTag->comment,
+                 g_settings_get_boolean (ETSettings, "ogg-split-comment"));
 
     /************
      * Composer *
      ************/
-    Ogg_Set_Tag(vc,"COMPOSER=",FileTag->composer,VORBIS_SPLIT_FIELD_COMPOSER);
+    Ogg_Set_Tag (vc, "COMPOSER=", FileTag->composer,
+                 g_settings_get_boolean (ETSettings, "ogg-split-composer"));
 
     /*******************
      * Original artist *
      *******************/
-    Ogg_Set_Tag(vc,"PERFORMER=",FileTag->orig_artist,VORBIS_SPLIT_FIELD_ORIG_ARTIST);
+    Ogg_Set_Tag (vc, "PERFORMER=", FileTag->orig_artist,
+                 g_settings_get_boolean (ETSettings,
+                                         "ogg-split-original-artist"));
 
     /*************
      * Copyright *
