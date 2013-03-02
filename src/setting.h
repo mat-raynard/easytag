@@ -55,10 +55,6 @@ gchar  *DEFAULT_PATH_TO_MP3;
 
 /* Misc */
 /* User Interface. */
-gint    MAIN_WINDOW_X;
-gint    MAIN_WINDOW_Y;
-gint    MAIN_WINDOW_HEIGHT;
-gint    MAIN_WINDOW_WIDTH;
 gint    PANE_HANDLE_POSITION1;
 gint    PANE_HANDLE_POSITION2;
 gint    PANE_HANDLE_POSITION3;

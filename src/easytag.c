@@ -358,8 +358,14 @@ activate (GApplication *application, gpointer user_data)
                                GTK_WINDOW (MainWindow));
     gtk_window_set_title (GTK_WINDOW (MainWindow),
                           PACKAGE_NAME " " PACKAGE_VERSION);
-    // This part is needed to set correctly the position of handle panes
-    gtk_window_set_default_size(GTK_WINDOW(MainWindow),MAIN_WINDOW_WIDTH,MAIN_WINDOW_HEIGHT);
+    /* This part is needed to correctly set the position of handle panes. */
+    {
+        int width, height;
+
+        g_settings_get (ETSettings, "window-location", "(iiii)", NULL, NULL,
+                        &width, &height);
+        gtk_window_set_default_size (GTK_WINDOW (MainWindow), width, height);
+    }
 
     g_signal_connect(G_OBJECT(MainWindow),"delete_event",G_CALLBACK(Quit_MainWindow),NULL);
     g_signal_connect(G_OBJECT(MainWindow),"destroy",G_CALLBACK(Quit_MainWindow),NULL);
@@ -431,7 +437,13 @@ activate (GApplication *application, gpointer user_data)
     gtk_widget_show(MainWindow);
 
     if (g_settings_get_boolean (ETSettings, "remember-location"))
-        gtk_window_move(GTK_WINDOW(MainWindow), MAIN_WINDOW_X, MAIN_WINDOW_Y);
+    {
+        int x, y;
+
+        g_settings_get (ETSettings, "window-location", "(iiii)", &x, &y, NULL,
+                        NULL);
+        gtk_window_move (GTK_WINDOW (MainWindow), x, y);
+    }
 
     /* Load the default dir when the UI is created and displayed
      * to the screen and open also the scanner window */
@@ -4996,14 +5008,12 @@ void MainWindow_Apply_Changes (void)
     {
         gint x, y, width, height;
 
-        // Position and Origin of the window
+        /* Position and Origin of the window. */
         gdk_window_get_root_origin(window,&x,&y);
-        MAIN_WINDOW_X = x;
-        MAIN_WINDOW_Y = y;
         width = gdk_window_get_width(window);
         height = gdk_window_get_height(window);
-        MAIN_WINDOW_WIDTH  = width;
-        MAIN_WINDOW_HEIGHT = height;
+        g_settings_set (ETSettings, "window-location", "(iiii)", x, y, width,
+                        height);
 
         // Handle panes position
         PANE_HANDLE_POSITION1 = gtk_paned_get_position(GTK_PANED(MainWindowHPaned));

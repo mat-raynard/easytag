@@ -111,10 +111,6 @@ tConfigVariable Config_Variables[] =
 {
     {"default_path_to_mp3",                 CV_TYPE_STRING,  &DEFAULT_PATH_TO_MP3               },
 
-    {"main_window_x",                       CV_TYPE_INT,     &MAIN_WINDOW_X                     },
-    {"main_window_y",                       CV_TYPE_INT,     &MAIN_WINDOW_Y                     },
-    {"main_window_height",                  CV_TYPE_INT,     &MAIN_WINDOW_HEIGHT                },
-    {"main_window_width",                   CV_TYPE_INT,     &MAIN_WINDOW_WIDTH                 },
     {"pane_handle_position1",               CV_TYPE_INT,     &PANE_HANDLE_POSITION1             },
     {"pane_handle_position2",               CV_TYPE_INT,     &PANE_HANDLE_POSITION2             },
     {"pane_handle_position3",               CV_TYPE_INT,     &PANE_HANDLE_POSITION3             },
@@ -257,10 +253,6 @@ void Init_Config_Variables (void)
     /*
      * Misc
      */
-    MAIN_WINDOW_X                   = -1; // '-1' lets the Windows Manager to place the window
-    MAIN_WINDOW_Y                   = -1;
-    MAIN_WINDOW_WIDTH               = 1040;
-    MAIN_WINDOW_HEIGHT              = -1;
     PANE_HANDLE_POSITION1           = 660;
     PANE_HANDLE_POSITION2           = 360;
     PANE_HANDLE_POSITION3           = 300;
@@ -535,7 +527,8 @@ Apply_Changes_Of_UI (void)
      * Changes in user interface
      */
 
-    // Configuration of the main window (see easytag.c) - Function also called when destroying the window
+    /* Configuration of the main window (see easytag.c) - Function also called
+     * when destroying the window. */
     MainWindow_Apply_Changes();
 
     // Configuration of the preference window (see prefs.c) - Function also called when destroying the window
