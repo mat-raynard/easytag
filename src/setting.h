@@ -55,11 +55,6 @@ gchar  *DEFAULT_PATH_TO_MP3;
 
 /* Misc */
 /* User Interface. */
-gint    PANE_HANDLE_POSITION1;
-gint    PANE_HANDLE_POSITION2;
-gint    PANE_HANDLE_POSITION3;
-gint    PANE_HANDLE_POSITION4;
-
 gint    SORTING_FILE_MODE;
 gint    SORTING_FILE_CASE_SENSITIVE;
 

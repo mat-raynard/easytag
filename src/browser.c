@@ -3436,7 +3436,13 @@ GtkWidget *Create_Browser_Items (GtkWidget *parent)
 
     gtk_paned_pack1(GTK_PANED(ArtistAlbumVPaned),ScrollWindowArtistList,TRUE,TRUE); // Top side
     gtk_paned_pack2(GTK_PANED(ArtistAlbumVPaned),ScrollWindowAlbumList,TRUE,TRUE);   // Bottom side
-    gtk_paned_set_position(GTK_PANED(ArtistAlbumVPaned),PANE_HANDLE_POSITION3);
+    {
+        gint pos3;
+
+        g_settings_get (ETSettings, "pane-positions", "(uuuu)", NULL, NULL,
+                        &pos3, NULL);
+        gtk_paned_set_position (GTK_PANED (ArtistAlbumVPaned), pos3);
+    }
 
 
     /*
@@ -3529,7 +3535,13 @@ GtkWidget *Create_Browser_Items (GtkWidget *parent)
     gtk_box_pack_start(GTK_BOX(VerticalBox),BrowserHPaned,TRUE,TRUE,0);
     gtk_paned_pack1(GTK_PANED(BrowserHPaned),BrowserNoteBook,TRUE,TRUE);   // Left side
     gtk_paned_pack2(GTK_PANED(BrowserHPaned),ScrollWindowFileList,TRUE,TRUE); // Right side
-    gtk_paned_set_position(GTK_PANED(BrowserHPaned),PANE_HANDLE_POSITION2);
+    {
+        gint pos2;
+
+        g_settings_get (ETSettings, "pane-positions", "(uuuu)", NULL, &pos2,
+                        NULL, NULL);
+        gtk_paned_set_position (GTK_PANED (BrowserHPaned), pos2);
+    }
 
     gtk_widget_show_all(VerticalBox);
 

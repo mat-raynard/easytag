@@ -389,7 +389,13 @@ activate (GApplication *application, gpointer user_data)
     /* The two panes: BrowserArea on the left, FileArea+TagArea on the right */
     MainWindowHPaned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     //gtk_box_pack_start(GTK_BOX(MainVBox),MainWindowHPaned,TRUE,TRUE,0);
-    gtk_paned_set_position(GTK_PANED(MainWindowHPaned),PANE_HANDLE_POSITION1);
+    {
+        gint pos1;
+
+        g_settings_get (ETSettings, "pane-positions", "(uuuu)", &pos1, NULL,
+                        NULL, NULL);
+        gtk_paned_set_position (GTK_PANED (MainWindowHPaned), pos1);
+    }
     gtk_widget_show(MainWindowHPaned);
 
     /* Browser (Tree + File list + Entry) */
@@ -413,7 +419,12 @@ activate (GApplication *application, gpointer user_data)
     MainWindowVPaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
     gtk_box_pack_start(GTK_BOX(MainVBox),MainWindowVPaned,TRUE,TRUE,0);
     gtk_paned_pack1(GTK_PANED(MainWindowVPaned),MainWindowHPaned,TRUE,FALSE);
-    gtk_paned_set_position(GTK_PANED(MainWindowVPaned),PANE_HANDLE_POSITION4);
+    {
+        gint pos4;
+        g_settings_get (ETSettings, "pane-positions", "(uuuu)", NULL, NULL,
+                        NULL, &pos4);
+        gtk_paned_set_position (GTK_PANED (MainWindowVPaned), pos4);
+    }
     gtk_widget_show(MainWindowVPaned);
 
 
@@ -5007,6 +5018,7 @@ void MainWindow_Apply_Changes (void)
     if ( window && gdk_window_is_visible(window) && gdk_window_get_state(window)!=GDK_WINDOW_STATE_MAXIMIZED )
     {
         gint x, y, width, height;
+	gint pos1, pos2, pos3, pos4;
 
         /* Position and Origin of the window. */
         gdk_window_get_root_origin(window,&x,&y);
@@ -5015,11 +5027,12 @@ void MainWindow_Apply_Changes (void)
         g_settings_set (ETSettings, "window-location", "(iiii)", x, y, width,
                         height);
 
-        // Handle panes position
-        PANE_HANDLE_POSITION1 = gtk_paned_get_position(GTK_PANED(MainWindowHPaned));
-        PANE_HANDLE_POSITION2 = gtk_paned_get_position(GTK_PANED(BrowserHPaned));
-        PANE_HANDLE_POSITION3 = gtk_paned_get_position(GTK_PANED(ArtistAlbumVPaned));
-        PANE_HANDLE_POSITION4 = gtk_paned_get_position(GTK_PANED(MainWindowVPaned));
+        /* Handle panes position. */
+        pos1 = gtk_paned_get_position (GTK_PANED (MainWindowHPaned));
+        pos2 = gtk_paned_get_position (GTK_PANED (BrowserHPaned));
+        pos3 = gtk_paned_get_position (GTK_PANED (ArtistAlbumVPaned));
+        pos4 = gtk_paned_get_position (GTK_PANED (MainWindowVPaned));
+        g_settings_set (ETSettings, "pane-positions", "(uuuu)", pos1, pos2,
+                        pos3, pos4);
     }
-
 }

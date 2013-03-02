@@ -111,11 +111,6 @@ tConfigVariable Config_Variables[] =
 {
     {"default_path_to_mp3",                 CV_TYPE_STRING,  &DEFAULT_PATH_TO_MP3               },
 
-    {"pane_handle_position1",               CV_TYPE_INT,     &PANE_HANDLE_POSITION1             },
-    {"pane_handle_position2",               CV_TYPE_INT,     &PANE_HANDLE_POSITION2             },
-    {"pane_handle_position3",               CV_TYPE_INT,     &PANE_HANDLE_POSITION3             },
-    {"pane_handle_position4",               CV_TYPE_INT,     &PANE_HANDLE_POSITION4             },
-
     {"sorting_file_mode",                    CV_TYPE_INT,     &SORTING_FILE_MODE                        },
     {"sorting_file_case_sensitive",          CV_TYPE_BOOL,    &SORTING_FILE_CASE_SENSITIVE              },
 
@@ -253,11 +248,6 @@ void Init_Config_Variables (void)
     /*
      * Misc
      */
-    PANE_HANDLE_POSITION1           = 660;
-    PANE_HANDLE_POSITION2           = 360;
-    PANE_HANDLE_POSITION3           = 300;
-    PANE_HANDLE_POSITION4           = 300;
-
     SORTING_FILE_MODE                       = SORTING_BY_ASCENDING_FILENAME;
 #ifdef G_OS_WIN32
     SORTING_FILE_CASE_SENSITIVE             = 1;
