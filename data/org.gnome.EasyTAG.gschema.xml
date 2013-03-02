@@ -9,6 +9,13 @@
       <default>true</default>
     </key>
 
+    <key name="window-location" type="(iiii)">
+      <summary>Location of the main window</summary>
+      <description>The location of the main window on the screen, of the form
+      X position, Y position, width and height, in pixels.</description>
+      <default>(-1,-1,1000,-1)</default>
+    </key>
+
     <key name="remember-location" type="b">
       <summary>Remember the location of the main window</summary>
       <description>Whether to remember the location of the main window on the
