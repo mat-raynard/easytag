@@ -24,6 +24,13 @@
       <default>true</default>
     </key>
 
+    <key name="pane-positions" type="(uuuu)">
+      <summary>The pane positions in the main window</summary>
+      <description>The positions of the pane separators in the main
+      window</description>
+      <default>(660,360,300,300)</default>
+    </key>
+
     <key name="default-path" type="s">
       <summary>Default path</summary>
       <description>The default path to search for music files</description>
