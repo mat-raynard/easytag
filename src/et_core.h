@@ -23,9 +23,12 @@
 #define __ET_CORE_H__
 
 
+#include "config.h" /* For definition of ENABLE_OGG and so on. */
+
+#include "setting.h"
+
 #include <glib.h>
 #include <gdk/gdk.h>
-#include <config.h> // For definition of ENABLE_OGG, ...
 
 
 /***************
@@ -42,57 +45,6 @@ GdkColor GREY;
 GdkColor LIGHT_GREY;
 GdkColor YELLOW;
 GdkColor BLACK;
-
-
-/*
- * Types of sorting (discontinuous value to avoid separators in SortingFileOptionMenu).
- */
-typedef enum
-{
-    SORTING_BY_ASCENDING_FILENAME,
-    SORTING_BY_DESCENDING_FILENAME,
-    SORTING_BY_ASCENDING_TITLE,
-    SORTING_BY_DESCENDING_TITLE,
-    SORTING_BY_ASCENDING_ARTIST,
-    SORTING_BY_DESCENDING_ARTIST,
-    SORTING_BY_ASCENDING_ALBUM_ARTIST,
-    SORTING_BY_DESCENDING_ALBUM_ARTIST,
-    SORTING_BY_ASCENDING_ALBUM,
-    SORTING_BY_DESCENDING_ALBUM,
-    SORTING_BY_ASCENDING_YEAR,
-    SORTING_BY_DESCENDING_YEAR,
-    SORTING_BY_ASCENDING_DISC_NUMBER,
-    SORTING_BY_DESCENDING_DISC_NUMBER,
-    SORTING_BY_ASCENDING_TRACK_NUMBER,
-    SORTING_BY_DESCENDING_TRACK_NUMBER,
-    SORTING_BY_ASCENDING_GENRE,
-    SORTING_BY_DESCENDING_GENRE,
-    SORTING_BY_ASCENDING_COMMENT,
-    SORTING_BY_DESCENDING_COMMENT,
-    SORTING_BY_ASCENDING_COMPOSER,
-    SORTING_BY_DESCENDING_COMPOSER,
-    SORTING_BY_ASCENDING_ORIG_ARTIST,
-    SORTING_BY_DESCENDING_ORIG_ARTIST,
-    SORTING_BY_ASCENDING_COPYRIGHT,
-    SORTING_BY_DESCENDING_COPYRIGHT,
-    SORTING_BY_ASCENDING_URL,
-    SORTING_BY_DESCENDING_URL,
-    SORTING_BY_ASCENDING_ENCODED_BY,
-    SORTING_BY_DESCENDING_ENCODED_BY,
-    SORTING_BY_ASCENDING_CREATION_DATE,
-    SORTING_BY_DESCENDING_CREATION_DATE,
-    SORTING_BY_ASCENDING_FILE_TYPE,
-    SORTING_BY_DESCENDING_FILE_TYPE,
-    SORTING_BY_ASCENDING_FILE_SIZE,
-    SORTING_BY_DESCENDING_FILE_SIZE,
-    SORTING_BY_ASCENDING_FILE_DURATION,
-    SORTING_BY_DESCENDING_FILE_DURATION,
-    SORTING_BY_ASCENDING_FILE_BITRATE,
-    SORTING_BY_DESCENDING_FILE_BITRATE,
-    SORTING_BY_ASCENDING_FILE_SAMPLERATE,
-    SORTING_BY_DESCENDING_FILE_SAMPLERATE,
-    SORTING_UNKNOWN
-} ET_Sorting_Type;
 
 
 /*
@@ -397,8 +349,8 @@ guint ET_Get_Number_Of_Files_In_Directory (const gchar *path_utf8);
 
 gboolean ET_Detect_Changes_Of_File_Tag          (File_Tag  *FileTag1,  File_Tag  *FileTag2);
 
-GList *ET_Sort_File_List                                  (GList *ETFileList, ET_Sorting_Type Sorting_Type);
-void   ET_Sort_Displayed_File_List_And_Update_UI          (ET_Sorting_Type Sorting_Type);
+GList *ET_Sort_File_List (GList *ETFileList, EtSortMode Sorting_Type);
+void ET_Sort_Displayed_File_List_And_Update_UI (EtSortMode Sorting_Type);
 gint ET_Comp_Func_Sort_File_By_Ascending_Filename         (ET_File *ETFile1, ET_File *ETFile2);
 gint ET_Comp_Func_Sort_File_By_Descending_Filename        (ET_File *ETFile1, ET_File *ETFile2);
 gint ET_Comp_Func_Sort_File_By_Ascending_Creation_Date    (ET_File *ETFile1, ET_File *ETFile2);

@@ -1809,136 +1809,135 @@ Browser_List_Sort_Func (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
     gtk_tree_model_get(model, a, LIST_FILE_POINTER, &ETFile1, -1);
     gtk_tree_model_get(model, b, LIST_FILE_POINTER, &ETFile2, -1);
 
-    switch (SORTING_FILE_MODE)
+    switch (g_settings_get_enum (ETSettings, "sort-mode"))
     {
-        case SORTING_UNKNOWN:
-        case SORTING_BY_ASCENDING_FILENAME:
+        case ET_SORT_MODE_ASCENDING_FILENAME:
             result = ET_Comp_Func_Sort_File_By_Ascending_Filename(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_FILENAME:
+        case ET_SORT_MODE_DESCENDING_FILENAME:
             result = ET_Comp_Func_Sort_File_By_Descending_Filename(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_TITLE:
+        case ET_SORT_MODE_ASCENDING_TITLE:
             result = ET_Comp_Func_Sort_File_By_Ascending_Title(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_TITLE:
+        case ET_SORT_MODE_DESCENDING_TITLE:
             result = ET_Comp_Func_Sort_File_By_Descending_Title(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_ARTIST:
+        case ET_SORT_MODE_ASCENDING_ARTIST:
             result = ET_Comp_Func_Sort_File_By_Ascending_Artist(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_ARTIST:
+        case ET_SORT_MODE_DESCENDING_ARTIST:
             result = ET_Comp_Func_Sort_File_By_Descending_Artist(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_ALBUM_ARTIST:
+        case ET_SORT_MODE_ASCENDING_ALBUM_ARTIST:
             result = ET_Comp_Func_Sort_File_By_Ascending_Album_Artist(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_ALBUM_ARTIST:
+        case ET_SORT_MODE_DESCENDING_ALBUM_ARTIST:
             result = ET_Comp_Func_Sort_File_By_Descending_Album_Artist(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_ALBUM:
+        case ET_SORT_MODE_ASCENDING_ALBUM:
             result = ET_Comp_Func_Sort_File_By_Ascending_Album(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_ALBUM:
+        case ET_SORT_MODE_DESCENDING_ALBUM:
             result = ET_Comp_Func_Sort_File_By_Descending_Album(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_YEAR:
+        case ET_SORT_MODE_ASCENDING_YEAR:
             result = ET_Comp_Func_Sort_File_By_Ascending_Year(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_YEAR:
+        case ET_SORT_MODE_DESCENDING_YEAR:
             result = ET_Comp_Func_Sort_File_By_Descending_Year(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_DISC_NUMBER:
+        case ET_SORT_MODE_ASCENDING_DISC_NUMBER:
             result = et_comp_func_sort_file_by_ascending_disc_number (ETFile1,
                                                                       ETFile2);
             break;
-        case SORTING_BY_DESCENDING_DISC_NUMBER:
+        case ET_SORT_MODE_DESCENDING_DISC_NUMBER:
             result = et_comp_func_sort_file_by_descending_disc_number (ETFile1,
                                                                        ETFile2);
             break;
-        case SORTING_BY_ASCENDING_TRACK_NUMBER:
+        case ET_SORT_MODE_ASCENDING_TRACK_NUMBER:
             result = ET_Comp_Func_Sort_File_By_Ascending_Track_Number (ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_TRACK_NUMBER:
+        case ET_SORT_MODE_DESCENDING_TRACK_NUMBER:
             result = ET_Comp_Func_Sort_File_By_Descending_Track_Number (ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_GENRE:
+        case ET_SORT_MODE_ASCENDING_GENRE:
             result = ET_Comp_Func_Sort_File_By_Ascending_Genre(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_GENRE:
+        case ET_SORT_MODE_DESCENDING_GENRE:
             result = ET_Comp_Func_Sort_File_By_Descending_Genre(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_COMMENT:
+        case ET_SORT_MODE_ASCENDING_COMMENT:
             result = ET_Comp_Func_Sort_File_By_Ascending_Comment(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_COMMENT:
+        case ET_SORT_MODE_DESCENDING_COMMENT:
             result = ET_Comp_Func_Sort_File_By_Descending_Comment(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_COMPOSER:
+        case ET_SORT_MODE_ASCENDING_COMPOSER:
             result = ET_Comp_Func_Sort_File_By_Ascending_Composer(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_COMPOSER:
+        case ET_SORT_MODE_DESCENDING_COMPOSER:
             result = ET_Comp_Func_Sort_File_By_Descending_Composer(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_ORIG_ARTIST:
+        case ET_SORT_MODE_ASCENDING_ORIG_ARTIST:
             result = ET_Comp_Func_Sort_File_By_Ascending_Orig_Artist(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_ORIG_ARTIST:
+        case ET_SORT_MODE_DESCENDING_ORIG_ARTIST:
             result = ET_Comp_Func_Sort_File_By_Descending_Orig_Artist(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_COPYRIGHT:
+        case ET_SORT_MODE_ASCENDING_COPYRIGHT:
             result = ET_Comp_Func_Sort_File_By_Ascending_Copyright(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_COPYRIGHT:
+        case ET_SORT_MODE_DESCENDING_COPYRIGHT:
             result = ET_Comp_Func_Sort_File_By_Descending_Copyright(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_URL:
+        case ET_SORT_MODE_ASCENDING_URL:
             result = ET_Comp_Func_Sort_File_By_Ascending_Url(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_URL:
+        case ET_SORT_MODE_DESCENDING_URL:
             result = ET_Comp_Func_Sort_File_By_Descending_Url(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_ENCODED_BY:
+        case ET_SORT_MODE_ASCENDING_ENCODED_BY:
             result = ET_Comp_Func_Sort_File_By_Ascending_Encoded_By(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_ENCODED_BY:
+        case ET_SORT_MODE_DESCENDING_ENCODED_BY:
             result = ET_Comp_Func_Sort_File_By_Descending_Encoded_By(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_CREATION_DATE:
+        case ET_SORT_MODE_ASCENDING_CREATION_DATE:
             result = ET_Comp_Func_Sort_File_By_Ascending_Creation_Date (ETFile1,                                                                        ETFile2);
             break;
-        case SORTING_BY_DESCENDING_CREATION_DATE:
+        case ET_SORT_MODE_DESCENDING_CREATION_DATE:
             result = ET_Comp_Func_Sort_File_By_Descending_Creation_Date (ETFile1,
                                                                          ETFile2);
             break;
-        case SORTING_BY_ASCENDING_FILE_TYPE:
+        case ET_SORT_MODE_ASCENDING_FILE_TYPE:
             result = ET_Comp_Func_Sort_File_By_Ascending_File_Type(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_FILE_TYPE:
+        case ET_SORT_MODE_DESCENDING_FILE_TYPE:
             result = ET_Comp_Func_Sort_File_By_Descending_File_Type(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_FILE_SIZE:
+        case ET_SORT_MODE_ASCENDING_FILE_SIZE:
             result = ET_Comp_Func_Sort_File_By_Ascending_File_Size(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_FILE_SIZE:
+        case ET_SORT_MODE_DESCENDING_FILE_SIZE:
             result = ET_Comp_Func_Sort_File_By_Descending_File_Size(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_FILE_DURATION:
+        case ET_SORT_MODE_ASCENDING_FILE_DURATION:
             result = ET_Comp_Func_Sort_File_By_Ascending_File_Duration(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_FILE_DURATION:
+        case ET_SORT_MODE_DESCENDING_FILE_DURATION:
             result = ET_Comp_Func_Sort_File_By_Descending_File_Duration(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_FILE_BITRATE:
+        case ET_SORT_MODE_ASCENDING_FILE_BITRATE:
             result = ET_Comp_Func_Sort_File_By_Ascending_File_Bitrate(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_FILE_BITRATE:
+        case ET_SORT_MODE_DESCENDING_FILE_BITRATE:
             result = ET_Comp_Func_Sort_File_By_Descending_File_Bitrate(ETFile1, ETFile2);
             break;
-        case SORTING_BY_ASCENDING_FILE_SAMPLERATE:
+        case ET_SORT_MODE_ASCENDING_FILE_SAMPLERATE:
             result = ET_Comp_Func_Sort_File_By_Ascending_File_Samplerate(ETFile1, ETFile2);
             break;
-        case SORTING_BY_DESCENDING_FILE_SAMPLERATE:
+        case ET_SORT_MODE_DESCENDING_FILE_SAMPLERATE:
             result = ET_Comp_Func_Sort_File_By_Descending_File_Samplerate(ETFile1, ETFile2);
             break;
     }

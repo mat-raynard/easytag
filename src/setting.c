@@ -111,7 +111,6 @@ tConfigVariable Config_Variables[] =
 {
     {"default_path_to_mp3",                 CV_TYPE_STRING,  &DEFAULT_PATH_TO_MP3               },
 
-    {"sorting_file_mode",                    CV_TYPE_INT,     &SORTING_FILE_MODE                        },
     {"sorting_file_case_sensitive",          CV_TYPE_BOOL,    &SORTING_FILE_CASE_SENSITIVE              },
 
     {"filename_extension_lower_case",                  CV_TYPE_BOOL,    &FILENAME_EXTENSION_LOWER_CASE            },
@@ -222,7 +221,6 @@ void Init_Config_Variables (void)
     /*
      * Misc
      */
-    SORTING_FILE_MODE                       = SORTING_BY_ASCENDING_FILENAME;
 #ifdef G_OS_WIN32
     SORTING_FILE_CASE_SENSITIVE             = 1;
 #else /* !G_OS_WIN32 */
@@ -371,9 +369,6 @@ Apply_Changes_Of_Preferences_Window (void)
 
         /* Misc */
         SORTING_FILE_CASE_SENSITIVE            = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(SortingFileCaseSensitive));
-
-        SORTING_FILE_MODE = gtk_combo_box_get_active(GTK_COMBO_BOX(SortingFileCombo));
-        Browser_List_Refresh_Sort ();
 
         if (AUDIO_FILE_PLAYER) g_free(AUDIO_FILE_PLAYER);
         AUDIO_FILE_PLAYER                       = g_strdup(gtk_entry_get_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(FilePlayerCombo)))));
@@ -1189,4 +1184,80 @@ Create_Easytag_Directory (void)
 
         return TRUE;
     }
+}
+
+/*
+ * et_settings_enum_get:
+ * @value: the property value to be set (active item on combo box)
+ * @variant: the variant to set the @value from
+ * @user_data: the #GType of the #GSettings enum
+ *
+ * Wrapper function to convert an enum-type GSettings key into an integer
+ * value.
+ *
+ * Returns: %TRUE if the mapping was successful, %FALSE otherwise
+ */
+gboolean
+et_settings_enum_get (GValue *value, GVariant *variant, gpointer user_data)
+{
+    GType enum_type;
+    GEnumClass *enum_class;
+    GEnumValue *enum_value;
+    const gchar *nick;
+
+    g_return_val_if_fail (user_data != NULL, FALSE);
+
+    enum_type = (GType)GPOINTER_TO_SIZE (user_data);
+    enum_class = g_type_class_ref (enum_type);
+    nick = g_variant_get_string (variant, NULL);
+    enum_value = g_enum_get_value_by_nick (enum_class, nick);
+    g_type_class_unref (enum_class);
+
+    if (!enum_value)
+    {
+        g_warning ("Unable to lookup %s enum nick '%s' from GType",
+                   g_type_name (enum_type),
+                   nick);
+        return FALSE;
+    }
+
+    g_value_set_int (value, enum_value->value);
+    return TRUE;
+}
+
+/*
+ * et_settings_enum_set:
+ * @value: the property value to set the @variant from
+ * @expected_type: the expected type of the returned variant
+ * @user_data: the #GType of the #GSettings enum
+ *
+ * Wrapper function to convert an integer value into a string suitable for
+ * storing into an enum-type GSettings key.
+ *
+ * Returns: a new GVariant containing the mapped value, or %NULL upon failure
+ */
+GVariant *
+et_settings_enum_set (const GValue *value, const GVariantType *expected_type,
+                      gpointer user_data)
+{
+    GType enum_type;
+    GEnumClass *enum_class;
+    GEnumValue *enum_value;
+
+    g_return_val_if_fail (user_data != NULL, NULL);
+
+    enum_type = (GType)GPOINTER_TO_SIZE (user_data);
+    enum_class = g_type_class_ref (enum_type);
+    enum_value = g_enum_get_value (enum_class, g_value_get_int (value));
+    g_type_class_unref (enum_class);
+
+    if (!enum_value)
+    {
+        g_warning ("Unable to lookup %s enum value '%d' from GType",
+                   g_type_name (enum_type), g_value_get_int (value));
+        return NULL;
+    }
+
+    return g_variant_new (g_variant_type_peek_string (expected_type),
+                          enum_value->value_nick);
 }

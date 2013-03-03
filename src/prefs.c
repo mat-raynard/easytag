@@ -38,6 +38,7 @@
 #include "misc.h"
 #include "scan.h"
 #include "easytag.h"
+#include "enums.h"
 #include "browser.h"
 #include "cddb.h"
 #include "charset.h"
@@ -66,7 +67,6 @@ static void Cddb_Use_Proxy_Toggled (void);
 
 static void DefaultPathToMp3_Combo_Add_String (void);
 static void CddbLocalPath_Combo_Add_String (void);
-
 
 
 /*************
@@ -357,7 +357,10 @@ void Open_OptionsWindow (void)
     gtk_combo_box_text_append_text (GTK_COMBO_BOX_TEXT (SortingFileCombo),
                                     _("Descending creation date"));
 
-    gtk_combo_box_set_active(GTK_COMBO_BOX(SortingFileCombo), SORTING_FILE_MODE);
+    g_settings_bind_with_mapping (ETSettings, "sort-mode", SortingFileCombo,
+                                  "active", G_SETTINGS_BIND_DEFAULT,
+                                  et_settings_enum_get, et_settings_enum_set,
+                                  GSIZE_TO_POINTER (ET_TYPE_SORT_MODE), NULL);
     gtk_widget_set_tooltip_text(SortingFileCombo,
                                 _("Select the type of file sorting when "
                                 "loading a directory."));
@@ -1995,5 +1998,3 @@ CddbLocalPath_Combo_Add_String (void)
     path = gtk_entry_get_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(CddbLocalPath))));
     Add_String_To_Combo_List(GTK_LIST_STORE(CddbLocalPath), path);
 }
-
-
