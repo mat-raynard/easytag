@@ -108,7 +108,14 @@ void Open_OptionsWindow (void)
     gtk_window_set_position(GTK_WINDOW(OptionsWindow),GTK_WIN_POS_CENTER);
     gtk_window_set_transient_for(GTK_WINDOW(OptionsWindow),GTK_WINDOW(MainWindow));
     gtk_container_set_border_width(GTK_CONTAINER(OptionsWindow), 5);
-    gtk_window_set_default_size(GTK_WINDOW(OptionsWindow),OPTIONS_WINDOW_WIDTH,OPTIONS_WINDOW_HEIGHT);
+    {
+        gint width, height;
+
+        g_settings_get (ETSettings, "preferences-location", "(iiii)", NULL,
+                        NULL, &width, &height);
+        gtk_window_set_default_size (GTK_WINDOW (OptionsWindow), width,
+                                     height);
+    }
     /* Title */
     gtk_window_set_title (GTK_WINDOW (OptionsWindow), _("Preferences"));
 
@@ -1737,22 +1744,20 @@ void OptionsWindow_Apply_Changes (void)
 {
     if (OptionsWindow)
     {
-        //gint x, y;
-        gint width, height;
         GdkWindow *window;
 
         window = gtk_widget_get_window(OptionsWindow);
 
         if ( window && gdk_window_is_visible(window) && gdk_window_get_state(window)!=GDK_WINDOW_STATE_MAXIMIZED )
         {
-            // Position and Origin of the preferences window
-            //gdk_window_get_root_origin(OptionsWindow->window,&x,&y);
-            //OPTIONS_WINDOW_X = x;
-            //OPTIONS_WINDOW_Y = y;
-            width = gdk_window_get_width(window);
-            height = gdk_window_get_height(window);
-            OPTIONS_WINDOW_WIDTH  = width;
-            OPTIONS_WINDOW_HEIGHT = height;
+            gint x, y, width, height;
+
+            /* Position and Origin of the preferences window. */
+            gdk_window_get_root_origin(window, &x, &y);
+            width = gdk_window_get_width (window);
+            height = gdk_window_get_height (window);
+            g_settings_set (ETSettings, "preferences-location", "(iiii)", x, y,
+                            width, height);
         }
 
         /* Save combobox history lists before exit */

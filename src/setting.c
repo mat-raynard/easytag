@@ -194,10 +194,6 @@ tConfigVariable Config_Variables[] =
     {"scan_tag_default_mask",                   CV_TYPE_STRING,  &SCAN_TAG_DEFAULT_MASK                  },
     {"rename_file_default_mask",                CV_TYPE_STRING,  &RENAME_FILE_DEFAULT_MASK               },
     {"rename_directory_default_mask",           CV_TYPE_STRING,  &RENAME_DIRECTORY_DEFAULT_MASK          },
-
-    {"options_window_height",                   CV_TYPE_INT,     &OPTIONS_WINDOW_HEIGHT                  },
-    {"options_window_width",                    CV_TYPE_INT,     &OPTIONS_WINDOW_WIDTH                   }
-
 };
 
 
@@ -347,13 +343,6 @@ void Init_Config_Variables (void)
     SCAN_TAG_DEFAULT_MASK           = NULL;
     RENAME_FILE_DEFAULT_MASK        = NULL;
     RENAME_DIRECTORY_DEFAULT_MASK   = NULL;
-
-    /*
-     * Other parameters
-     */
-    OPTIONS_WINDOW_HEIGHT = 300;
-    OPTIONS_WINDOW_WIDTH  = 400;
-
 }
 
 

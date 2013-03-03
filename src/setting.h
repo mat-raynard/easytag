@@ -151,12 +151,6 @@ gchar  *RENAME_FILE_DEFAULT_MASK;
 gchar  *RENAME_DIRECTORY_DEFAULT_MASK;
 
 
-/* Other parameters */
-gint    OPTIONS_WINDOW_HEIGHT;
-gint    OPTIONS_WINDOW_WIDTH;
-
-
-
 /**************
  * Prototypes *
  **************/
