@@ -905,5 +905,11 @@
       <range min="0" max="7" />
     </key>
 
+    <key name="preferences-location" type="(iiii)">
+      <summary>Location of the preferences window</summary>
+      <description>The location of the preferences window on the screen, of the
+      form X position, Y position, width and height, in pixels.</description>
+      <default>(-1,-1,-1,-1)</default>
+    </key>
   </schema>
 </schemalist>
