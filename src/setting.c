@@ -191,11 +191,6 @@ tConfigVariable Config_Variables[] =
     {"cddb_set_to_genre",                       CV_TYPE_BOOL,    &CDDB_SET_TO_GENRE                      },
     {"cddb_set_to_file_name",                   CV_TYPE_BOOL,    &CDDB_SET_TO_FILE_NAME                  },
 
-    {"search_window_x",                         CV_TYPE_INT,     &SEARCH_WINDOW_X                        },
-    {"search_window_y",                         CV_TYPE_INT,     &SEARCH_WINDOW_Y                        },
-    {"search_window_height",                    CV_TYPE_INT,     &SEARCH_WINDOW_HEIGHT                   },
-    {"search_window_width",                     CV_TYPE_INT,     &SEARCH_WINDOW_WIDTH                    },
-
     {"scan_tag_default_mask",                   CV_TYPE_STRING,  &SCAN_TAG_DEFAULT_MASK                  },
     {"rename_file_default_mask",                CV_TYPE_STRING,  &RENAME_FILE_DEFAULT_MASK               },
     {"rename_directory_default_mask",           CV_TYPE_STRING,  &RENAME_DIRECTORY_DEFAULT_MASK          },
@@ -345,14 +340,6 @@ void Init_Config_Variables (void)
     CDDB_SET_TO_TRACK_TOTAL = 1;
     CDDB_SET_TO_GENRE       = 0;
     CDDB_SET_TO_FILE_NAME   = 1;
-
-    /*
-     * Search window
-     */
-    SEARCH_WINDOW_X             = -1;
-    SEARCH_WINDOW_Y             = -1;
-    SEARCH_WINDOW_HEIGHT        = 350;
-    SEARCH_WINDOW_WIDTH         = 650;
 
     /*
      * Masks

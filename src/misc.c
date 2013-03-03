@@ -1970,7 +1970,14 @@ void Open_Search_File_Window (void)
     g_signal_connect(G_OBJECT(SearchFileWindow),"destroy", G_CALLBACK(Destroy_Search_File_Window),NULL);
     g_signal_connect(G_OBJECT(SearchFileWindow),"delete_event", G_CALLBACK(Destroy_Search_File_Window),NULL);
     g_signal_connect(G_OBJECT(SearchFileWindow),"key_press_event", G_CALLBACK(Search_File_Window_Key_Press),NULL);
-    gtk_window_set_default_size(GTK_WINDOW(SearchFileWindow),SEARCH_WINDOW_WIDTH,SEARCH_WINDOW_HEIGHT);
+    {
+        gint width, height;
+
+        g_settings_get (ETSettings, "search-location", "(iiii)", NULL, NULL,
+                        &width, &height);
+        gtk_window_set_default_size (GTK_WINDOW (SearchFileWindow), width,
+                                     height);
+    }
 
     VBox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
     gtk_container_add(GTK_CONTAINER(SearchFileWindow),VBox);
@@ -2266,9 +2273,13 @@ void Open_Search_File_Window (void)
     gtk_widget_show_all(SearchFileWindow);
 
     if (g_settings_get_boolean (ETSettings, "search-remember-location"))
-        gtk_window_move(GTK_WINDOW(SearchFileWindow), SEARCH_WINDOW_X, SEARCH_WINDOW_Y);
-    //else
-    //    gtk_window_set_position(GTK_WINDOW(SearchFileWindow), GTK_WIN_POS_CENTER_ON_PARENT); // Must use gtk_window_set_transient_for to work
+    {
+        gint x, y;
+
+        g_settings_get (ETSettings, "search-location", "(iiii)", &x, &y, NULL,
+                        NULL);
+        gtk_window_move (GTK_WINDOW (SearchFileWindow), x, y);
+    }
 }
 
 static void
@@ -2293,21 +2304,20 @@ void Search_File_Window_Apply_Changes (void)
 {
     if (SearchFileWindow)
     {
-        gint x, y, width, height;
         GdkWindow *window;
 
         window = gtk_widget_get_window(SearchFileWindow);
 
         if ( window && gdk_window_is_visible(window) && gdk_window_get_state(window)!=GDK_WINDOW_STATE_MAXIMIZED )
         {
-            // Position and Origin of the scanner window
-            gdk_window_get_root_origin(window,&x,&y);
-            SEARCH_WINDOW_X = x;
-            SEARCH_WINDOW_Y = y;
-            width = gdk_window_get_width(window);
-            height = gdk_window_get_height(window);
-            SEARCH_WINDOW_WIDTH  = width;
-            SEARCH_WINDOW_HEIGHT = height;
+            gint x, y, width, height;
+
+            /* Position and Origin of the search window. */
+            gdk_window_get_root_origin (window, &x, &y);
+            width = gdk_window_get_width (window);
+            height = gdk_window_get_height (window);
+            g_settings_set (ETSettings, "search-location", "(iiii)", x, y,
+                            width, height);
         }
     }
 }

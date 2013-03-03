@@ -145,12 +145,6 @@ gint    CDDB_SET_TO_TRACK_TOTAL;
 gint    CDDB_SET_TO_GENRE;
 gint    CDDB_SET_TO_FILE_NAME;
 
-/* Search Window */
-gint    SEARCH_WINDOW_X;
-gint    SEARCH_WINDOW_Y;
-gint    SEARCH_WINDOW_HEIGHT;
-gint    SEARCH_WINDOW_WIDTH;
-
 /* Default mask */
 gchar  *SCAN_TAG_DEFAULT_MASK;
 gchar  *RENAME_FILE_DEFAULT_MASK;
