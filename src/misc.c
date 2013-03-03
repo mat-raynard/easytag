@@ -2773,7 +2773,14 @@ void Open_Load_Filename_Window (void)
 
     // Just center on mainwindow
     gtk_window_set_position(GTK_WINDOW(LoadFilenameWindow), GTK_WIN_POS_CENTER_ON_PARENT);
-    gtk_window_set_default_size(GTK_WINDOW(LoadFilenameWindow),LOAD_FILE_WINDOW_WIDTH,LOAD_FILE_WINDOW_HEIGHT);
+    {
+        gint width, height;
+
+        g_settings_get (ETSettings, "load-filenames-position", "(iiii)", NULL,
+                        NULL, &width, &height);
+        gtk_window_set_default_size (GTK_WINDOW (LoadFilenameWindow), width,
+                                     height);
+    }
 
     Frame = gtk_frame_new(NULL);
     gtk_container_add(GTK_CONTAINER(LoadFilenameWindow),Frame);
@@ -3072,8 +3079,16 @@ void Open_Load_Filename_Window (void)
     g_signal_emit_by_name(G_OBJECT(gtk_bin_get_child(GTK_BIN(FileToLoadCombo))),"changed");
 
     gtk_widget_show_all(LoadFilenameWindow);
-    if (LOAD_FILE_WINDOW_X > 0 && LOAD_FILE_WINDOW_Y > 0)
-        gtk_window_move(GTK_WINDOW(LoadFilenameWindow),LOAD_FILE_WINDOW_X,LOAD_FILE_WINDOW_Y);
+    {
+        gint x, y;
+
+        g_settings_get (ETSettings, "load-filenames-position", "(iiii)", &x,
+                        &y, NULL, NULL);
+        if (x > 0 && y > 0)
+        {
+            gtk_window_move (GTK_WINDOW (LoadFilenameWindow), x, y);
+        }
+    }
 }
 
 static void
@@ -3098,21 +3113,20 @@ void Load_Filename_Window_Apply_Changes (void)
 {
     if (LoadFilenameWindow)
     {
-        gint x, y, width, height;
         GdkWindow *window;
 
         window = gtk_widget_get_window (LoadFilenameWindow);
 
         if ( window && gdk_window_is_visible(window) && gdk_window_get_state(window)!=GDK_WINDOW_STATE_MAXIMIZED )
         {
-            // Position and Origin of the window
-            gdk_window_get_root_origin(window,&x,&y);
-            LOAD_FILE_WINDOW_X = x;
-            LOAD_FILE_WINDOW_Y = y;
-            width = gdk_window_get_width(window);
-            height = gdk_window_get_height(window);
-            LOAD_FILE_WINDOW_WIDTH  = width;
-            LOAD_FILE_WINDOW_HEIGHT = height;
+            gint x, y, width, height;
+
+            /* Position and Origin of the window. */
+            gdk_window_get_root_origin (window, &x, &y);
+            width = gdk_window_get_width (window);
+            height = gdk_window_get_height (window);
+            g_settings_set (ETSettings, "load-filenames-position", "(iiii)", x,
+                            y, width, height);
         }
     }
 }

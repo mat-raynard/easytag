@@ -163,11 +163,6 @@ tConfigVariable Config_Variables[] =
     {"playlist_content_mask",                   CV_TYPE_BOOL,    &PLAYLIST_CONTENT_MASK                  },
     {"playlist_content_mask_value",             CV_TYPE_STRING,  &PLAYLIST_CONTENT_MASK_VALUE            },
 
-    {"load_file_window_x",                      CV_TYPE_INT,     &LOAD_FILE_WINDOW_X                     },
-    {"load_file_window_y",                      CV_TYPE_INT,     &LOAD_FILE_WINDOW_Y                     },
-    {"load_file_window_width",                  CV_TYPE_INT,     &LOAD_FILE_WINDOW_WIDTH                 },
-    {"load_file_window_height",                 CV_TYPE_INT,     &LOAD_FILE_WINDOW_HEIGHT                },
-
     {"cddb_local_path",                         CV_TYPE_STRING,  &CDDB_LOCAL_PATH                        },
 
     {"cddb_search_in_artist_field",             CV_TYPE_BOOL,    &CDDB_SEARCH_IN_ARTIST_FIELD            },
@@ -319,14 +314,6 @@ void Init_Config_Variables (void)
     PLAYLIST_CONTENT_FILENAME       = 1;
     PLAYLIST_CONTENT_MASK           = 0;
     PLAYLIST_CONTENT_MASK_VALUE     = g_strdup("%n/%l - %a - %b - %t");
-
-    /*
-     * Load File window
-     */
-    LOAD_FILE_WINDOW_X        = -1;
-    LOAD_FILE_WINDOW_Y        = -1;
-    LOAD_FILE_WINDOW_WIDTH    = -1;
-    LOAD_FILE_WINDOW_HEIGHT   = -1;
 
     /*
      * CDDB window

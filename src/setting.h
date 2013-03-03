@@ -115,12 +115,6 @@ gint    PLAYLIST_CONTENT_FILENAME;
 gint    PLAYLIST_CONTENT_MASK;
 gchar  *PLAYLIST_CONTENT_MASK_VALUE;
 
-/* "Load filenames from txt" window */
-gint    LOAD_FILE_WINDOW_X;
-gint    LOAD_FILE_WINDOW_Y;
-gint    LOAD_FILE_WINDOW_WIDTH;
-gint    LOAD_FILE_WINDOW_HEIGHT;
-
 /* CDDB in preferences window */
 gchar  *CDDB_LOCAL_PATH;
 
