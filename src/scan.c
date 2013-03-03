@@ -3148,20 +3148,20 @@ void ScannerWindow_Apply_Changes (void)
 {
     if (ScannerWindow)
     {
-        gint x, y;//, width, height;
         GdkWindow *window;
 
         window = gtk_widget_get_window(ScannerWindow);
 
         if ( window && gdk_window_is_visible(window) && gdk_window_get_state(window)!=GDK_WINDOW_STATE_MAXIMIZED )
         {
-            // Position and Origin of the scanner window
-            gdk_window_get_root_origin(window,&x,&y);
-            SCANNER_WINDOW_X = x;
-            SCANNER_WINDOW_Y = y;
-            //gdk_window_get_size(window,&width,&height);
-            //SCANNER_WINDOW_WIDTH  = width;
-            //SCANNER_WINDOW_HEIGHT = height;
+            gint x, y, width, height;
+
+            /* Position and Origin of the scanner window */
+            gdk_window_get_root_origin (window, &x, &y);
+            width = gdk_window_get_width (window);
+            height = gdk_window_get_height (window);
+            g_settings_set (ETSettings, "scan-location", "(iiii)", x, y, width,
+                            height);
         }
 
         // The scanner selected
@@ -4110,7 +4110,11 @@ Scan_Set_Scanner_Window_Init_Position (void)
     if (ScannerWindow && g_settings_get_boolean (ETSettings,
                                                  "scan-remember-location"))
     {
+        gint x, y;
+
         gtk_widget_realize(ScannerWindow);
-        gtk_window_move(GTK_WINDOW(ScannerWindow),SCANNER_WINDOW_X,SCANNER_WINDOW_Y);
+        g_settings_get (ETSettings, "scan-location", "(iiii)", &x, &y, NULL,
+                        NULL);
+        gtk_window_move (GTK_WINDOW (ScannerWindow), x, y);
     }
 }

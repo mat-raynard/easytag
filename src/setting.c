@@ -141,9 +141,6 @@ tConfigVariable Config_Variables[] =
     {"rfs_convert_underscore_and_p20_into_space",CV_TYPE_BOOL,&RFS_CONVERT_UNDERSCORE_AND_P20_INTO_SPACE },
     {"rfs_convert_space_into_underscore",        CV_TYPE_BOOL,&RFS_CONVERT_SPACE_INTO_UNDERSCORE         },
     {"rfs_remove_spaces",                        CV_TYPE_BOOL,&RFS_REMOVE_SPACES                         },
-    {"scanner_window_x",                        CV_TYPE_INT,     &SCANNER_WINDOW_X                       },
-    {"scanner_window_y",                        CV_TYPE_INT,     &SCANNER_WINDOW_Y                       },
-
     {"process_filename_field",                  CV_TYPE_BOOL,    &PROCESS_FILENAME_FIELD                 },
     {"process_title_field",                     CV_TYPE_BOOL,    &PROCESS_TITLE_FIELD                    },
     {"process_artist_field",                    CV_TYPE_BOOL,    &PROCESS_ARTIST_FIELD                   },
@@ -302,8 +299,7 @@ void Init_Config_Variables (void)
     FTS_CONVERT_UNDERSCORE_AND_P20_INTO_SPACE = 1;
     FTS_CONVERT_SPACE_INTO_UNDERSCORE         = 0;
     RFS_CONVERT_UNDERSCORE_AND_P20_INTO_SPACE = 1;
-    SCANNER_WINDOW_X                          = -1;
-    SCANNER_WINDOW_Y                          = -1;
+    RFS_CONVERT_SPACE_INTO_UNDERSCORE         = 0;
 
     /*
      * Scanner window
