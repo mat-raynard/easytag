@@ -1257,7 +1257,14 @@ void Open_Write_Playlist_Window (void)
 
     // Just center on mainwindow
     gtk_window_set_position(GTK_WINDOW(WritePlaylistWindow), GTK_WIN_POS_CENTER_ON_PARENT);
-    gtk_window_set_default_size(GTK_WINDOW(WritePlaylistWindow),PLAYLIST_WINDOW_WIDTH,PLAYLIST_WINDOW_HEIGHT);
+    {
+        gint width, height;
+
+        g_settings_get (ETSettings, "playlist-location", "(iiii)", NULL, NULL,
+                        &width, &height);
+        gtk_window_set_default_size (GTK_WINDOW (WritePlaylistWindow), width,
+                                     height);
+    }
 
     Frame = gtk_frame_new(NULL);
     gtk_container_add(GTK_CONTAINER(WritePlaylistWindow),Frame);
@@ -1450,8 +1457,16 @@ void Open_Write_Playlist_Window (void)
     g_signal_connect_swapped(G_OBJECT(Button),"clicked",G_CALLBACK(Playlist_Write_Button_Pressed),NULL);
 
     gtk_widget_show_all(WritePlaylistWindow);
-    if (PLAYLIST_WINDOW_X > 0 && PLAYLIST_WINDOW_Y > 0)
-        gtk_window_move(GTK_WINDOW(WritePlaylistWindow),PLAYLIST_WINDOW_X,PLAYLIST_WINDOW_Y);
+    {
+        gint x, y;
+
+        g_settings_get (ETSettings, "playlist-location", "(iiii)", &x, &y, NULL,
+                        NULL);
+        if (x > 0 && y > 0)
+        {
+            gtk_window_move (GTK_WINDOW (WritePlaylistWindow), x, y);
+        }
+    }
 
     /* To initialize the mask status icon and visibility */
     g_signal_emit_by_name(G_OBJECT(gtk_bin_get_child(GTK_BIN(PlayListNameMaskCombo))),"changed");
@@ -1477,21 +1492,20 @@ void Write_Playlist_Window_Apply_Changes (void)
 {
     if (WritePlaylistWindow)
     {
-        gint x, y, width, height;
         GdkWindow *window;
 
         window = gtk_widget_get_window (WritePlaylistWindow);
 
         if ( window && gdk_window_is_visible(window) && gdk_window_get_state(window)!=GDK_WINDOW_STATE_MAXIMIZED )
         {
-            // Position and Origin of the window
-            gdk_window_get_root_origin(window,&x,&y);
-            PLAYLIST_WINDOW_X = x;
-            PLAYLIST_WINDOW_Y = y;
-            width = gdk_window_get_width(window);
-            height = gdk_window_get_height(window);
-            PLAYLIST_WINDOW_WIDTH  = width;
-            PLAYLIST_WINDOW_HEIGHT = height;
+            gint x, y, width, height;
+
+            /* Position and Origin of the window. */
+            gdk_window_get_root_origin (window, &x, &y);
+            width = gdk_window_get_width (window);
+            height = gdk_window_get_height (window);
+            g_settings_set (ETSettings, "playlist-location", "(iiii)", x, y,
+                            width, height);
         }
 
         /* List of variables also set in the function 'Playlist_Write_Button_Pressed' */
