@@ -719,6 +719,13 @@
       <default>true</default>
     </key>
 
+    <key name="search-location" type="(iiii)">
+      <summary>Location of the search window</summary>
+      <description>The location of the search window on the screen, of the
+      form X position, Y position, width and height, in pixels</description>
+      <default>(-1,-1,-1,-1)</default>
+    </key>
+
     <key name="search-remember-location" type="b">
       <summary>Remember the location of the search window</summary>
       <description>Whether to remember the location of the search window on the
