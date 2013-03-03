@@ -197,6 +197,21 @@
       <default>true</default>
     </key>
 
+    <key name="cddb-location" type="(iiii)">
+      <summary>Location of the CDDB window</summary>
+      <description>The location of the CDDB window on the screen, of the
+      form X position, Y position, width and height, in pixels.</description>
+      <default>(-1,-1,-1,-1)</default>
+    </key>
+
+    <key name="cddb-pane-position" type="u">
+      <summary>The pane position in the CDDB window</summary>
+      <description>The position of the pane separator in the CDDB
+      window</description>
+      <default>300</default>
+      <range min="0" max="65535" />
+    </key>
+
     <key name="cddb-run-scanner" type="b">
       <summary>Run the scanner on CDDB results</summary>
       <description>Whether to run the tag scanner, with the current settings,
