@@ -129,12 +129,6 @@ gint    LOAD_FILE_WINDOW_HEIGHT;
 /* CDDB in preferences window */
 gchar  *CDDB_LOCAL_PATH;
 
-gint    CDDB_WINDOW_X;
-gint    CDDB_WINDOW_Y;
-gint    CDDB_WINDOW_HEIGHT;
-gint    CDDB_WINDOW_WIDTH;
-gint    CDDB_PANE_HANDLE_POSITION;
-
 /* CDDB window */
 gint    CDDB_SEARCH_IN_ARTIST_FIELD;
 gint    CDDB_SEARCH_IN_TITLE_FIELD;

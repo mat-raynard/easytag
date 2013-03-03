@@ -240,8 +240,14 @@ void Open_Cddb_Window (void)
     gtk_window_set_title(GTK_WINDOW(CddbWindow),_("CD Database Search"));
     gtk_window_set_position(GTK_WINDOW(CddbWindow),GTK_WIN_POS_CENTER);
 
-    // This part is needed to set correctly the position of handle panes
-    gtk_window_set_default_size(GTK_WINDOW(CddbWindow),CDDB_WINDOW_WIDTH,CDDB_WINDOW_HEIGHT);
+    /* This part is needed to correctly set the position of handle panes. */
+    {
+        gint width, height;
+
+        g_settings_get (ETSettings, "cddb-location", "(iiii)", NULL, NULL,
+                        &width, &height);
+        gtk_window_set_default_size (GTK_WINDOW (CddbWindow), width, height);
+    }
 
     g_signal_connect(G_OBJECT(CddbWindow),"delete_event", G_CALLBACK(Cddb_Destroy_Window),NULL);
     g_signal_connect(G_OBJECT(CddbWindow),"key_press_event", G_CALLBACK(Cddb_Window_Key_Press),NULL);
@@ -613,7 +619,9 @@ void Open_Cddb_Window (void)
      */
     CddbWindowHPaned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     gtk_box_pack_start(GTK_BOX(VBox),CddbWindowHPaned,TRUE,TRUE,0);
-    gtk_paned_set_position(GTK_PANED(CddbWindowHPaned),CDDB_PANE_HANDLE_POSITION);
+    gtk_paned_set_position (GTK_PANED (CddbWindowHPaned),
+                            g_settings_get_uint (ETSettings,
+                                                 "cddb-pane-position"));
 
     // List of albums
     ScrollWindow = gtk_scrolled_window_new(NULL, NULL);
@@ -821,12 +829,19 @@ void Open_Cddb_Window (void)
     CddbStopSearch = FALSE;
 
     gtk_widget_show_all(CddbWindow);
-    if (g_settings_get_boolean (ETSettings, "cddb-remember-location")
-    && CDDB_WINDOW_X > 0 && CDDB_WINDOW_Y > 0)
+    if (g_settings_get_boolean (ETSettings, "cddb-remember-location"))
     {
-        gtk_window_move(GTK_WINDOW(CddbWindow),CDDB_WINDOW_X,CDDB_WINDOW_Y);
+        gint x, y;
+
+        g_settings_get (ETSettings, "cddb-location", "(iiii)", &x, &y, NULL,
+                        NULL);
+        if (x > 0 && y > 0)
+        {
+            gtk_window_move (GTK_WINDOW (CddbWindow), x, y);
+        }
     }
-    // Force resize window
+
+    /* Force resize window. */
     gtk_widget_get_allocation(GTK_WIDGET(CddbSearchInAllCategories), &allocation);
     gtk_widget_set_size_request(GTK_WIDGET(CddbSearchInAllFields), allocation.width, -1);
     g_signal_emit_by_name(G_OBJECT(CddbShowCategoriesButton),"toggled");
@@ -874,24 +889,24 @@ void Cddb_Window_Apply_Changes (void)
 {
     if (CddbWindow)
     {
-        gint x, y, width, height;
         GdkWindow *window;
 
         window = gtk_widget_get_window(CddbWindow);
 
         if ( window && gdk_window_is_visible(window) && gdk_window_get_state(window)!=GDK_WINDOW_STATE_MAXIMIZED )
         {
-            // Position and Origin of the window
-            gdk_window_get_root_origin(window,&x,&y);
-            CDDB_WINDOW_X = x;
-            CDDB_WINDOW_Y = y;
-            width = gdk_window_get_width(window);
-            height = gdk_window_get_height(window);
-            CDDB_WINDOW_WIDTH  = width;
-            CDDB_WINDOW_HEIGHT = height;
+            gint x, y, width, height;
 
-            // Handle panes position
-            CDDB_PANE_HANDLE_POSITION = gtk_paned_get_position(GTK_PANED(CddbWindowHPaned));
+            /* Position and Origin of the window. */
+            gdk_window_get_root_origin (window, &x, &y);
+            width = gdk_window_get_width (window);
+            height = gdk_window_get_height (window);
+            g_settings_set (ETSettings, "cddb-location", "(iiii)", x, y, width,
+                            height);
+
+            /* Handle pane position. */
+            g_settings_set_uint (ETSettings, "cddb-pane-position",
+                                 gtk_paned_get_position (GTK_PANED (CddbWindowHPaned)));
         }
 
         CDDB_SEARCH_IN_ARTIST_FIELD     = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(CddbSearchInArtistField));

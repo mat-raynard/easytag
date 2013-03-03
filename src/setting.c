@@ -173,11 +173,6 @@ tConfigVariable Config_Variables[] =
     {"load_file_window_height",                 CV_TYPE_INT,     &LOAD_FILE_WINDOW_HEIGHT                },
 
     {"cddb_local_path",                         CV_TYPE_STRING,  &CDDB_LOCAL_PATH                        },
-    {"cddb_window_x",                           CV_TYPE_INT,     &CDDB_WINDOW_X                          },
-    {"cddb_window_y",                           CV_TYPE_INT,     &CDDB_WINDOW_Y                          },
-    {"cddb_window_height",                      CV_TYPE_INT,     &CDDB_WINDOW_HEIGHT                     },
-    {"cddb_window_width",                       CV_TYPE_INT,     &CDDB_WINDOW_WIDTH                      },
-    {"cddb_pane_handle_position",               CV_TYPE_INT,     &CDDB_PANE_HANDLE_POSITION              },
 
     {"cddb_search_in_artist_field",             CV_TYPE_BOOL,    &CDDB_SEARCH_IN_ARTIST_FIELD            },
     {"cddb_search_in_title_field",              CV_TYPE_BOOL,    &CDDB_SEARCH_IN_TITLE_FIELD             },
@@ -346,12 +341,6 @@ void Init_Config_Variables (void)
      * CDDB window
      */
     CDDB_LOCAL_PATH                         = NULL;
-
-    CDDB_WINDOW_X                 = -1;
-    CDDB_WINDOW_Y                 = -1;
-    CDDB_WINDOW_WIDTH             = 660;
-    CDDB_WINDOW_HEIGHT            = 470;
-    CDDB_PANE_HANDLE_POSITION     = 350;
 
     CDDB_SEARCH_IN_ARTIST_FIELD         = 1;
     CDDB_SEARCH_IN_TITLE_FIELD          = 1;
