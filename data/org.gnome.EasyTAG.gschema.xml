@@ -832,13 +832,11 @@
       <default>false</default>
     </key>
 
-    <!-- TODO: Generate enums with glib-mkenums.
     <key name="scan-type" enum="org.gnome.EasyTAG.EtScanType">
       <summary>The scan type</summary>
       <description>Which type of scan to show in the scanner</description>
       <default>'rename-file'</default>
     </key>
-    -->
 
     <key name="flac-write-id3" type="b">
       <summary>Write ID3 tags to FLAC files</summary>

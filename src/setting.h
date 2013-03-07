@@ -46,6 +46,16 @@ struct _tConfigVariable
 
 
 /*
+ * The mode for the scanner window. See the GSettings key "scanner-type".
+ */
+typedef enum
+{
+    ET_SCAN_TYPE_FILL_TAG,
+    ET_SCAN_TYPE_RENAME_FILE,
+    ET_SCAN_TYPE_PROCESS_FIELDS
+} EtScanType;
+
+/*
  * Types of sorting. See the GSettings key "sort-mode".
  */
 typedef enum
@@ -134,7 +144,6 @@ gint    FILE_WRITING_ID3V1_ICONV_OPTIONS_TRANSLIT;
 gint    FILE_WRITING_ID3V1_ICONV_OPTIONS_IGNORE;
 
 /* Scanner */
-gint    SCANNER_TYPE;
 gint    FTS_CONVERT_UNDERSCORE_AND_P20_INTO_SPACE;
 gint    FTS_CONVERT_SPACE_INTO_UNDERSCORE;
 gint    RFS_CONVERT_UNDERSCORE_AND_P20_INTO_SPACE;

@@ -32,13 +32,6 @@ GtkWidget *ScannerWindow;
 GtkWidget *SWScanButton;    // To enable/disable it in easytag.c
 
 
-enum
-{
-    SCANNER_FILL_TAG = 0,
-    SCANNER_RENAME_FILE,
-    SCANNER_PROCESS_FIELDS
-}; // Add a new item : Min and Max values used in Open_ScannerWindow
-
 enum {
     MASK_EDITOR_TEXT,
     MASK_EDITOR_COUNT
@@ -77,7 +70,7 @@ void Scan_Convert_Space_Into_Undescore  (gchar *string);
 void Scan_Remove_Spaces                 (gchar *string);
 
 void Init_ScannerWindow (void);
-void Open_ScannerWindow (gint scanner_type);
+void Open_ScannerWindow (void);
 void ScannerWindow_Apply_Changes (void);
 
 #endif /* __SCAN_H__ */

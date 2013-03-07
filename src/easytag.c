@@ -1951,7 +1951,7 @@ void Action_Scan_Selected_Files (void)
     /* Check if scanner window is opened */
     if (!ScannerWindow)
     {
-        Open_ScannerWindow(SCANNER_TYPE);
+        Open_ScannerWindow ();
         Statusbar_Message(_("Select Mode and Mask, and redo the same action"),TRUE);
         return;
     }
@@ -4494,7 +4494,8 @@ Init_Load_Default_Dir (void)
 
     // Open the scanner window
     if (g_settings_get_boolean (ETSettings, "scan-startup"))
-        Open_ScannerWindow(SCANNER_TYPE); // Open the last selected scanner
+        /* Open the last selected scanner. */
+        Open_ScannerWindow ();
 
     if (INIT_DIRECTORY)
     {

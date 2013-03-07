@@ -31,6 +31,7 @@
 #include "gtk2_compat.h"
 #include "scan.h"
 #include "easytag.h"
+#include "enums.h"
 #include "prefs.h"
 #include "setting.h"
 #include "id3_tag.h"
@@ -275,7 +276,6 @@ static char *int2roman_r (int num, char * str, size_t len);
 static void Scan_Convert_Character (gchar **string);
 static GList *Scan_Generate_New_Tag_From_Mask (ET_File *ETFile, gchar *mask);
 static void Scan_Set_Scanner_Window_Init_Position (void);
-
 
 
 /*************
@@ -579,7 +579,7 @@ void Scan_Fill_Tag_Generate_Preview (void)
 
     if (!ETCore->ETFileDisplayedList
     ||  !ScannerWindow || !RenameFileMaskCombo || !FillTagPreviewLabel
-    ||  gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) != SCANNER_FILL_TAG)
+    ||  gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) != ET_SCAN_TYPE_FILL_TAG)
         return;
 
     mask = g_strdup(gtk_entry_get_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(ScanTagMaskCombo)))));
@@ -956,7 +956,7 @@ void Scan_Rename_File_Generate_Preview (void)
     ||  !ScannerWindow || !RenameFileMaskCombo || !RenameFilePreviewLabel)
         return;
 
-    if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) != SCANNER_RENAME_FILE)
+    if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) != ET_SCAN_TYPE_RENAME_FILE)
         return;
 
     mask = g_strdup(gtk_entry_get_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(RenameFileMaskCombo)))));
@@ -2312,7 +2312,8 @@ static gchar
 /******************
  * Scanner Window *
  ******************/
-void Open_ScannerWindow (gint scanner_type)
+void
+Open_ScannerWindow ()
 {
     GtkWidget *ScanVBox;
     GtkWidget *HBox1, *HBox2, *HBox4, *VBox, *hbox, *vbox;
@@ -2332,18 +2333,9 @@ void Open_ScannerWindow (gint scanner_type)
     /* Check if already opened */
     if (ScannerWindow)
     {
-        //gdk_window_show(ScannerWindow->window);
         gtk_window_present(GTK_WINDOW(ScannerWindow));
-        if (ScannerOptionCombo)
-        {
-            gtk_combo_box_set_active(GTK_COMBO_BOX(ScannerOptionCombo), scanner_type);
-        }
         return;
     }
-
-    if ( scanner_type < SCANNER_FILL_TAG
-    ||   scanner_type > SCANNER_PROCESS_FIELDS)
-        scanner_type = SCANNER_FILL_TAG;
 
     /* The window */
     ScannerWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -2386,20 +2378,28 @@ void Open_ScannerWindow (gint scanner_type)
 
     /* Option for Tag */
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ScannerOptionCombo),
-                                   _(Scanner_Option_Menu_Items[SCANNER_FILL_TAG]));
+                                   _(Scanner_Option_Menu_Items[ET_SCAN_TYPE_FILL_TAG]));
 
     /* Option for FileName */
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ScannerOptionCombo),
-                                   _(Scanner_Option_Menu_Items[SCANNER_RENAME_FILE]));
+                                   _(Scanner_Option_Menu_Items[ET_SCAN_TYPE_RENAME_FILE]));
 
     /* Option for ProcessFields */
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ScannerOptionCombo),
-                              _(Scanner_Option_Menu_Items[SCANNER_PROCESS_FIELDS]));
+                              _(Scanner_Option_Menu_Items[ET_SCAN_TYPE_PROCESS_FIELDS]));
 
     /* Selection of the item made at the end of the function. */
     gtk_widget_set_tooltip_text (ScannerOptionCombo,
                                  _("Select the type of scanner to use"));
-    g_signal_connect(G_OBJECT(ScannerOptionCombo), "changed", G_CALLBACK(Scanner_Option_Menu_Activate_Item), NULL);
+    /* The selected scanner. */
+    g_settings_bind_with_mapping (ETSettings, "scan-type",
+                                  ScannerOptionCombo, "active",
+                                  G_SETTINGS_BIND_DEFAULT,
+                                  et_settings_enum_get,
+                                  et_settings_enum_set,
+                                  GSIZE_TO_POINTER (ET_TYPE_SCAN_TYPE), NULL);
+    g_signal_connect (G_OBJECT (ScannerOptionCombo), "changed",
+                      G_CALLBACK (Scanner_Option_Menu_Activate_Item), NULL);
 
     /* 'Scan selected files' button */
     SWScanButton = gtk_button_new();
@@ -3043,8 +3043,9 @@ void Open_ScannerWindow (gint scanner_type)
     g_signal_emit_by_name(G_OBJECT(ProcessFieldsConvert),"toggled");/* To enable / disable entries */
     g_signal_emit_by_name(G_OBJECT(ProcessFieldsDetectRomanNumerals),"toggled");/* To enable / disable entries */
 
-    // Activate the current menu in the option menu
-    gtk_combo_box_set_active(GTK_COMBO_BOX(ScannerOptionCombo), scanner_type);
+    /* Set the active item after the necessary widgets have been
+     * instantiated. */
+    Scanner_Option_Menu_Activate_Item (ScannerOptionCombo, NULL);
 }
 
 static gboolean
@@ -3072,15 +3073,15 @@ void Scan_Select_Mode_And_Run_Scanner (ET_File *ETFile)
 {
     g_return_if_fail (ScannerWindow != NULL || ETFile != NULL);
 
-    if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == SCANNER_FILL_TAG)
+    if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == ET_SCAN_TYPE_FILL_TAG)
     {
         /* Run Scanner Type: Scan Tag */
         Scan_Tag_With_Mask(ETFile);
-    } else if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == SCANNER_RENAME_FILE)
+    } else if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == ET_SCAN_TYPE_RENAME_FILE)
     {
         /* Run Scanner Type: Rename File */
         Scan_Rename_File_With_Mask(ETFile);
-    } else if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == SCANNER_PROCESS_FIELDS)
+    } else if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == ET_SCAN_TYPE_PROCESS_FIELDS)
     {
         /* Run Scanner Type: Process Fields */
         Scan_Process_Fields(ETFile);
@@ -3089,8 +3090,8 @@ void Scan_Select_Mode_And_Run_Scanner (ET_File *ETFile)
 
 void Scan_Use_Fill_Tag_Scanner (void)
 {
-    if (!ScannerWindow || gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) != SCANNER_FILL_TAG)
-        Open_ScannerWindow(SCANNER_FILL_TAG);
+    if (!ScannerWindow || gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) != ET_SCAN_TYPE_FILL_TAG)
+        Open_ScannerWindow ();
     else
         Action_Scan_Selected_Files();
 }
@@ -3098,16 +3099,16 @@ void Scan_Use_Fill_Tag_Scanner (void)
 
 void Scan_Use_Rename_File_Scanner (void)
 {
-    if (!ScannerWindow || gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) != SCANNER_RENAME_FILE)
-        Open_ScannerWindow(SCANNER_RENAME_FILE);
+    if (!ScannerWindow || gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) != ET_SCAN_TYPE_RENAME_FILE)
+        Open_ScannerWindow ();
     else
         Action_Scan_Selected_Files();
 }
 
 void Scan_Use_Process_Fields_Scanner (void)
 {
-    if (!ScannerWindow || gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) != SCANNER_PROCESS_FIELDS)
-        Open_ScannerWindow(SCANNER_PROCESS_FIELDS);
+    if (!ScannerWindow || gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) != ET_SCAN_TYPE_PROCESS_FIELDS)
+        Open_ScannerWindow ();
     else
         Action_Scan_Selected_Files();
 }
@@ -3163,9 +3164,6 @@ void ScannerWindow_Apply_Changes (void)
             g_settings_set (ETSettings, "scan-location", "(iiii)", x, y, width,
                             height);
         }
-
-        // The scanner selected
-        SCANNER_TYPE = gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo));
 
         /* Group: select entries to process */
         PROCESS_FILENAME_FIELD    = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFileNameField));
@@ -3346,10 +3344,10 @@ Scan_Check_Editor_Mask (GtkWidget *widget_to_show_hide,
                         GtkEntry *widget_source)
 {
     /* Select and get result of check scanner */
-    if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == SCANNER_FILL_TAG)
+    if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == ET_SCAN_TYPE_FILL_TAG)
     {
         return Scan_Check_Scan_Tag_Mask(widget_to_show_hide,widget_source);
-    } else if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == SCANNER_RENAME_FILE)
+    } else if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == ET_SCAN_TYPE_RENAME_FILE)
     {
         return Scan_Check_Rename_File_Mask(widget_to_show_hide,widget_source);
     } else
@@ -3706,7 +3704,7 @@ Mask_Editor_List_Add (void)
 
     treemodel = gtk_tree_view_get_model(GTK_TREE_VIEW(MaskEditorList));
 
-    if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == SCANNER_FILL_TAG)
+    if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == ET_SCAN_TYPE_FILL_TAG)
     {
         while(Scan_Masks[i])
         {
@@ -3722,7 +3720,7 @@ Mask_Editor_List_Add (void)
             g_free(temp);
             i++;
         }
-    } else if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == SCANNER_RENAME_FILE)
+    } else if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == ET_SCAN_TYPE_RENAME_FILE)
     {
         while(Rename_File_Masks[i])
         {
@@ -3915,10 +3913,10 @@ Mask_Editor_List_Save_Button (void)
 {
     Mask_Editor_Clean_Up_Masks_List();
 
-    if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == SCANNER_FILL_TAG)
+    if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == ET_SCAN_TYPE_FILL_TAG)
     {
         Save_Scan_Tag_Masks_List(ScanTagListModel, MASK_EDITOR_TEXT);
-    } else if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == SCANNER_RENAME_FILE)
+    } else if (gtk_combo_box_get_active(GTK_COMBO_BOX(ScannerOptionCombo)) == ET_SCAN_TYPE_RENAME_FILE)
     {
         Save_Rename_File_Masks_List(RenameFileListModel, MASK_EDITOR_TEXT);
     }
@@ -4062,7 +4060,7 @@ Scanner_Option_Menu_Activate_Item (GtkWidget *combo, gpointer data)
 {
     switch (gtk_combo_box_get_active(GTK_COMBO_BOX(combo)))
     {
-        case SCANNER_FILL_TAG:
+        case ET_SCAN_TYPE_FILL_TAG:
             gtk_widget_show(MaskEditorButton);
             gtk_widget_show(LegendButton);
             gtk_widget_show(ScanTagFrame);
@@ -4074,7 +4072,7 @@ Scanner_Option_Menu_Activate_Item (GtkWidget *combo, gpointer data)
             g_signal_emit_by_name(G_OBJECT(MaskEditorButton),"toggled");    /* To hide or show mask editor frame */
             break;
 
-        case SCANNER_RENAME_FILE:
+        case ET_SCAN_TYPE_RENAME_FILE:
             gtk_widget_show(MaskEditorButton);
             gtk_widget_show(LegendButton);
             gtk_widget_hide(ScanTagFrame);
@@ -4086,7 +4084,7 @@ Scanner_Option_Menu_Activate_Item (GtkWidget *combo, gpointer data)
             g_signal_emit_by_name(G_OBJECT(MaskEditorButton),"toggled");    /* To hide or show mask editor frame */
             break;
 
-        case SCANNER_PROCESS_FIELDS:
+        case ET_SCAN_TYPE_PROCESS_FIELDS:
             gtk_widget_hide(MaskEditorButton);
             gtk_widget_hide(LegendButton);
             gtk_widget_hide(ScanTagFrame);

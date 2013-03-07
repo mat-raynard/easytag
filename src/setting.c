@@ -134,7 +134,6 @@ tConfigVariable Config_Variables[] =
 
     {"audio_file_player",                       CV_TYPE_STRING,&AUDIO_FILE_PLAYER                        },
 
-    {"scanner_type",                             CV_TYPE_INT, &SCANNER_TYPE                              },
     {"fts_convert_underscore_and_p20_into_space",CV_TYPE_BOOL,&FTS_CONVERT_UNDERSCORE_AND_P20_INTO_SPACE },
     {"fts_convert_space_into_underscore",        CV_TYPE_BOOL,&FTS_CONVERT_SPACE_INTO_UNDERSCORE         },
     {"rfs_convert_underscore_and_p20_into_space",CV_TYPE_BOOL,&RFS_CONVERT_UNDERSCORE_AND_P20_INTO_SPACE },
@@ -270,7 +269,6 @@ void Init_Config_Variables (void)
     /*
      * Scanner
      */
-    SCANNER_TYPE                              = SCANNER_FILL_TAG;
     FTS_CONVERT_UNDERSCORE_AND_P20_INTO_SPACE = 1;
     FTS_CONVERT_SPACE_INTO_UNDERSCORE         = 0;
     RFS_CONVERT_UNDERSCORE_AND_P20_INTO_SPACE = 1;
