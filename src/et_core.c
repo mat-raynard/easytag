@@ -4698,18 +4698,23 @@ gchar *ET_File_Name_Generate (ET_File *ETFile, gchar *new_file_name_utf8)
 #endif
 
 
+/* Convert filename extension (lower/upper/no change). */
 static gchar *
 ET_File_Name_Format_Extension (ET_File *ETFile)
 {
-    // Convert filename extension (lower/upper/no change)
-    if (FILENAME_EXTENSION_LOWER_CASE)
-        return g_utf8_strdown(ETFile->ETFileDescription->Extension,-1);
+    EtFilenameExtensionMode mode;
 
-    else if (FILENAME_EXTENSION_UPPER_CASE)
-        return g_utf8_strup(ETFile->ETFileDescription->Extension,-1);
-
-    else // FILENAME_EXTENSION_NO_CHANGE
-        return g_strdup(ETFile->ETFileExtension);
+    mode = g_settings_get_enum (ETSettings, "rename-extension-mode");
+    switch (mode)
+    {
+        case ET_FILENAME_EXTENSION_LOWER_CASE:
+            return g_utf8_strdown (ETFile->ETFileDescription->Extension, -1);
+        case ET_FILENAME_EXTENSION_UPPER_CASE:
+            return g_utf8_strup (ETFile->ETFileDescription->Extension, -1);
+        case ET_FILENAME_EXTENSION_NO_CHANGE:
+        default:
+            return g_strdup (ETFile->ETFileExtension);
+    };
 }
 
 

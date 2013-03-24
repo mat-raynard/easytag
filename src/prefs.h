@@ -63,9 +63,6 @@ GtkListStore *FilePlayerModel;
 
 /* File Settings */
 GtkWidget *ReplaceIllegalCharactersInFilename;
-GtkWidget *FilenameExtensionNoChange;
-GtkWidget *FilenameExtensionLowerCase;
-GtkWidget *FilenameExtensionUpperCase;
 GtkWidget *PreserveModificationTime;
 GtkWidget *UpdateParentDirectoryModificationTime;
 
