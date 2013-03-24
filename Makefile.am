@@ -48,6 +48,7 @@ easytag_SOURCES = \
 	src/crc32.c \
 	src/dlm.c \
 	src/easytag.c \
+	src/enums.c \
 	src/et_core.c \
 	src/flac_header.c \
 	src/flac_tag.c \
@@ -115,6 +116,44 @@ easytag_headers = \
 easytag_LDADD = \
 	$(EASYTAG_LIBS) \
 	$(ID3LIB_LIBS)
+
+BUILT_SOURCES = \
+	src/enums.h
+
+enum_data = \
+	src/enums.c \
+	src/enums.h
+
+easytag_enum_headers = \
+	$(srcdir)/src/setting.h
+
+src/enums.c: $(easytag_enum_headers) src/enums.h Makefile
+	$(AM_V_GEN)$(GLIB_MKENUMS) \
+		--fhead "#include \"enums.h\"\n\n" \
+		--fprod "/* enumerations from \"@filename@\" */\n" \
+		--fprod "#include \"@filename@\"\n" \
+		--vhead "GType\n@enum_name@_get_type (void)\n{\n" \
+		--vhead "    static GType type = 0;\n\n" \
+		--vhead "    if (!type)\n    {\n" \
+		--vhead "        static const G@Type@Value _@enum_name@_values[] = {" \
+		--vprod "            { @VALUENAME@, \"@VALUENAME@\", \"@valuenick@\" }," \
+		--vtail "            { 0, NULL, NULL }\n        };\n\n" \
+		--vtail "        type = g_@type@_register_static (\"@EnumName@\", _@enum_name@_values);\n    }\n\n" \
+		--vtail "  return type;\n}\n\n" \
+		$(easytag_enum_headers) > $@
+
+src/enums.h: $(easytag_enum_headers) Makefile
+	$(AM_V_GEN)$(GLIB_MKENUMS) \
+		--fhead "#ifndef ET_ENUMS_H_\n" \
+		--fhead "#define ET_ENUMS_H_\n\n" \
+		--fhead "#include <glib-object.h>\n\n" \
+		--fhead "G_BEGIN_DECLS\n\n" \
+		--fprod "/* enumerations from @filename@ */\n" \
+		--vhead "GType @enum_name@_get_type (void);\n" \
+		--vhead "#define ET_TYPE_@ENUMSHORT@ (@enum_name@_get_type())\n" \
+		--ftail "G_END_DECLS\n\n" \
+		--ftail "#endif /* ET_ENUMS_H_ */" \
+		$(easytag_enum_headers) > $@
 
 # NSIS installer script.
 # TODO: Run script from dist dir.
@@ -324,6 +363,7 @@ endif
 CLEANFILES = \
 	$(check_SCRIPTS) \
 	$(desktop_DATA) \
+	$(enum_data) \
 	$(nodist_man_MANS) \
 	easytag-win32-installer.nsi
 

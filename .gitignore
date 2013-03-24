@@ -37,4 +37,6 @@ ltmain.sh
 /src/id3lib/.deps/
 /src/libapetag/.deps/
 /src/win32/.deps/
+/src/enums.c
+/src/enums.h
 stamp-h1
