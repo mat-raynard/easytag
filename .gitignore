@@ -27,6 +27,7 @@ configure
 /INSTALL
 libtool
 ltmain.sh
+/org.gnome.EasyTAG.enums.xml
 /po/*.gmo
 /po/.intltool-merge-cache
 /po/Makefile.in.in
