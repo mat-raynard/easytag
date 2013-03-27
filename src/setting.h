@@ -62,6 +62,16 @@ typedef enum
 } EtPlaylistContent;
 
 /*
+ * Encoding options when renaming files.
+ */
+typedef enum
+{
+    ET_RENAME_ENCODING_TRY_ALTERNATIVE,
+    ET_RENAME_ENCODING_TRANSLITERATE,
+    ET_RENAME_ENCODING_IGNORE
+} EtRenameEncoding;
+
+/*
  * The mode for the scanner window. See the GSettings key "scanner-type".
  */
 typedef enum
@@ -144,11 +154,6 @@ gchar  *DEFAULT_PATH_TO_MP3;
 gint    SORTING_FILE_CASE_SENSITIVE;
 
 gchar  *AUDIO_FILE_PLAYER;
-
-/* File Settings */
-gint    FILENAME_CHARACTER_SET_OTHER;
-gint    FILENAME_CHARACTER_SET_APPROXIMATE;
-gint    FILENAME_CHARACTER_SET_DISCARD;
 
 /* Tag Settings */
 gint    FILE_WRITING_ID3V2_VERSION_4;
