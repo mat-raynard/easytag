@@ -53,6 +53,9 @@
  * Declaration *
  ***************/
 /* Playlist window defined in misc.h */
+static GtkWidget *playlist_content_filenames;
+static GtkWidget *playlist_content_extended;
+static GtkWidget *playlist_content_mask;
 
 /* Search file window. */
 static GtkWidget *SearchFileWindow = NULL;
@@ -1389,14 +1392,23 @@ void Open_Write_Playlist_Window (void)
     gtk_container_add(GTK_CONTAINER(Frame),vbox);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 4);
 
-    playlist_content_none = gtk_radio_button_new_with_label(NULL,_("Write only list of files"));
-    gtk_box_pack_start(GTK_BOX(vbox),playlist_content_none,FALSE,FALSE,0);
+    playlist_content_filenames = gtk_radio_button_new_with_label (NULL,
+                                                                  _("Filenames only"));
+    gtk_widget_set_name (playlist_content_filenames, "filenames");
+    gtk_box_pack_start (GTK_BOX (vbox), playlist_content_filenames, FALSE,
+                        FALSE, 0);
 
-    playlist_content_filename = gtk_radio_button_new_with_label_from_widget(
-        GTK_RADIO_BUTTON(playlist_content_none),_("Write info using filename"));
-    gtk_box_pack_start(GTK_BOX(vbox),playlist_content_filename,FALSE,FALSE,0);
+    playlist_content_extended = gtk_radio_button_new_with_label_from_widget(
+        GTK_RADIO_BUTTON (playlist_content_filenames),
+	                  _("Filenames with extended information"));
+    gtk_widget_set_name (playlist_content_extended, "extended");
+    gtk_box_pack_start (GTK_BOX (vbox), playlist_content_extended, FALSE,
+                        FALSE, 0);
 
-    playlist_content_mask = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(playlist_content_none), _("Write info using:"));
+    playlist_content_mask = gtk_radio_button_new_with_label_from_widget(
+        GTK_RADIO_BUTTON (playlist_content_filenames),
+                          _("Filenames and information mask:"));
+    gtk_widget_set_name (playlist_content_mask, "extended-mask");
     hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,0);
     gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,0);
     gtk_box_pack_start(GTK_BOX(hbox),playlist_content_mask,FALSE,FALSE,0);
@@ -1429,10 +1441,24 @@ void Open_Write_Playlist_Window (void)
     // FIX ME : edit the masks
     gtk_widget_set_sensitive(GTK_WIDGET(Button),FALSE);
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(playlist_content_none),    PLAYLIST_CONTENT_NONE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(playlist_content_filename),PLAYLIST_CONTENT_FILENAME);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(playlist_content_mask),    PLAYLIST_CONTENT_MASK);
-
+    g_settings_bind_with_mapping (ETSettings, "playlist-content",
+                                  playlist_content_filenames, "active",
+                                  G_SETTINGS_BIND_DEFAULT,
+                                  et_settings_enum_radio_get,
+                                  et_settings_enum_radio_set,
+                                  playlist_content_filenames, NULL);
+    g_settings_bind_with_mapping (ETSettings, "playlist-content",
+                                  playlist_content_extended, "active",
+                                  G_SETTINGS_BIND_DEFAULT,
+                                  et_settings_enum_radio_get,
+                                  et_settings_enum_radio_set,
+                                  playlist_content_extended, NULL);
+    g_settings_bind_with_mapping (ETSettings, "playlist-content",
+                                  playlist_content_mask, "active",
+                                  G_SETTINGS_BIND_DEFAULT,
+                                  et_settings_enum_radio_get,
+                                  et_settings_enum_radio_set,
+                                  playlist_content_mask, NULL);
 
     /* Separator line */
     Separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
@@ -1512,10 +1538,6 @@ void Write_Playlist_Window_Apply_Changes (void)
         if (PLAYLIST_NAME) g_free(PLAYLIST_NAME);
         PLAYLIST_NAME                 = g_strdup(gtk_entry_get_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(PlayListNameMaskCombo)))));
 
-        PLAYLIST_CONTENT_NONE         = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_content_none));
-        PLAYLIST_CONTENT_FILENAME     = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_content_filename));
-        PLAYLIST_CONTENT_MASK         = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(playlist_content_mask));
-        
         if (PLAYLIST_CONTENT_MASK_VALUE) g_free(PLAYLIST_CONTENT_MASK_VALUE);
         PLAYLIST_CONTENT_MASK_VALUE   = g_strdup(gtk_entry_get_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(PlayListContentMaskCombo)))));
 
@@ -1789,6 +1811,7 @@ Write_Playlist (const gchar *playlist_name)
     gchar *basedir;
     gchar *temp;
     gint   duration;
+    EtPlaylistContent playlist_content;
 
     if ((file = fopen(playlist_name,"wb")) == NULL)
     {
@@ -1802,8 +1825,9 @@ Write_Playlist (const gchar *playlist_name)
      */
     basedir = g_path_get_dirname(playlist_name);
 
+    playlist_content = g_settings_get_enum (ETSettings, "playlist-content");
     // 1) First line of the file (if playlist content is not set to "write only list of files")
-    if (!PLAYLIST_CONTENT_NONE)
+    if (playlist_content != ET_PLAYLIST_CONTENT_FILENAMES)
     {
         fprintf(file,"#EXTM3U\r\n");
     }
@@ -1829,6 +1853,7 @@ Write_Playlist (const gchar *playlist_name)
     {
         etfilelist = g_list_first(ETCore->ETFileList);
     }
+    /* TODO: Restructure to avid the duplicated code. */
     while (etfilelist)
     {
         etfile   = (ET_File *)etfilelist->data;
@@ -1841,25 +1866,34 @@ Write_Playlist (const gchar *playlist_name)
             if ( strncmp(filename,basedir,strlen(basedir))==0 )
             {
                 // 2) Write the header
-                if (PLAYLIST_CONTENT_NONE)
+                switch (playlist_content)
                 {
-                    // No header written
-                }else if (PLAYLIST_CONTENT_FILENAME)
-                {
-                    // Header uses only filename
-                    temp = g_path_get_basename(filename);
-                    fprintf(file,"#EXTINF:%d,%s\r\n",duration,temp); // Must be written in system encoding (not UTF-8)
-                    g_free(temp);
-                }else if (PLAYLIST_CONTENT_MASK)
-                {
-                    // Header uses generated filename from a mask
-                    gchar *mask = filename_from_display(gtk_entry_get_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(PlayListContentMaskCombo)))));
-                    // Special case : we don't replace illegal characters and don't check if there is a directory separator in the mask.
-                    gchar *filename_generated_utf8 = Scan_Generate_New_Filename_From_Mask(etfile,mask,TRUE);
-                    gchar *filename_generated = filename_from_display(filename_generated_utf8);
-                    fprintf(file,"#EXTINF:%d,%s\r\n",duration,filename_generated); // Must be written in system encoding (not UTF-8)
-                    g_free(mask);
-                    g_free(filename_generated_utf8);
+                    case ET_PLAYLIST_CONTENT_FILENAMES:
+                        /* No header written. */
+                        break;
+                    case ET_PLAYLIST_CONTENT_EXTENDED:
+                        /* Header has extended information. */
+                        temp = g_path_get_basename (filename);
+                        /* Must be written in system encoding (not UTF-8). */
+                        fprintf (file, "#EXTINF:%d,%s\r\n", duration, temp);
+                        g_free (temp);
+                        break;
+                    case ET_PLAYLIST_CONTENT_EXTENDED_MASK:
+                    {
+                        /* Header uses information generated from a mask. */
+                        gchar *mask = filename_from_display (gtk_entry_get_text (GTK_ENTRY (gtk_bin_get_child (GTK_BIN (PlayListContentMaskCombo)))));
+                        /* Special case: do not replace illegal characters and
+                         * do not check if there is a directory separator in
+                         * the mask.
+                         */
+                        gchar *filename_generated_utf8 = Scan_Generate_New_Filename_From_Mask (etfile, mask, TRUE);
+                        gchar *filename_generated = filename_from_display (filename_generated_utf8);
+                        /* Must be written in system encoding (not UTF-8). */
+                        fprintf (file, "#EXTINF:%d,%s\r\n", duration,
+                                 filename_generated);
+                        g_free (mask);
+                        g_free (filename_generated_utf8);
+                    }
                 }
 
                 // 3) Write the file path
@@ -1878,24 +1912,34 @@ Write_Playlist (const gchar *playlist_name)
         } else /* !ETSettings:playlist-relative */
         {
             // 2) Write the header
-            if (PLAYLIST_CONTENT_NONE)
+            switch (playlist_content)
             {
-                // No header written
-            }else if (PLAYLIST_CONTENT_FILENAME)
-            {
-                // Header uses only filename
-                temp = g_path_get_basename(filename);
-                fprintf(file,"#EXTINF:%d,%s\r\n",duration,temp); // Must be written in system encoding (not UTF-8)
-                g_free(temp);
-            }else if (PLAYLIST_CONTENT_MASK)
-            {
-                // Header uses generated filename from a mask
-                gchar *mask = filename_from_display(gtk_entry_get_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(PlayListContentMaskCombo)))));
-                gchar *filename_generated_utf8 = Scan_Generate_New_Filename_From_Mask(etfile,mask,TRUE);
-                gchar *filename_generated = filename_from_display(filename_generated_utf8);
-                fprintf(file,"#EXTINF:%d,%s\r\n",duration,filename_generated); // Must be written in system encoding (not UTF-8)
-                g_free(mask);
-                g_free(filename_generated_utf8);
+                case ET_PLAYLIST_CONTENT_FILENAMES:
+                    /* No header written. */
+                    break;
+                case ET_PLAYLIST_CONTENT_EXTENDED:
+                    /* Header has extended information. */
+                    temp = g_path_get_basename (filename);
+                    /* Must be written in system encoding (not UTF-8). */
+                    fprintf (file, "#EXTINF:%d,%s\r\n", duration, temp);
+                    g_free (temp);
+                    break;
+                case ET_PLAYLIST_CONTENT_EXTENDED_MASK:
+                {
+                    /* Header uses information generated from a mask. */
+                    gchar *mask = filename_from_display (gtk_entry_get_text (GTK_ENTRY (gtk_bin_get_child (GTK_BIN (PlayListContentMaskCombo)))));
+                    /* Special case: do not replace illegal characters and
+                     * do not check if there is a directory separator in
+                     * the mask.
+                     */
+                    gchar *filename_generated_utf8 = Scan_Generate_New_Filename_From_Mask (etfile, mask, TRUE);
+                    gchar *filename_generated = filename_from_display (filename_generated_utf8);
+                    /* Must be written in system encoding (not UTF-8). */
+                    fprintf (file, "#EXTINF:%d,%s\r\n", duration,
+                             filename_generated);
+                    g_free (mask);
+                    g_free (filename_generated_utf8);
+                }
             }
 
             // 3) Write the file path
