@@ -903,7 +903,7 @@ void Open_OptionsWindow (void)
         _("No"));
     gtk_grid_attach (GTK_GRID (Table), FileWritingId3v2IconvOptionsNo, 2, 6, 1,
                      1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(FileWritingId3v2IconvOptionsNo),FILE_WRITING_ID3V2_ICONV_OPTIONS_NO);
+    gtk_widget_set_name (FileWritingId3v2IconvOptionsNo, "none");
     gtk_widget_set_tooltip_text(FileWritingId3v2IconvOptionsNo,_("With this option, when "
         "a character cannot be represented in the target character set, it isn't changed. "
         "But note that an error message will be displayed for information."));
@@ -912,7 +912,8 @@ void Open_OptionsWindow (void)
         _("//TRANSLIT"));
     gtk_grid_attach (GTK_GRID (Table), FileWritingId3v2IconvOptionsTranslit, 3,
                      6, 1, 1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(FileWritingId3v2IconvOptionsTranslit),FILE_WRITING_ID3V2_ICONV_OPTIONS_TRANSLIT);
+    gtk_widget_set_name (FileWritingId3v2IconvOptionsTranslit,
+                         "transliterate");
     gtk_widget_set_tooltip_text(FileWritingId3v2IconvOptionsTranslit,_("With this option, when "
         "a character cannot be represented in the target character set, it can be "
         "approximated through one or several similarly looking characters."));
@@ -922,10 +923,29 @@ void Open_OptionsWindow (void)
         _("//IGNORE"));
     gtk_grid_attach (GTK_GRID (Table), FileWritingId3v2IconvOptionsIgnore, 4,
                      6, 1, 1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(FileWritingId3v2IconvOptionsIgnore),FILE_WRITING_ID3V2_ICONV_OPTIONS_IGNORE);
+    gtk_widget_set_name (FileWritingId3v2IconvOptionsIgnore, "ignore");
     gtk_widget_set_tooltip_text(FileWritingId3v2IconvOptionsIgnore,_("With this option, when "
         "a character cannot be represented in the target character set, it will "
         "be silently discarded."));
+
+    g_settings_bind_with_mapping (ETSettings, "id3v2-encoding-option",
+                                  FileWritingId3v2IconvOptionsNo, "active",
+                                  G_SETTINGS_BIND_DEFAULT,
+                                  et_settings_enum_radio_get,
+                                  et_settings_enum_radio_set,
+                                  FileWritingId3v2IconvOptionsNo, NULL);
+    g_settings_bind_with_mapping (ETSettings, "id3v2-encoding-option",
+                                  FileWritingId3v2IconvOptionsTranslit,
+                                  "active", G_SETTINGS_BIND_DEFAULT,
+                                  et_settings_enum_radio_get,
+                                  et_settings_enum_radio_set,
+                                  FileWritingId3v2IconvOptionsTranslit, NULL);
+    g_settings_bind_with_mapping (ETSettings, "id3v2-encoding-option",
+                                  FileWritingId3v2IconvOptionsIgnore, "active",
+                                  G_SETTINGS_BIND_DEFAULT,
+                                  et_settings_enum_radio_get,
+                                  et_settings_enum_radio_set,
+                                  FileWritingId3v2IconvOptionsIgnore, NULL);
 
     // ID3v1 tags
     Frame = gtk_frame_new (_("ID3v1 tags"));
@@ -976,7 +996,7 @@ void Open_OptionsWindow (void)
         _("No"));
     gtk_grid_attach (GTK_GRID (Table), FileWritingId3v1IconvOptionsNo, 1, 4, 1,
                      1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(FileWritingId3v1IconvOptionsNo),FILE_WRITING_ID3V1_ICONV_OPTIONS_NO);
+    gtk_widget_set_name (FileWritingId3v1IconvOptionsNo, "none");
     gtk_widget_set_tooltip_text(FileWritingId3v1IconvOptionsNo,_("With this option, when "
         "a character cannot be represented in the target character set, it isn't changed. "
         "But note that an error message will be displayed for information."));
@@ -985,7 +1005,8 @@ void Open_OptionsWindow (void)
         _("//TRANSLIT"));
     gtk_grid_attach (GTK_GRID (Table), FileWritingId3v1IconvOptionsTranslit, 2,
                      4, 1, 1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(FileWritingId3v1IconvOptionsTranslit),FILE_WRITING_ID3V1_ICONV_OPTIONS_TRANSLIT);
+    gtk_widget_set_name (FileWritingId3v1IconvOptionsTranslit,
+                         "transliterate");
     gtk_widget_set_tooltip_text(FileWritingId3v1IconvOptionsTranslit,_("With this option, when "
         "a character cannot be represented in the target character set, it can be "
         "approximated through one or several similarly looking characters."));
@@ -995,10 +1016,29 @@ void Open_OptionsWindow (void)
         _("//IGNORE"));
     gtk_grid_attach (GTK_GRID (Table), FileWritingId3v1IconvOptionsIgnore, 3,
                      4, 1, 1);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(FileWritingId3v1IconvOptionsIgnore),FILE_WRITING_ID3V1_ICONV_OPTIONS_IGNORE);
+    gtk_widget_set_name (FileWritingId3v1IconvOptionsIgnore, "ignore");
     gtk_widget_set_tooltip_text(FileWritingId3v1IconvOptionsIgnore,_("With this option, when "
         "a character cannot be represented in the target character set, it will "
         "be silently discarded."));
+
+    g_settings_bind_with_mapping (ETSettings, "id3v1-encoding-option",
+                                  FileWritingId3v1IconvOptionsNo, "active",
+                                  G_SETTINGS_BIND_DEFAULT,
+                                  et_settings_enum_radio_get,
+                                  et_settings_enum_radio_set,
+                                  FileWritingId3v1IconvOptionsNo, NULL);
+    g_settings_bind_with_mapping (ETSettings, "id3v1-encoding-option",
+                                  FileWritingId3v1IconvOptionsTranslit,
+                                  "active", G_SETTINGS_BIND_DEFAULT,
+                                  et_settings_enum_radio_get,
+                                  et_settings_enum_radio_set,
+                                  FileWritingId3v1IconvOptionsTranslit, NULL);
+    g_settings_bind_with_mapping (ETSettings, "id3v1-encoding-option",
+                                  FileWritingId3v1IconvOptionsIgnore, "active",
+                                  G_SETTINGS_BIND_DEFAULT,
+                                  et_settings_enum_radio_get,
+                                  et_settings_enum_radio_set,
+                                  FileWritingId3v1IconvOptionsIgnore, NULL);
 
     /* Character Set for reading tag */
     Frame = gtk_frame_new (_("Character Set for reading ID3 tags"));

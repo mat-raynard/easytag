@@ -1160,37 +1160,52 @@ void Id3tag_Prepare_ID3v1 (ID3Tag *id3_tag)
  * We use specials functionalities of iconv : //TRANSLIT and //IGNORE (the last
  * one doesn't work on my system) to force conversion to the target encoding.
  */
-gchar *Id3tag_Rules_For_ISO_Fields (const gchar *string, const gchar *from_codeset, const gchar *to_codeset)
+gchar *
+Id3tag_Rules_For_ISO_Fields (const gchar *string, const gchar *from_codeset,
+                             const gchar *to_codeset)
 {
     gchar *string_converted = NULL;
+    EtTagEncoding iconv_option;
 
-    if (!string || !from_codeset || !to_codeset)
-        return NULL;
+    g_return_val_if_fail (string || from_codeset || to_codeset, NULL);
 
-    if (FILE_WRITING_ID3V1_ICONV_OPTIONS_NO)
+    iconv_option = g_settings_get_enum (ETSettings, "id3v1-encoding-option");
+
+    switch (iconv_option)
     {
-        string_converted = convert_string(string,from_codeset,to_codeset,TRUE);
-
-    }else if (FILE_WRITING_ID3V1_ICONV_OPTIONS_TRANSLIT)
-    {
-        // iconv_open (3):
-        // When the string "//TRANSLIT" is appended to tocode, transliteration
-        // is activated. This means that when a character cannot be represented
-        // in the target character set, it can be approximated through one or
-        // several similarly looking characters.
-        gchar *to_enc = g_strconcat(to_codeset, "//TRANSLIT", NULL);
-        string_converted = convert_string(string,from_codeset,to_enc,TRUE);
-        g_free(to_enc);
-
-    }else if (FILE_WRITING_ID3V1_ICONV_OPTIONS_IGNORE)
-    {
-        // iconv_open (3):
-        // When the string "//IGNORE" is appended to tocode, characters that
-        // cannot be represented in the target character set will be silently
-        // discarded.
-        gchar *to_enc = g_strconcat(to_codeset, "//IGNORE", NULL);
-        string_converted = convert_string(string,from_codeset,to_enc,TRUE);
-        g_free(to_enc);
+        default:
+        case ET_TAG_ENCODING_NONE:
+            string_converted = convert_string (string, from_codeset,
+                                               to_codeset, TRUE);
+            break;
+        case ET_TAG_ENCODING_TRANSLITERATE:
+        {
+            /* iconv_open (3):
+             * When the string "//TRANSLIT" is appended to tocode,
+             * transliteration is activated. This means that when a character
+             * cannot be represented in the target character set, it can be
+             * approximated through one or several similarly looking
+             * characters.
+             */
+            gchar *to_enc = g_strconcat (to_codeset, "//TRANSLIT", NULL);
+            string_converted = convert_string (string, from_codeset, to_enc,
+                                               TRUE);
+            g_free (to_enc);
+            break;
+        }
+        case ET_TAG_ENCODING_IGNORE:
+        {
+            /* iconv_open (3):
+             * When the string "//IGNORE" is appended to tocode, characters
+             * that cannot be represented in the target character set will be
+             * silently discarded.
+             */
+            gchar *to_enc = g_strconcat (to_codeset, "//IGNORE", NULL);
+            string_converted = convert_string (string, from_codeset, to_enc,
+                                               TRUE);
+            g_free (to_enc);
+            break;
+        }
     }
 
     return string_converted;
