@@ -64,18 +64,6 @@ static GtkWidget *RenameFilePreviewLabel = NULL;
 static GtkListStore *RenameFileListModel;
 static GtkListStore *ScanTagListModel;
 
-static GtkWidget *ProcessFileNameField;
-static GtkWidget *ProcessTitleField;
-static GtkWidget *ProcessArtistField;
-static GtkWidget *ProcessAlbumArtistField;
-static GtkWidget *ProcessAlbumField;
-static GtkWidget *ProcessGenreField;
-static GtkWidget *ProcessCommentField;
-static GtkWidget *ProcessComposerField;
-static GtkWidget *ProcessOrigArtistField;
-static GtkWidget *ProcessCopyrightField;
-static GtkWidget *ProcessURLField;
-static GtkWidget *ProcessEncodedByField;
 static GtkWidget *ProcessFieldsConvertIntoSpace = NULL;
 static GtkWidget *ProcessFieldsConvertSpace = NULL;
 static GtkWidget *ProcessFieldsConvert = NULL;
@@ -277,6 +265,11 @@ static void Scan_Convert_Character (gchar **string);
 static GList *Scan_Generate_New_Tag_From_Mask (ET_File *ETFile, gchar *mask);
 static void Scan_Set_Scanner_Window_Init_Position (void);
 
+gboolean et_scanner_flags_get (GValue *value, GVariant *variant,
+                               gpointer user_data);
+GVariant *et_scanner_flags_set (const GValue *value,
+                                const GVariantType *expected_type,
+                                gpointer user_data);
 
 /*************
  * Functions *
@@ -1116,6 +1109,7 @@ Scan_Process_Fields (ET_File *ETFile)
     File_Tag  *FileTag  = NULL;
     File_Name *st_filename;
     File_Tag  *st_filetag;
+    guint process_fields;
     gchar     *filename_utf8;
     gchar     *string;
 
@@ -1123,11 +1117,13 @@ Scan_Process_Fields (ET_File *ETFile)
 
     st_filename = (File_Name *)ETFile->FileNameNew->data;
     st_filetag  = (File_Tag  *)ETFile->FileTag->data;
+    process_fields = g_settings_get_flags (ETSettings, "process-fields");
 
     /* Process the filename */
     if (st_filename != NULL)
     {
-        if (st_filename->value_utf8 && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFileNameField)))
+        if (st_filename->value_utf8
+            && (process_fields & ET_PROCESS_FIELD_FILENAME))
         {
             gchar *string_utf8;
             gchar *pos;
@@ -1154,7 +1150,8 @@ Scan_Process_Fields (ET_File *ETFile)
     if (st_filetag != NULL)
     {
         // Title field
-        if (st_filetag->title && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessTitleField)))
+        if (st_filetag->title
+            && (process_fields & ET_PROCESS_FIELD_TITLE))
         {
             if (!FileTag)
             {
@@ -1172,7 +1169,8 @@ Scan_Process_Fields (ET_File *ETFile)
         }
 
         // Artist field
-        if (st_filetag->artist && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessArtistField)))
+        if (st_filetag->artist
+            && (process_fields & ET_PROCESS_FIELD_ARTIST))
         {
             if (!FileTag)
             {
@@ -1190,7 +1188,8 @@ Scan_Process_Fields (ET_File *ETFile)
         }
 
 		// Album Artist field
-        if (st_filetag->album_artist && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessAlbumArtistField)))
+        if (st_filetag->album_artist
+            && (process_fields & ET_PROCESS_FIELD_ALBUM_ARTIST))
         {
             if (!FileTag)
             {
@@ -1207,7 +1206,8 @@ Scan_Process_Fields (ET_File *ETFile)
             g_free(string);
         }
         // Album field
-        if (st_filetag->album && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessAlbumField)))
+        if (st_filetag->album
+            && (process_fields & ET_PROCESS_FIELD_ALBUM))
         {
             if (!FileTag)
             {
@@ -1225,7 +1225,8 @@ Scan_Process_Fields (ET_File *ETFile)
         }
 
         // Genre field
-        if (st_filetag->genre && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessGenreField)))
+        if (st_filetag->genre
+            && (process_fields & ET_PROCESS_FIELD_GENRE))
         {
             if (!FileTag)
             {
@@ -1243,7 +1244,8 @@ Scan_Process_Fields (ET_File *ETFile)
         }
 
         // Comment field
-        if (st_filetag->comment && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessCommentField)))
+        if (st_filetag->comment
+            && (process_fields & ET_PROCESS_FIELD_COMMENT))
         {
             if (!FileTag)
             {
@@ -1261,7 +1263,8 @@ Scan_Process_Fields (ET_File *ETFile)
         }
 
         // Composer field
-        if (st_filetag->composer && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessComposerField)))
+        if (st_filetag->composer
+            && (process_fields & ET_PROCESS_FIELD_COMPOSER))
         {
             if (!FileTag)
             {
@@ -1279,7 +1282,8 @@ Scan_Process_Fields (ET_File *ETFile)
         }
 
         // Original artist field
-        if (st_filetag->orig_artist && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessOrigArtistField)))
+        if (st_filetag->orig_artist
+            && (process_fields & ET_PROCESS_FIELD_ORIGINAL_ARTIST))
         {
             if (!FileTag)
             {
@@ -1297,7 +1301,8 @@ Scan_Process_Fields (ET_File *ETFile)
         }
 
         // Copyright field
-        if (st_filetag->copyright && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessCopyrightField)))
+        if (st_filetag->copyright
+            && (process_fields & ET_PROCESS_FIELD_COPYRIGHT))
         {
             if (!FileTag)
             {
@@ -1315,7 +1320,8 @@ Scan_Process_Fields (ET_File *ETFile)
         }
 
         // URL field
-        if (st_filetag->url && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessURLField)))
+        if (st_filetag->url
+            && (process_fields & ET_PROCESS_FIELD_URL))
         {
             if (!FileTag)
             {
@@ -1333,7 +1339,8 @@ Scan_Process_Fields (ET_File *ETFile)
         }
 
         // 'Encoded by' field
-        if (st_filetag->encoded_by && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessEncodedByField)))
+        if (st_filetag->encoded_by
+            && (process_fields & ET_PROCESS_FIELD_ENCODED_BY))
         {
             if (!FileTag)
             {
@@ -2600,79 +2607,67 @@ Open_ScannerWindow ()
                                  _("The buttons on the right represent the "
                                    "fields which can be processed. Select "
                                    "those which interest you"));
-    // Advice for Translators: set the first letter of filename translated
-    ProcessFileNameField = gtk_toggle_button_new_with_label(   _("F"));
-    gtk_widget_set_tooltip_text (ProcessFileNameField,
-                                 _("Process filename field"));
-    // Advice for Translators: set the first letter of title translated
-    ProcessTitleField = gtk_toggle_button_new_with_label(      _("T"));
-    gtk_widget_set_tooltip_text(ProcessTitleField,             _("Process title field"));
-    // Advice for Translators: set the first letter of artist translated
-    ProcessArtistField = gtk_toggle_button_new_with_label(     _("Ar"));
-    gtk_widget_set_tooltip_text(ProcessArtistField,            _("Process file artist field"));
-    // Advice for Translators: set the first letter of album artist translated
-    ProcessAlbumArtistField = gtk_toggle_button_new_with_label(_("AA"));
-    gtk_widget_set_tooltip_text(ProcessAlbumArtistField,       _("Process album artist field"));
-    // Advice for Translators: set the first letter of album translated
-    ProcessAlbumField = gtk_toggle_button_new_with_label(      _("Al"));
-    gtk_widget_set_tooltip_text(ProcessAlbumField,             _("Process album field"));
-    // Advice for Translators: set the first letter of genre translated
-    ProcessGenreField = gtk_toggle_button_new_with_label(      _("G"));
-    gtk_widget_set_tooltip_text(ProcessGenreField,             _("Process genre field"));
-    // Advice for Translators: set the first letter of comment translated
-    ProcessCommentField = gtk_toggle_button_new_with_label(    _("Cm"));
-    gtk_widget_set_tooltip_text(ProcessCommentField,           _("Process comment field"));
-    // Advice for Translators: set the first letter of composer translated
-    ProcessComposerField = gtk_toggle_button_new_with_label(   _("Cp"));
-    gtk_widget_set_tooltip_text(ProcessComposerField,          _("Process composer field"));
-    // Advice for Translators: set the first letter of orig artist translated
-    ProcessOrigArtistField = gtk_toggle_button_new_with_label( _("O"));
-    gtk_widget_set_tooltip_text(ProcessOrigArtistField,        _("Process original artist field"));
-    // Advice for Translators: set the first letter of copyright translated
-    ProcessCopyrightField = gtk_toggle_button_new_with_label(  _("Cr"));
-    gtk_widget_set_tooltip_text(ProcessCopyrightField,         _("Process copyright field"));
-    // Advice for Translators: set the first letter of URL translated
-    ProcessURLField = gtk_toggle_button_new_with_label(        _("U"));
-    gtk_widget_set_tooltip_text(ProcessURLField,               _("Process URL field"));
-    // Advice for Translators: set the first letter of encoder name translated
-    ProcessEncodedByField = gtk_toggle_button_new_with_label(  _("E"));
-    gtk_widget_set_tooltip_text(ProcessEncodedByField,         _("Process encoder name field"));
-    gtk_box_pack_start(GTK_BOX(hbox),ProcessFileNameField,   TRUE,TRUE,2);
-    gtk_box_pack_start(GTK_BOX(hbox),ProcessTitleField,      TRUE,TRUE,2);
-    gtk_box_pack_start(GTK_BOX(hbox),ProcessArtistField,     TRUE,TRUE,2);
-    gtk_box_pack_start(GTK_BOX(hbox),ProcessAlbumArtistField,TRUE,TRUE,2);
-    gtk_box_pack_start(GTK_BOX(hbox),ProcessAlbumField,      TRUE,TRUE,2);
-    gtk_box_pack_start(GTK_BOX(hbox),ProcessGenreField,      TRUE,TRUE,2);
-    gtk_box_pack_start(GTK_BOX(hbox),ProcessCommentField,    TRUE,TRUE,2);
-    gtk_box_pack_start(GTK_BOX(hbox),ProcessComposerField,   TRUE,TRUE,2);
-    gtk_box_pack_start(GTK_BOX(hbox),ProcessOrigArtistField, TRUE,TRUE,2);
-    gtk_box_pack_start(GTK_BOX(hbox),ProcessCopyrightField,  TRUE,TRUE,2);
-    gtk_box_pack_start(GTK_BOX(hbox),ProcessURLField,        TRUE,TRUE,2);
-    gtk_box_pack_start(GTK_BOX(hbox),ProcessEncodedByField,  TRUE,TRUE,2);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFileNameField),   PROCESS_FILENAME_FIELD);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessTitleField),      PROCESS_TITLE_FIELD);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessArtistField),     PROCESS_ARTIST_FIELD);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessAlbumArtistField),PROCESS_ALBUM_ARTIST_FIELD);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessAlbumField),      PROCESS_ALBUM_FIELD);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessGenreField),      PROCESS_GENRE_FIELD);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessCommentField),    PROCESS_COMMENT_FIELD);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessComposerField),   PROCESS_COMPOSER_FIELD);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessOrigArtistField), PROCESS_ORIG_ARTIST_FIELD);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessCopyrightField),  PROCESS_COPYRIGHT_FIELD);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessURLField),        PROCESS_URL_FIELD);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessEncodedByField),  PROCESS_ENCODED_BY_FIELD);
-    g_signal_connect(G_OBJECT(ProcessFileNameField),   "toggled",G_CALLBACK(Select_Fields_Set_Sensitive),NULL);
-    g_signal_connect(G_OBJECT(ProcessTitleField),      "toggled",G_CALLBACK(Select_Fields_Set_Sensitive),NULL);
-    g_signal_connect(G_OBJECT(ProcessArtistField),     "toggled",G_CALLBACK(Select_Fields_Set_Sensitive),NULL);
-    g_signal_connect(G_OBJECT(ProcessAlbumArtistField),"toggled",G_CALLBACK(Select_Fields_Set_Sensitive),NULL);
-    g_signal_connect(G_OBJECT(ProcessAlbumField),      "toggled",G_CALLBACK(Select_Fields_Set_Sensitive),NULL);
-    g_signal_connect(G_OBJECT(ProcessGenreField),      "toggled",G_CALLBACK(Select_Fields_Set_Sensitive),NULL);
-    g_signal_connect(G_OBJECT(ProcessCommentField),    "toggled",G_CALLBACK(Select_Fields_Set_Sensitive),NULL);
-    g_signal_connect(G_OBJECT(ProcessComposerField),   "toggled",G_CALLBACK(Select_Fields_Set_Sensitive),NULL);
-    g_signal_connect(G_OBJECT(ProcessOrigArtistField), "toggled",G_CALLBACK(Select_Fields_Set_Sensitive),NULL);
-    g_signal_connect(G_OBJECT(ProcessCopyrightField),  "toggled",G_CALLBACK(Select_Fields_Set_Sensitive),NULL);
-    g_signal_connect(G_OBJECT(ProcessURLField),        "toggled",G_CALLBACK(Select_Fields_Set_Sensitive),NULL);
-    g_signal_connect(G_OBJECT(ProcessEncodedByField),  "toggled",G_CALLBACK(Select_Fields_Set_Sensitive),NULL);
+    {
+        gsize i;
+        GFlagsClass *flags_class;
+        GFlagsValue *flags_value;
+        static const struct
+        {
+            const gchar *label;
+            const gchar *tooltip;
+        } mapping[] =
+        {
+            /* Translators: the first letter of "filename". */
+            { N_("F"), N_("Process filename") },
+            /* Translators: the first letter of the track "title". */
+            { N_("T"), N_("Process title field") },
+            /* Translators: the first letter of the track "artist". */
+            { N_("Ar"), N_("Process artist field") },
+            /* Translators: the first letter of the track "album artist". */
+            { N_("AA"), N_("Process album artist field") },
+            /* Translators: the first letter of the track "album". */
+            { N_("Al"), N_("Process album field") },
+            /* Translators: the first letter of the track "genre". */
+            { N_("G"), N_("Process genre field") },
+            /* Translators: the first letter of the track "comment". */
+            { N_("Cm"), N_("Process comment field") },
+            /* Translators: the first letter of the track "composer". */
+            { N_("Cp"), N_("Process composer field") },
+            /* Translators: the first letter of the track "original artist". */
+            { N_("O"), N_("Process original artist field") },
+            /* Translators: the first letter of the track "copyright". */
+            { N_("Cr"), N_("Process copyright field") },
+            /* Translators: the first letter of "URL". */
+            { N_("U"), N_("Process URL field") },
+            /* Translators: the first letter of "encoded-by". */
+            { N_("E"), N_("Process encoded-by field") },
+        };
+
+        flags_class = g_type_class_ref (ET_TYPE_PROCESS_FIELD);
+
+        for (i = 0; i < G_N_ELEMENTS (mapping); i++)
+        {
+            GtkWidget *widget;
+
+            flags_value = g_flags_get_first_value (flags_class, 1 << i);
+            widget = gtk_toggle_button_new_with_label (gettext (mapping[i].label));
+            gtk_widget_set_tooltip_text (widget, gettext (mapping[i].tooltip));
+            gtk_widget_set_name (widget, flags_value->value_nick);
+            g_object_set_data (G_OBJECT (widget), "flags-type",
+                               GSIZE_TO_POINTER (ET_TYPE_PROCESS_FIELD));
+            g_settings_bind_with_mapping (ETSettings, "process-fields",
+                                          widget, "active",
+                                          G_SETTINGS_BIND_DEFAULT,
+                                          et_scanner_flags_get,
+                                          et_scanner_flags_set, widget, NULL);
+            gtk_box_pack_start (GTK_BOX (hbox), widget, TRUE, TRUE, 2);
+            g_signal_connect (G_OBJECT (widget), "toggled",
+                              G_CALLBACK (Select_Fields_Set_Sensitive), NULL);
+        }
+
+        g_type_class_unref (flags_class);
+    }
+
     /* The small buttons */
     Button = gtk_button_new();
     g_signal_connect(G_OBJECT(Button),"clicked",G_CALLBACK(Select_Fields_Invert_Selection),NULL);
@@ -3165,20 +3160,6 @@ void ScannerWindow_Apply_Changes (void)
                             height);
         }
 
-        /* Group: select entries to process */
-        PROCESS_FILENAME_FIELD    = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFileNameField));
-        PROCESS_TITLE_FIELD       = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessTitleField));
-        PROCESS_ARTIST_FIELD      = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessArtistField));
-        PROCESS_ALBUM_ARTIST_FIELD= gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessAlbumArtistField));
-        PROCESS_ALBUM_FIELD       = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessAlbumField));
-        PROCESS_GENRE_FIELD       = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessGenreField));
-        PROCESS_COMMENT_FIELD     = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessCommentField));
-        PROCESS_COMPOSER_FIELD    = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessComposerField));
-        PROCESS_ORIG_ARTIST_FIELD = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessOrigArtistField));
-        PROCESS_COPYRIGHT_FIELD   = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessCopyrightField));
-        PROCESS_URL_FIELD         = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessURLField));
-        PROCESS_ENCODED_BY_FIELD  = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessEncodedByField));
-
         /* Group: convert one character */
         PF_CONVERT_INTO_SPACE     = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvertIntoSpace));
         PF_CONVERT_SPACE          = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvertSpace));
@@ -3442,30 +3423,12 @@ Process_Fields_First_Letters_Check_Button_Toggled (GtkWidget *object)
 static void
 Select_Fields_Invert_Selection (void)
 {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFileNameField),
-                                !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFileNameField)));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessTitleField),
-                                !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessTitleField)));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessArtistField),
-                                !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessArtistField)));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessAlbumArtistField),
-                                !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessAlbumArtistField)));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessAlbumField),
-                                !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessAlbumField)));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessGenreField),
-                                !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessGenreField)));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessCommentField),
-                                !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessCommentField)));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessComposerField),
-                                !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessComposerField)));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessOrigArtistField),
-                                !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessOrigArtistField)));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessCopyrightField),
-                                !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessCopyrightField)));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessURLField),
-                                !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessURLField)));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessEncodedByField),
-                                !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessEncodedByField)));
+    GFlagsClass *flags_class;
+    guint current = g_settings_get_flags (ETSettings, "process-fields");
+    flags_class = g_type_class_ref (ET_TYPE_PROCESS_FIELD);
+    g_settings_set_flags (ETSettings, "process-fields",
+                          ~current & flags_class->mask);
+    g_type_class_unref (flags_class);
 }
 
 static void
@@ -3473,19 +3436,14 @@ Select_Fields_Select_Unselect_All (void)
 {
     static gboolean state = TRUE;
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFileNameField),   state);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessTitleField),      state);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessArtistField),     state);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessAlbumArtistField),state);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessAlbumField),      state);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessGenreField),      state);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessCommentField),    state);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessComposerField),   state);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessOrigArtistField), state);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessCopyrightField),  state);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessURLField),        state);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessEncodedByField),  state);
+    GFlagsClass *flags_class;
+
+    flags_class = g_type_class_ref (ET_TYPE_PROCESS_FIELD);
+    g_settings_set_flags (ETSettings, "process-fields",
+                          state ? 0 : 0 | flags_class->mask);
     state = !state;
+
+    g_type_class_unref (flags_class);
 }
 
 /*
@@ -3494,18 +3452,7 @@ Select_Fields_Select_Unselect_All (void)
 static void
 Select_Fields_Set_Sensitive (void)
 {
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFileNameField))
-    ||  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessTitleField))
-    ||  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessArtistField))
-    ||  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessAlbumArtistField))
-    ||  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessAlbumField))
-    ||  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessGenreField))
-    ||  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessCommentField))
-    ||  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessComposerField))
-    ||  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessOrigArtistField))
-    ||  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessCopyrightField))
-    ||  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessURLField))
-    ||  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessEncodedByField)))
+    if (g_settings_get_flags (ETSettings, "process-fields") != 0)
     {
         gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsConvertIntoSpace),     TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsConvertSpace),         TRUE);
@@ -4115,4 +4062,131 @@ Scan_Set_Scanner_Window_Init_Position (void)
                         NULL);
         gtk_window_move (GTK_WINDOW (ScannerWindow), x, y);
     }
+}
+
+/*
+ * et_scanner_flags_get:
+ * @value: the property value to be set (active item on combo box)
+ * @variant: the variant to set the @value from
+ * @user_data: the #GType of the #GSettings flags
+ *
+ * Wrapper function to convert a flags-type GSettings key state into the active
+ * toggle button.
+ *
+ * Returns: %TRUE if the mapping was successful, %FALSE otherwise
+ */
+gboolean
+et_scanner_flags_get (GValue *value, GVariant *variant, gpointer user_data)
+{
+    const gchar *name;
+    GType flags_type;
+    GFlagsClass *flags_class;
+    GVariantIter iter;
+    GFlagsValue *flags_value;
+    const gchar *nick;
+    guint flags = 0;
+
+    g_return_val_if_fail (user_data != NULL, FALSE);
+
+    name = gtk_widget_get_name (GTK_WIDGET (user_data));
+    flags_type = (GType)GPOINTER_TO_SIZE (g_object_get_data (G_OBJECT (user_data),
+                                                                       "flags-type"));
+    flags_class = g_type_class_ref (flags_type);
+
+    g_variant_iter_init (&iter, variant);
+    while (g_variant_iter_next (&iter, "&s", &nick))
+    {
+        flags_value = g_flags_get_value_by_nick (flags_class, nick);
+
+        if (flags_value)
+        {
+            flags |= flags_value->value;
+        }
+        else
+        {
+            g_warning ("Unable to lookup %s flags nick '%s' from GType",
+                       g_type_name (flags_type), nick);
+            g_type_class_unref (flags_class);
+            return FALSE;
+        }
+    }
+
+    flags_value = g_flags_get_value_by_nick (flags_class, name);
+    g_type_class_unref (flags_class);
+
+    /* TRUE if settings flag is set for this widget, which will make the widget
+     * active. */
+    g_value_set_boolean (value, flags & flags_value->value);
+    return TRUE;
+}
+
+/*
+ * et_scanner_flags_set:
+ * @value: the property value to set the @variant from
+ * @expected_type: the expected type of the returned variant
+ * @user_data: the widget associated with the changed setting
+ *
+ * Wrapper function to convert a boolean value into a string suitable for
+ * storing into a flags-type GSettings key.
+ *
+ * Returns: a new GVariant containing the mapped value, or %NULL upon failure
+ */
+GVariant *
+et_scanner_flags_set (const GValue *value, const GVariantType *expected_type,
+                      gpointer user_data)
+{
+    const gchar *name;
+    GType flags_type;
+    GFlagsClass *flags_class;
+    GFlagsValue *flags_value;
+    guint mask;
+    GVariantBuilder builder;
+    guint flags = g_settings_get_flags (ETSettings, "process-fields");
+
+    g_return_val_if_fail (user_data != NULL, NULL);
+
+    name = gtk_widget_get_name (GTK_WIDGET (user_data));
+    flags_type = (GType)GPOINTER_TO_SIZE (g_object_get_data (G_OBJECT (user_data),
+                                                                       "flags-type"));
+    flags_class = g_type_class_ref (flags_type);
+    flags_value = g_flags_get_value_by_nick (flags_class, name);
+    mask = flags_class->mask;
+
+    if (!flags_value)
+    {
+        g_warning ("Unable to lookup %s flags value '%d' from GType",
+                   g_type_name (flags_type), g_value_get_boolean (value));
+        g_type_class_unref (flags_class);
+        return NULL;
+    }
+
+    if (g_value_get_boolean (value))
+    {
+        flags |= flags_value->value;
+    }
+    else
+    {
+        flags &= (flags_value->value ^ mask);
+    }
+
+    g_variant_builder_init (&builder, expected_type);
+
+    while (flags)
+    {
+        flags_value = g_flags_get_first_value (flags_class, flags);
+
+        if (flags_value == NULL)
+        {
+            g_variant_builder_clear (&builder);
+            g_type_class_unref (flags_class);
+            return NULL;
+        }
+
+        g_variant_builder_add (&builder, "s", flags_value->value_nick);
+        flags &= ~flags_value->value;
+    }
+
+    g_type_class_unref (flags_class);
+
+    return g_variant_builder_end (&builder);
 }
