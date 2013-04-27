@@ -11,7 +11,6 @@ General tidying
 * Port configuration settings to use GSettings
 * Port file I/O to use GFile from GIO
 ** Additionally, make I/O asynchronous
-* Use g_spawn_async() or g_app_info_launch() to spawn processes
 * Instantiate windows on first use, not at startup
 
 After GTK+ 3

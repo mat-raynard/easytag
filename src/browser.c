@@ -4383,19 +4383,10 @@ Run_Program_With_Selected_Files (GtkWidget *combobox)
 static gboolean
 Run_Program (const gchar *program_name, GList *args_list)
 {
-#ifdef G_OS_WIN32
-    GList              *filelist;
-    gchar             **argv;
-    gint                argv_index = 0;
-    gchar              *argv_join;
-    gchar              *full_command;
-    STARTUPINFO         siStartupInfo;
-    PROCESS_INFORMATION piProcessInfo;
-#else /* !G_OS_WIN32 */
-    pid_t   pid;
-#endif /* !G_OS_WIN32 */
-    gchar *program_path;
-
+    GdkAppLaunchContext *context;
+    GAppInfo *appinfo;
+    GList *files = NULL;
+    GError *error = NULL;
 
     /* Check if a name for the program have been supplied */
     if (!program_name || strlen(program_name)<1)
@@ -4415,126 +4406,46 @@ Run_Program (const gchar *program_name, GList *args_list)
         return FALSE;
     }
 
-    if ( !(program_path = Check_If_Executable_Exists(program_name)) )
+#if !GTK_CHECK_VERSION(3,0,0)
+    context = gdk_app_launch_context_new ();
+#else /* GTK_CHECK_VERSION(3,0,0) */
+    context = gdk_display_get_app_launch_context (gdk_display_get_default ());
+#endif /* GTK_CHECK_VERSION(3,0,0) */
+    appinfo = g_app_info_create_from_commandline (program_name, NULL,
+                                                  G_APP_INFO_CREATE_NONE,
+                                                  &error);
+
+    if (error != NULL)
     {
-        GtkWidget *msgdialog;
+        Log_Print (LOG_ERROR,
+                   _("Failed to launch program: %s"), error->message);
+        g_clear_error (&error);
+        g_object_unref (context);
+        g_object_unref (appinfo);
 
-        msgdialog = gtk_message_dialog_new(GTK_WINDOW(MainWindow),
-                                           GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-                                           GTK_MESSAGE_ERROR,
-                                           GTK_BUTTONS_CLOSE,
-                                           _("The program '%s' cannot be found"),
-                                           program_name);
-        gtk_window_set_title(GTK_WINDOW(msgdialog),_("Program Name Error"));
-
-        gtk_dialog_run(GTK_DIALOG(msgdialog));
-        gtk_widget_destroy(msgdialog);
         return FALSE;
     }
 
-
-#ifdef G_OS_WIN32
-    filelist = args_list;
-
-    // See documentation : http://c.developpez.com/faq/vc/?page=ProcessThread and http://www.answers.com/topic/createprocess
-    ZeroMemory(&siStartupInfo, sizeof(siStartupInfo));
-    siStartupInfo.cb = sizeof(siStartupInfo);
-    ZeroMemory(&piProcessInfo, sizeof(piProcessInfo));
-
-    argv = g_new0(gchar *,g_list_length(filelist) + 2); // "+2" for 1rst arg 'foo' and last arg 'NULL'
-    //argv[argv_index++] = "foo";
-
-    // Load files as arguments
-    while (filelist)
+    for (; args_list; args_list = g_list_next (args_list))
     {
-        // We must enclose filename between " because of possible (probable!) spaces in filenames"
-        argv[argv_index++] = g_strconcat("\"", (gchar *)filelist->data, "\"", NULL);
-        filelist = filelist->next;
-    }
-    argv[argv_index] = NULL; // Ends the list of arguments
-
-    // Make a command line with all arguments (joins strings together to form one long string separated by a space)
-    argv_join = g_strjoinv(" ", argv);
-    // Build the full command to pass to CreateProcess (FIX ME : it will ignore args of program)
-    full_command = g_strconcat("\"",program_path,"\" ",argv_join,NULL);
-
-    //if (CreateProcess(program_path, // Here it doesn't seem to load all the selected files
-    //                  argv_join,
-    if (CreateProcess(NULL,
-                      full_command,
-                      NULL,
-                      NULL,
-                      FALSE,
-                      CREATE_DEFAULT_ERROR_MODE,
-                      NULL,
-                      NULL,
-                      &siStartupInfo,
-                      &piProcessInfo) == FALSE)
-    {
-        Log_Print(LOG_ERROR,_("Cannot execute %s (error %d)\n"), program_name, GetLastError());
+        files = g_list_prepend (files,
+                                g_file_new_for_path ((gchar *)args_list->data));
     }
 
-    // Free allocated parameters (for each filename)
-    for (argv_index = 1; argv[argv_index]; argv_index++)
-        g_free(argv[argv_index]);
+    files = g_list_reverse (files);
 
-    g_free(argv_join);
-    g_free(full_command);
-    g_free(program_path);
+    g_app_info_launch (appinfo, files, G_APP_LAUNCH_CONTEXT (context), &error);
 
-#else /* !G_OS_WIN32 */
-
-    g_free(program_path); // Freed as never used
-
-    pid = fork();
-    switch (pid)
+    if (error != NULL)
     {
-        case -1:
-            Log_Print(LOG_ERROR,_("Cannot fork another process\n"));
-            //exit(-1);
-            break;
-        case 0:
-        {
-            gchar **argv;
-            gint    argv_index = 0;
-            gchar **argv_user;
-            gint    argv_user_number;
-            gchar  *msg;
-
-            argv_user = g_strsplit(program_name," ",0); // the string may contains arguments, space is the delimiter
-            // Number of arguments into 'argv_user'
-            for (argv_user_number=0;argv_user[argv_user_number];argv_user_number++);
-
-            argv = g_new0(gchar *,argv_user_number + g_list_length(args_list) + 1); // +1 for NULL
-
-            // Load 'user' arguments (program name and more...)
-            while (argv_user[argv_index])
-            {
-                argv[argv_index] = argv_user[argv_index];
-                argv_index++;
-            }
-            // Load arguments from 'args_list'
-            while (args_list)
-            {
-                argv[argv_index] = (gchar *)args_list->data;
-                argv_index++;
-                args_list = args_list->next;
-            }
-            argv[argv_index] = NULL;
-
-            // Execution ...
-            execvp(argv[0],argv);
-
-            msg = g_strdup_printf (_("Executed command: %s"), program_name);
-            Statusbar_Message(msg,TRUE);
-            g_free(msg);
-            //_exit(-1);
-            break;
-        }
-        default:
-            break;
+        Log_Print (LOG_ERROR, _("Failed to launch program: %s"),
+                   error->message);
+        g_clear_error (&error);
     }
-#endif /* !G_OS_WIN32 */
+
+    g_object_unref (context);
+    g_object_unref (appinfo);
+    g_list_free_full (files, g_object_unref);
 
     return TRUE;
 }
