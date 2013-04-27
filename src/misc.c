@@ -838,21 +838,13 @@ static void Open_File_Selection_Window (GtkWidget *entry, gchar *title, GtkFileC
 static void
 Run_Audio_Player_Using_File_List (GList *etfilelist_init)
 {
-    gchar  **argv;
-    gint     argv_index = 0;
     GList   *etfilelist;
     ET_File *etfile;
     gchar   *filename;
-    gchar   *program_path;
-#ifdef G_OS_WIN32
-    gchar              *argv_join;
-    STARTUPINFO         siStartupInfo;
-    PROCESS_INFORMATION piProcessInfo;
-#else /* !G_OS_WIN32 */
-    pid_t   pid;
-    gchar **argv_user;
-    gint    argv_user_number;
-#endif /* !G_OS_WIN32 */
+    GdkAppLaunchContext *context;
+    GAppInfo *appinfo;
+    GError *error = NULL;
+    GList *files = NULL;
 
     // Exit if no program selected...
     if (!AUDIO_FILE_PLAYER || strlen(g_strstrip(AUDIO_FILE_PLAYER))<1)
@@ -871,109 +863,50 @@ Run_Audio_Player_Using_File_List (GList *etfilelist_init)
         return;
     }
 
-    if ( !(program_path = Check_If_Executable_Exists(AUDIO_FILE_PLAYER)) )
-    {
-        gchar *msg = g_strdup_printf(_("The program '%s' cannot be found"),AUDIO_FILE_PLAYER);
-        Log_Print(LOG_ERROR,msg);
-        g_free(msg);
-        return;
-    }
-    g_free(program_path);
-
     // The list of files to play
     etfilelist = etfilelist_init;
 
-#ifdef G_OS_WIN32
-    // See documentation : http://c.developpez.com/faq/vc/?page=ProcessThread and http://www.answers.com/topic/createprocess
-    ZeroMemory(&siStartupInfo, sizeof(siStartupInfo));
-    siStartupInfo.cb = sizeof(siStartupInfo);
-    ZeroMemory(&piProcessInfo, sizeof(piProcessInfo));
+#if !GTK_CHECK_VERSION(3,0,0)
+    context = gdk_app_launch_context_new ();
+#else /* GTK_CHECK_VERSION(3,0,0) */
+    context = gdk_display_get_app_launch_context (gdk_display_get_default ());
+#endif /* GTK_CHECK_VERSION(3,0,0) */
+    appinfo = g_app_info_create_from_commandline (AUDIO_FILE_PLAYER, NULL,
+                                                  G_APP_INFO_CREATE_NONE,
+                                                  &error);
 
-    argv = g_new0(gchar *,g_list_length(etfilelist) + 2); // "+2" for 1rst arg 'foo' and last arg 'NULL'
-    argv[argv_index++] = "foo";
-
-    // Load files as arguments
-    while (etfilelist)
+    if (error != NULL)
     {
-        etfile   = (ET_File *)etfilelist->data;
+        Log_Print (LOG_ERROR,
+                   _("Failed to launch audio player: %s"), error->message);
+        g_clear_error (&error);
+        g_object_unref (context);
+        g_object_unref (appinfo);
+
+        return;
+    }
+
+    for (; etfilelist; etfilelist = g_list_next (etfilelist))
+    {
+        etfile = (ET_File *)etfilelist->data;
         filename = ((File_Name *)etfile->FileNameCur->data)->value;
-        //filename_utf8 = ((File_Name *)etfile->FileNameCur->data)->value_utf8;
-        // We must enclose filename between quotes, because of possible (probable!) spaces in filenames"
-        argv[argv_index++] = g_strconcat("\"", filename, "\"", NULL);
-        etfilelist = etfilelist->next;
+        files = g_list_prepend (files, g_file_new_for_path (filename));
     }
-    argv[argv_index] = NULL; // Ends the list of arguments
 
-    // Make a command line with all arguments (joins strings together to form one long string separated by a space)
-    argv_join = g_strjoinv(" ", argv);
+    files = g_list_reverse (files);
 
-    if (CreateProcess(AUDIO_FILE_PLAYER,
-                      argv_join,
-                      NULL,
-                      NULL,
-                      FALSE,
-                      CREATE_DEFAULT_ERROR_MODE,
-                      NULL,
-                      NULL,
-                      &siStartupInfo,
-                      &piProcessInfo) == FALSE)
+    g_app_info_launch (appinfo, files, G_APP_LAUNCH_CONTEXT (context), &error);
+
+    if (error != NULL)
     {
-        Log_Print(LOG_ERROR,_("Cannot execute %s (error %d)\n"), AUDIO_FILE_PLAYER, GetLastError());
+        Log_Print (LOG_ERROR, _("Failed to launch audio player: %s"),
+                   error->message);
+        g_clear_error (&error);
     }
 
-    // Free allocated parameters (for each filename)
-    for (argv_index = 1; argv[argv_index]; argv_index++)
-        g_free(argv[argv_index]);
-
-    g_free(argv_join);
-
-#else /* !G_OS_WIN32 */
-    argv_user = g_strsplit(AUDIO_FILE_PLAYER," ",0); // the string may contains arguments, space is the delimiter
-    // Number of arguments into 'argv_user'
-    for (argv_user_number=0;argv_user[argv_user_number];argv_user_number++);
-
-    argv = g_new0(gchar *,argv_user_number + g_list_length(etfilelist) + 1); // +1 for NULL
-
-    // Load 'user' arguments (program name and more...)
-    while (argv_user[argv_index])
-    {
-        argv[argv_index] = argv_user[argv_index];
-        argv_index++;
-    }
-
-    // Load files as arguments
-    while (etfilelist)
-    {
-        etfile   = (ET_File *)etfilelist->data;
-        filename = ((File_Name *)etfile->FileNameCur->data)->value;
-        //filename_utf8 = ((File_Name *)etfile->FileNameCur->data)->value_utf8;
-        argv[argv_index++] = filename;
-        etfilelist = etfilelist->next;
-    }
-    argv[argv_index] = NULL; // Ends the list of arguments
-
-    pid = fork();
-    switch (pid)
-    {
-        case -1:
-            Log_Print(LOG_ERROR,_("Cannot fork another process"));
-            break;
-        case 0:
-        {
-            if (execvp(argv[0],argv) == -1)
-            {
-                Log_Print(LOG_ERROR,_("Cannot execute %s (%s)"),argv[0],g_strerror(errno));
-            }
-            g_strfreev(argv_user);
-            _exit(1);
-            break;
-        }
-        default:
-            break;
-    }
-#endif /* !G_OS_WIN32 */
-
-    g_free(argv);
+    g_object_unref (context);
+    g_object_unref (appinfo);
+    g_list_free_full (files, g_object_unref);
 }
 
 void Run_Audio_Player_Using_Directory (void)
