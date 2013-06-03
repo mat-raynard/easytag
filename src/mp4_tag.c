@@ -16,16 +16,23 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *  along with this program; if not, write to the Free Software Foundation,
+ *  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#include "config.h" // For definition of ENABLE_MP4
+/* Portions of this code was borrowed from the MPEG4IP tools project */
+#include "config.h" /* For definition of ENABLE_MP4. */
 
 #ifdef ENABLE_MP4
 
 #include <gtk/gtk.h>
 #include <glib/gi18n-lib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <ctype.h>
+#include <unistd.h>
+#include <string.h>
 #include <stdlib.h>
 
 #include "mp4_tag.h"
@@ -36,121 +43,335 @@
 #include "misc.h"
 #include "et_core.h"
 #include "charset.h"
+#include "mp4_tag_private.h"
 
-#include <tag_c.h>
+#include <mp4v2/mp4v2.h>
 
+G_DEFINE_TYPE (EtMP4Tag, et_mp4_tag, G_TYPE_OBJECT);
+
+/**************
+ * Prototypes *
+ **************/
+static void et_mp4_tag_unload (EtMP4Tag *tag);
+
+/*************
+ * Functions *
+ *************/
+
+static void
+et_mp4_tag_finalize (GObject *object)
+{
+    et_mp4_tag_unload (ET_MP4_TAG (object));
+    G_OBJECT_CLASS (et_mp4_tag_parent_class)->finalize (object);
+}
+
+static void
+et_mp4_tag_init (EtMP4Tag *tag)
+{
+    tag->priv = G_TYPE_INSTANCE_GET_PRIVATE (tag, ET_TYPE_MP4_TAG,
+                                             EtMP4TagPrivate);
+}
+
+static void
+et_mp4_tag_class_init (EtMP4TagClass *klass)
+{
+    G_OBJECT_CLASS (klass)->finalize = et_mp4_tag_finalize;
+    g_type_class_add_private (klass, sizeof (EtMP4TagPrivate));
+}
+
+static gboolean
+et_mp4_tag_load_symbol (EtMP4Tag *tag, const gchar *name, gpointer *func_ptr)
+{
+    EtMP4TagPrivate *priv = tag->priv;
+
+    if (!g_module_symbol (priv->module, name, func_ptr))
+    {
+        g_warning ("Failed to lookup symbol '%s'", name);
+        return FALSE;
+    }
+
+    if (func_ptr == NULL)
+    {
+        g_warning ("Attempt to lookup symbol '%s' was NULL", name);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static gboolean
+et_mp4_tag_load_symbols (EtMP4Tag *tag)
+{
+    EtMP4TagPrivate *priv = tag->priv;
+    gsize i;
+    struct
+    {
+        const gchar *name;
+        gpointer *func_ptr;
+    } symbols[] =
+    {
+        { "MP4Read", (gpointer *)&priv->mp4v2_read },
+        { "MP4Modify", (gpointer *)&priv->mp4v2_modify },
+        { "MP4Close", (gpointer *)&priv->mp4v2_close },
+        { "MP4TagsAlloc", (gpointer *)&priv->mp4v2_tagsalloc },
+        { "MP4TagsFetch", (gpointer *)&priv->mp4v2_tagsfetch },
+        { "MP4TagsFree", (gpointer *)&priv->mp4v2_tagsfree },
+        { "MP4TagsStore", (gpointer *)&priv->mp4v2_tagsstore },
+        { "MP4TagsSetName", (gpointer *)&priv->mp4v2_tagssetname },
+        { "MP4TagsSetArtist", (gpointer *)&priv->mp4v2_tagssetartist },
+        { "MP4TagsSetAlbum", (gpointer *)&priv->mp4v2_tagssetalbum },
+        { "MP4TagsSetAlbumArtist", (gpointer *)&priv->mp4v2_tagssetalbumartist },
+        { "MP4TagsSetDisk", (gpointer *)&priv->mp4v2_tagssetdisk },
+        { "MP4TagsSetReleaseDate", (gpointer *)&priv->mp4v2_tagssetreleasedate },
+        { "MP4TagsSetTrack", (gpointer *)&priv->mp4v2_tagssettrack },
+        { "MP4TagsSetGenre", (gpointer *)&priv->mp4v2_tagssetgenre },
+        { "MP4TagsSetComments", (gpointer *)&priv->mp4v2_tagssetcomments },
+        { "MP4TagsSetComposer", (gpointer *)&priv->mp4v2_tagssetcomposer },
+        { "MP4TagsSetEncodedBy", (gpointer *)&priv->mp4v2_tagssetencodedby },
+        { "MP4TagsAddArtwork", (gpointer *)&priv->mp4v2_addartwork },
+        { "MP4TagsSetArtwork", (gpointer *)&priv->mp4v2_setartwork },
+        { "MP4TagsRemoveArtwork", (gpointer *)&priv->mp4v2_removeartwork },
+        { "MP4GetTrackMediaDataName", (gpointer *)&priv->mp4v2_gettrackmediadataname },
+        { "MP4GetTrackEsdsObjectTypeId", (gpointer *)&priv->mp4v2_gettrackesdsobjecttypeid },
+        { "MP4GetTrackESConfiguration", (gpointer *)&priv->mp4v2_gettrackesconfiguration },
+        { "MP4GetNumberOfTracks", (gpointer *)&priv->mp4v2_getnumberoftracks },
+        { "MP4FindTrackId", (gpointer *)&priv->mp4v2_findtrackid },
+        { "MP4GetTrackBitRate", (gpointer *)&priv->mp4v2_gettrackbitrate },
+        { "MP4GetTrackTimeScale", (gpointer *)&priv->mp4v2_gettracktimescale },
+        { "MP4GetTrackAudioChannels", (gpointer *)&priv->mp4v2_gettrackaudiochannels },
+        { "MP4GetTrackDuration", (gpointer *)&priv->mp4v2_gettrackduration },
+        { "MP4ConvertFromTrackDuration", (gpointer *)&priv->mp4v2_convertfromtrackduration },
+    };
+
+    for (i = 0; i < G_N_ELEMENTS (symbols); i++)
+    {
+        if (!et_mp4_tag_load_symbol (tag, symbols[i].name,
+                                     symbols[i].func_ptr))
+        {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+gboolean
+et_mp4_tag_load (EtMP4Tag *tag)
+{
+    gchar *path;
+    EtMP4TagPrivate *priv;
+
+    g_return_val_if_fail (ET_IS_MP4_TAG (tag), FALSE);
+
+    if (!g_module_supported ())
+    {
+        return FALSE;
+    }
+
+    path = g_module_build_path (LIBDIR, "mp4v2");
+
+    priv = tag->priv;
+    priv->module = g_module_open (path, G_MODULE_BIND_LAZY);
+
+    if (!priv->module)
+    {
+        gchar *utf8_path = g_filename_display_name (path);
+        Log_Print (LOG_WARNING, _("Unable to open mp4v2 library: '%s' (%s)"),
+                   utf8_path, g_module_error ());
+        g_free (utf8_path);
+        g_free (path);
+
+        return FALSE;
+    }
+
+    if (!et_mp4_tag_load_symbols (tag))
+    {
+        Log_Print (LOG_WARNING,
+                   _("Unable to load symbols from mp4v2 library"));
+        g_free (path);
+
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static void
+et_mp4_tag_unload (EtMP4Tag *tag)
+{
+    g_return_if_fail (ET_IS_MP4_TAG (tag));
+
+    if (!g_module_close (tag->priv->module))
+    {
+        Log_Print (LOG_WARNING, _("Unable to close mp4v2 library (%s)"),
+                   g_module_error ());
+    }
+}
 
 /*
  * Mp4_Tag_Read_File_Tag:
  *
  * Read tag data into an Mp4 file.
  *
+ * cf. http://mp4v2.googlecode.com/svn/doc/1.9.0/api/example_2itmf_2tags_8c-example.html
+ *
  * Note:
  *  - for string fields, //if field is found but contains no info (strlen(str)==0), we don't read it
  *  - for track numbers, if they are zero, then we don't read it
  */
-gboolean Mp4tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
+gboolean
+Mp4tag_Read_File_Tag (EtMP4Tag *tag, gchar *filename, File_Tag *FileTag)
 {
-    TagLib_File *mp4file;
-    TagLib_Tag *tag;
-    guint track;
+    EtMP4TagPrivate *priv;
+    MP4FileHandle mp4file = NULL;
+    const MP4Tags *mp4tags = NULL;
+    uint16_t track, track_total;
+    uint16_t disk, disktotal;
+    Picture *prev_pic = NULL;
+    gint pic_num;
+    const MP4TagArtwork *mp4artwork = NULL;
 
+    g_return_val_if_fail (ET_IS_MP4_TAG (tag), FALSE);
     g_return_val_if_fail (filename != NULL && FileTag != NULL, FALSE);
 
+    priv = tag->priv;
+
     /* Get data from tag */
-    mp4file = taglib_file_new_type(filename,TagLib_File_MP4);
-    if (mp4file == NULL)
+    mp4file = priv->mp4v2_read (filename);
+    if (mp4file == MP4_INVALID_FILE_HANDLE)
     {
         gchar *filename_utf8 = filename_to_display(filename);
-        Log_Print(LOG_ERROR,_("Error while opening file: '%s' (%s)."),filename_utf8,_("MP4 format invalid"));
+        Log_Print(LOG_ERROR,_("ERROR while opening file: '%s' (%s)."),filename_utf8,_("MP4 format invalid"));
         g_free(filename_utf8);
         return FALSE;
     }
 
-    /* Check for audio track */
-    if (!taglib_file_is_valid (mp4file))
+    mp4tags = priv->mp4v2_tagsalloc ();
+    if (!priv->mp4v2_tagsfetch (mp4tags, mp4file))
     {
-        gchar *filename_utf8 = filename_to_display (filename);
-        Log_Print (LOG_ERROR, _("File contains no audio track: '%s'"),
-                   filename_utf8);
-        g_free (filename_utf8);
-        taglib_file_free (mp4file);
+        gchar *filename_utf8 = filename_to_display(filename);
+        Log_Print(LOG_ERROR,_("ERROR reading tags from file: '%s' (%s)."),filename_utf8,_("MP4 format invalid"));
+        g_free(filename_utf8);
         return FALSE;
     }
 
-    tag = taglib_file_tag (mp4file);
-    if (tag == NULL)
-    {
-        gchar *filename_utf8 = filename_to_display (filename);
-        Log_Print (LOG_ERROR, _("Error reading tags from file: '%s'"),
-                   filename_utf8);
-        g_free (filename_utf8);
-        taglib_file_free (mp4file);
-        return FALSE;
-    }
+    /* TODO Add error detection */
 
     /*********
      * Title *
      *********/
-    FileTag->title = g_strdup(taglib_tag_title(tag));
+    if (mp4tags->name)
+        FileTag->title = g_strdup(mp4tags->name);
 
     /**********
      * Artist *
      **********/
-    FileTag->artist = g_strdup(taglib_tag_artist(tag));
+    if (mp4tags->artist)
+        FileTag->artist = g_strdup(mp4tags->artist);
 
     /*********
      * Album *
      *********/
-    FileTag->album = g_strdup(taglib_tag_album(tag));
+    if (mp4tags->album)
+        FileTag->album = g_strdup(mp4tags->album);
 
     /****************
      * Album Artist *
      ****************/
-    /* TODO: No album artist or disc number support in the TagLib C API! */
+    if (mp4tags->albumArtist)
+        FileTag->album_artist = g_strdup(mp4tags->albumArtist);
+
+    /**********************
+     * Disk / Total Disks *
+     **********************/
+    if (mp4tags->disk)
+    {
+	disk = mp4tags->disk->index, disktotal = mp4tags->disk->total;
+        if (disk != 0 && disktotal != 0)
+            FileTag->disc_number = g_strdup_printf("%d/%d",(gint)disk,(gint)disktotal);
+        else if (disk != 0)
+            FileTag->disc_number = g_strdup_printf("%d",(gint)disk);
+        else if (disktotal != 0)
+            FileTag->disc_number = g_strdup_printf("/%d",(gint)disktotal);
+        //if (disktotal != 0)
+        //    FileTag->disk_number_total = g_strdup_printf("%d",(gint)disktotal);
+    }
 
     /********
      * Year *
      ********/
-    FileTag->year = g_strdup_printf("%u", taglib_tag_year(tag));
+    if (mp4tags->releaseDate)
+        FileTag->year = g_strdup(mp4tags->releaseDate);
 
     /*************************
      * Track and Total Track *
      *************************/
-    track = taglib_tag_track(tag);
+    if (mp4tags->track)
+    {
 
-    if (track != 0)
-        FileTag->track = NUMBER_TRACK_FORMATED ? g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,(gint)track) : g_strdup_printf("%d",(gint)track);
-    /* TODO: No total track support in the TagLib C API! */
+	track = mp4tags->track->index, track_total = mp4tags->track->total;
+        if (track != 0)
+            FileTag->track = NUMBER_TRACK_FORMATED ? g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,(gint)track) : g_strdup_printf("%d",(gint)track);
+        if (track_total != 0)
+            FileTag->track_total = NUMBER_TRACK_FORMATED ? g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,(gint)track_total) : g_strdup_printf("%d",(gint)track_total);
+    }
 
     /*********
      * Genre *
      *********/
-    FileTag->genre = g_strdup(taglib_tag_genre(tag));
+    if (mp4tags->genre)
+        FileTag->genre = g_strdup(mp4tags->genre);
 
     /***********
      * Comment *
      ***********/
-    FileTag->comment = g_strdup(taglib_tag_comment(tag));
+    if (mp4tags->comments)
+        FileTag->comment = g_strdup(mp4tags->comments);
 
     /**********************
      * Composer or Writer *
      **********************/
-    /* TODO: No composer support in the TagLib C API! */
+    if (mp4tags->composer)
+        FileTag->composer = g_strdup(mp4tags->composer);
 
     /*****************
      * Encoding Tool *
      *****************/
-    /* TODO: No encode_by support in the TagLib C API! */
+    if (mp4tags->encodedBy)
+        FileTag->encoded_by = g_strdup(mp4tags->encodedBy);
+
+    /* Unimplemented
+    Tempo / BPM
+    MP4GetMetadataTempo(file, &string)
+    */
 
     /***********
      * Picture *
      ***********/
-    /* TODO: No encode_by support in the TagLib C API! */
+    // Version 1.9.1 of mp4v2 and up handle multiple cover art
+    mp4artwork = mp4tags->artwork;
+    for (pic_num = 0; pic_num < mp4tags->artworkCount; ++pic_num, ++mp4artwork)
+    {
+        Picture *pic;
+
+        pic = Picture_Allocate();
+        if (!prev_pic)
+            FileTag->picture = pic;
+        else
+            prev_pic->next = pic;
+        prev_pic = pic;
+
+        pic->size = mp4artwork->size;
+        pic->data = g_memdup(mp4artwork->data, pic->size);
+	/* mp4artwork->type gives image type. */
+        pic->type = ET_PICTURE_TYPE_FRONT_COVER;
+        pic->description = NULL;
+    }
+
 
     /* Free allocated data */
-    taglib_tag_free_strings();
-    taglib_file_free(mp4file);
+    priv->mp4v2_tagsfree (mp4tags);
+    priv->mp4v2_close (mp4file, 0);
 
     return TRUE;
 }
@@ -164,37 +385,47 @@ gboolean Mp4tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
  * Note:
  *  - for track numbers, we write 0's if one or the other is blank
  */
-gboolean Mp4tag_Write_File_Tag (ET_File *ETFile)
+gboolean
+Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
 {
+    EtMP4TagPrivate *priv;
     File_Tag *FileTag;
     gchar    *filename;
     gchar    *filename_utf8;
-    TagLib_File *mp4file = NULL;
-    TagLib_Tag *tag;
-    gboolean success;
+    MP4FileHandle mp4file = NULL;
+    const MP4Tags *mp4tags = NULL;
+    MP4TagDisk mp4disk;
+    MP4TagTrack mp4track;
+    MP4TagArtwork mp4artwork;
+    gint error = 0;
 
-    g_return_val_if_fail (ETFile != NULL || ETFile->FileTag != NULL, FALSE);
+    g_return_val_if_fail (ET_IS_MP4_TAG (tag), FALSE);
+    g_return_val_if_fail (ETFile != NULL && ETFile->FileTag != NULL, FALSE);
+
+    /* extra initializers */
+    mp4disk.index  = 0;
+    mp4disk.total  = 0;
+    mp4track.index = 0;
+    mp4track.total = 0;
+
+    priv = tag->priv;
 
     FileTag = (File_Tag *)ETFile->FileTag->data;
     filename      = ((File_Name *)ETFile->FileNameCur->data)->value;
     filename_utf8 = ((File_Name *)ETFile->FileNameCur->data)->value_utf8;
 
     /* Open file for writing */
-    mp4file = taglib_file_new_type(filename, TagLib_File_MP4);
-    if (mp4file == NULL)
+    mp4file = priv->mp4v2_modify (filename, 0);
+    if (mp4file == MP4_INVALID_FILE_HANDLE)
     {
-        Log_Print(LOG_ERROR,_("Error while opening file: '%s' (%s)."),filename_utf8,_("MP4 format invalid"));
+        Log_Print(LOG_ERROR,_("ERROR while opening file: '%s' (%s)."),filename_utf8,_("MP4 format invalid"));
         return FALSE;
     }
 
-    tag = taglib_file_tag (mp4file);
-    if (tag == NULL)
+    mp4tags = priv->mp4v2_tagsalloc ();
+    if (!priv->mp4v2_tagsfetch (mp4tags, mp4file))
     {
-        gchar *filename_utf8 = filename_to_display (filename);
-        Log_Print (LOG_ERROR, _("Error reading tags from file: '%s'"),
-                   filename_utf8);
-        g_free (filename_utf8);
-        taglib_file_free (mp4file);
+        Log_Print(LOG_ERROR,_("ERROR reading tags from file: '%s' (%s)."),filename_utf8,_("MP4 format invalid"));
         return FALSE;
     }
 
@@ -203,10 +434,10 @@ gboolean Mp4tag_Write_File_Tag (ET_File *ETFile)
      *********/
     if (FileTag->title && g_utf8_strlen(FileTag->title, -1) > 0)
     {
-        taglib_tag_set_title(tag, FileTag->title);
+        priv->mp4v2_tagssetname (mp4tags, FileTag->title);
     }else
     {
-        taglib_tag_set_title(tag,"");
+        priv->mp4v2_tagssetname (mp4tags, "");
     }
 
     /**********
@@ -214,10 +445,10 @@ gboolean Mp4tag_Write_File_Tag (ET_File *ETFile)
      **********/
     if (FileTag->artist && g_utf8_strlen(FileTag->artist, -1) > 0)
     {
-        taglib_tag_set_artist(tag,FileTag->artist);
+        priv->mp4v2_tagssetartist (mp4tags, FileTag->artist);
     }else
     {
-        taglib_tag_set_artist(tag,"");
+        priv->mp4v2_tagssetartist (mp4tags, "");
     }
 
     /*********
@@ -225,44 +456,92 @@ gboolean Mp4tag_Write_File_Tag (ET_File *ETFile)
      *********/
     if (FileTag->album && g_utf8_strlen(FileTag->album, -1) > 0)
     {
-        taglib_tag_set_album(tag,FileTag->album);
+        priv->mp4v2_tagssetalbum (mp4tags, FileTag->album);
     }else
     {
-        taglib_tag_set_album(tag,"");
+        priv->mp4v2_tagssetalbum (mp4tags, "");
     }
 
+    /****************
+     * Album Artist *
+     ****************/
+    if (FileTag->album_artist && g_utf8_strlen(FileTag->album_artist, -1) > 0)
+    {
+        priv->mp4v2_tagssetalbumartist (mp4tags, FileTag->album_artist);
+    }else
+    {
+        priv->mp4v2_tagssetalbumartist (mp4tags, "");
+    }
+
+    /**********************
+     * Disk / Total Disks *
+     **********************/
+    if (FileTag->disc_number && g_utf8_strlen(FileTag->disc_number, -1) > 0)
+    //|| FileTag->disc_number_total && g_utf8_strlen(FileTag->disc_number_total, -1) > 0)
+    {
+        /* At the present time, we manage only disk number like '1' or '1/2', we
+         * don't use disk number total... so here we try to decompose */
+        if (FileTag->disc_number)
+        {
+            gchar *dn_tmp = g_strdup(FileTag->disc_number);
+            gchar *tmp    = strchr(dn_tmp,'/');
+            if (tmp)
+            {
+                // A disc_number_total was entered
+                if ( (tmp+1) && atoi(tmp+1) )
+                    mp4disk.total = atoi(tmp+1);
+
+                // Fill disc_number
+                *tmp = '\0';
+                mp4disk.index = atoi(dn_tmp);
+            }else
+            {
+                mp4disk.index = atoi(FileTag->disc_number);
+            }
+            g_free(dn_tmp);
+        }
+        /*if (FileTag->disc_number)
+            mp4disk.index = atoi(FileTag->disc_number);
+        if (FileTag->disc_number_total)
+            mp4disk.total = atoi(FileTag->disc_number_total);
+        */
+    }
+    priv->mp4v2_tagssetdisk (mp4tags, &mp4disk);
 
     /********
      * Year *
      ********/
     if (FileTag->year && g_utf8_strlen(FileTag->year, -1) > 0)
     {
-        taglib_tag_set_year(tag,atoi(FileTag->year));
+        priv->mp4v2_tagssetreleasedate (mp4tags, FileTag->year);
     }else
     {
-        taglib_tag_set_year(tag,0);
+        priv->mp4v2_tagssetreleasedate (mp4tags, "");
     }
 
     /*************************
      * Track and Total Track *
      *************************/
-    if ( FileTag->track && g_utf8_strlen(FileTag->track, -1) > 0 )
+    if ( (FileTag->track       && g_utf8_strlen(FileTag->track, -1) > 0)
+    ||   (FileTag->track_total && g_utf8_strlen(FileTag->track_total, -1) > 0) )
     {
-        taglib_tag_set_track(tag,atoi(FileTag->track));
-    }else
-    {
-        taglib_tag_set_track(tag,0);
+        if (FileTag->track)
+            mp4track.index = atoi(FileTag->track);
+        if (FileTag->track_total)
+            mp4track.total = atoi(FileTag->track_total);
     }
+    priv->mp4v2_tagssettrack (mp4tags, &mp4track);
 
     /*********
      * Genre *
      *********/
     if (FileTag->genre && g_utf8_strlen(FileTag->genre, -1) > 0 )
     {
-        taglib_tag_set_genre(tag,FileTag->genre);
+        priv->mp4v2_tagssetgenre (mp4tags, FileTag->genre);
     }else
     {
-        taglib_tag_set_genre(tag,"");
+        //MP4DeleteMetadataGenre(mp4tags);
+        priv->mp4v2_tagssetgenre (mp4tags, "");
     }
 
     /***********
@@ -270,28 +549,73 @@ gboolean Mp4tag_Write_File_Tag (ET_File *ETFile)
      ***********/
     if (FileTag->comment && g_utf8_strlen(FileTag->comment, -1) > 0)
     {
-        taglib_tag_set_comment(tag,FileTag->comment);
+        priv->mp4v2_tagssetcomments (mp4tags, FileTag->comment);
     }else
     {
-        taglib_tag_set_comment(tag,"");
+        priv->mp4v2_tagssetcomments (mp4tags, "");
     }
 
     /**********************
      * Composer or Writer *
      **********************/
+    if (FileTag->composer && g_utf8_strlen(FileTag->composer, -1) > 0)
+    {
+        priv->mp4v2_tagssetcomposer (mp4tags, FileTag->composer);
+    }else
+    {
+        priv->mp4v2_tagssetcomposer (mp4tags, "");
+    }
 
     /*****************
      * Encoding Tool *
      *****************/
+    if (FileTag->encoded_by && g_utf8_strlen(FileTag->encoded_by, -1) > 0)
+    {
+        priv->mp4v2_tagssetencodedby (mp4tags, FileTag->encoded_by);
+    }else
+    {
+        priv->mp4v2_tagssetencodedby (mp4tags, "");
+    }
 
     /***********
      * Picture *
      ***********/
+    {
+        // Can handle only one picture...
+        Picture *pic;
+        if (mp4tags->artworkCount && mp4tags->artwork)
+            priv->mp4v2_removeartwork (mp4tags, 0);
+        priv->mp4v2_setartwork (mp4tags, 0, NULL);
+        for (pic = FileTag->picture; pic; pic = pic->next)
+        {
+            if (pic->type == ET_PICTURE_TYPE_FRONT_COVER)
+            {
+                 mp4artwork.data = pic->data;
+                 mp4artwork.size = pic->size;
+                 switch (pic->type) {
+                  case PICTURE_FORMAT_JPEG:
+                     mp4artwork.type = MP4_ART_JPEG;
+                     break;
+                  case PICTURE_FORMAT_PNG:
+                     mp4artwork.type = MP4_ART_PNG;
+                     break;
+                  default:
+                     mp4artwork.type = MP4_ART_UNDEFINED;
+                 }
+                 if (mp4tags->artworkCount)
+                     priv->mp4v2_setartwork (mp4tags, 0, &mp4artwork);
+                 else
+                     priv->mp4v2_addartwork (mp4tags, &mp4artwork);
+            }
+        }
+    }
 
-    success = taglib_file_save (mp4file) ? TRUE : FALSE;
-    taglib_file_free(mp4file);
+    priv->mp4v2_tagsstore (mp4tags, mp4file);
+    priv->mp4v2_tagsfree (mp4tags);
+    priv->mp4v2_close (mp4file, 0);
 
-    return success;
+    if (error) return FALSE;
+    else       return TRUE;
 }
 
 

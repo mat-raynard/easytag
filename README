@@ -59,7 +59,7 @@ Installation
 * id3lib version greater than 3.7.12 (http://id3lib.sourceforge.net) (Recommended: id3lib-3.8.3)
 * libogg and libvorbis (http://www.vorbis.com) (if not deactivated by './configure --disable-ogg')
 * flac (http://flac.sourceforge.net) (if not deactivated by './configure --disable-flac')
-* taglib (http://taglib.github.com/) (if not deactivated by './configure --disable-mp4')
+* libmp4v2 (http://code.google.com/p/mp4v2/) (dynamically loaded at runtime)
 * wavpack (http://www.wavpack.com/) (if not deactivated by './configure --disable-wavpack')
 * libc 6 (glibc 2.1) or greater
 * intltool (if not deactivated by './configure --disable-nls')

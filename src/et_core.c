@@ -517,7 +517,18 @@ GList *ET_Add_File_To_File_List (gchar *filename)
             break;
 #ifdef ENABLE_MP4
         case MP4_TAG:
-            Mp4tag_Read_File_Tag(filename,FileTag);
+            {
+                EtMP4Tag *tag = ET_MP4_TAG (g_object_new (ET_TYPE_MP4_TAG,
+                                                          NULL));
+                if (et_mp4_tag_load (tag))
+                {
+                    Mp4tag_Read_File_Tag (tag, filename, FileTag);
+                }
+                else
+                {
+                    g_warning ("Failed to load module");
+                }
+            }
             break;
 #endif
 #ifdef ENABLE_WAVPACK
@@ -570,7 +581,18 @@ GList *ET_Add_File_To_File_List (gchar *filename)
 #endif
 #ifdef ENABLE_MP4
         case MP4_FILE:
-            Mp4_Header_Read_File_Info(filename,ETFileInfo);
+            {
+                EtMP4Tag *tag = ET_MP4_TAG (g_object_new (ET_TYPE_MP4_TAG,
+                                                          NULL));
+                if (et_mp4_tag_load (tag))
+                {
+                    Mp4_Header_Read_File_Info (tag, filename, ETFileInfo);
+                }
+                else
+                {
+                    g_warning ("Failed to load module");
+                }
+            }
             break;
 #endif
         case UNKNOWN_FILE:
@@ -3861,7 +3883,19 @@ gboolean ET_Save_File_Tag_To_HD (ET_File *ETFile)
             break;
 #ifdef ENABLE_MP4
         case MP4_TAG:
-            state = Mp4tag_Write_File_Tag(ETFile);
+            {
+                EtMP4Tag *tag = ET_MP4_TAG (g_object_new (ET_TYPE_MP4_TAG,
+                                                          NULL));
+                if (et_mp4_tag_load (tag))
+                {
+                    state = Mp4tag_Write_File_Tag (tag, ETFile);
+                }
+                else
+                {
+                    g_warning ("Failed to load module");
+                    state = FALSE;
+                }
+            }
             break;
 #endif
 #ifdef ENABLE_WAVPACK

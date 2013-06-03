@@ -20,22 +20,41 @@
  */
 
 
-#ifndef __MP4_TAG_H__
-#define __MP4_TAG_H__
-
+#ifndef ET_MP4_TAG_H_
+#define ET_MP4_TAG_H_
 
 #include "et_core.h"
 
-/****************
- * Declarations *
- ****************/
+G_BEGIN_DECLS
 
+#define ET_TYPE_MP4_TAG (et_mp4_tag_get_type ())
+#define ET_MP4_TAG(object) (G_TYPE_CHECK_INSTANCE_CAST ((object), ET_TYPE_MP4_TAG, EtMP4Tag))
+#define ET_IS_MP4_TAG(object) (G_TYPE_CHECK_INSTANCE_TYPE ((object), ET_TYPE_MP4_TAG))
 
+typedef struct _EtMP4Tag EtMP4Tag;
+typedef struct _EtMP4TagClass EtMP4TagClass;
+typedef struct _EtMP4TagPrivate EtMP4TagPrivate;
 
-/**************
- * Prototypes *
- **************/
-gboolean Mp4tag_Read_File_Tag  (gchar *filename, File_Tag *FileTag);
-gboolean Mp4tag_Write_File_Tag (ET_File *ETFile);
+struct _EtMP4Tag
+{
+    /*< private >*/
+    GObject parent_instance;
+    EtMP4TagPrivate *priv;
+};
 
-#endif /* __MP4_TAG_H__ */
+struct _EtMP4TagClass
+{
+    /*< private >*/
+    GObjectClass parent_class;
+};
+
+GType et_mp4_tag_get_type (void);
+gboolean et_mp4_tag_load (EtMP4Tag *tag);
+
+gboolean Mp4tag_Read_File_Tag  (EtMP4Tag *tag, gchar *filename,
+                                File_Tag *FileTag);
+gboolean Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile);
+
+G_END_DECLS
+
+#endif /* !ET_MP4_TAG_H_ */

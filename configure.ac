@@ -236,21 +236,20 @@ AS_IF([test "x$have_mp3" = "xyes" -a "x$enable_id3v23" != "xno"],
        ID3LIB_VERSION="(id3lib-$ID3LIB_MAJOR.$ID3LIB_MINOR.$ID3LIB_PATCH)"],
       [have_id3lib=no])
 
-
 dnl ################################################
-dnl # taglib library
+dnl # libmp4v2 headers
 dnl ################################################
-
-TAGLIB_DEPS="taglib_c >= 1.6.0"
+GMODULE_DEPS="gmodule-2.0"
 AS_IF([test "x$enable_mp4" != "xno"],
-      [PKG_CHECK_EXISTS([$TAGLIB_DEPS], [have_taglib=yes], [have_taglib=no])],
-      [have_taglib=no])
+      [AC_CHECK_HEADER([mp4v2/mp4v2.h], [have_libmp4v2=yes],
+                       [have_libmp4v2=no])],
+      [have_libmp4v2=no])
 
-AS_IF([test "x$have_taglib" != "xno"],
-      [AC_DEFINE([ENABLE_MP4], [], [Define for taglib MP4 support])],
-      [TAGLIB_DEPS=""
+AS_IF([test "x$have_libmp4v2" != "xno"],
+      [AC_DEFINE([ENABLE_MP4], [], [Define for libmp4v2 MP4 support])],
+      [GMODULE_DEPS=""
        AS_IF([test "x$enable_mp4" = "xyes"],
-             [AC_MSG_ERROR([Taglib MP4 support requested but required dependencies ($TAGLIB_DEPS) not found])])])
+             [AC_MSG_ERROR([libmp4v2 support requested but required headers were not found])])])
 
 dnl ################################################
 dnl # WavPack library
@@ -268,7 +267,7 @@ AS_IF([test "x$have_wavpack" != "xno"],
 
 dnl Check the pkg-config dependencies
 GIO_DEPS="gio-2.0 >= 2.32.0" dnl For g_file_new_tmp()
-PKG_CHECK_MODULES([EASYTAG], [$GIO_DEPS $GTK_DEPS $OGG_DEPS $SPEEX_DEPS $FLAC_DEPS $ID3TAG_DEPS $TAGLIB_DEPS $WAVPACK_DEPS])
+PKG_CHECK_MODULES([EASYTAG], [$GMODULE_DEPS $GIO_DEPS $GTK_DEPS $OGG_DEPS $SPEEX_DEPS $FLAC_DEPS $ID3TAG_DEPS $WAVPACK_DEPS])
 
 dnl Check for winsock
 AC_SEARCH_LIBS([gethostbyname], [nsl socket], [],
@@ -347,7 +346,7 @@ echo ID3v2.3 tags support ....: $have_id3lib $ID3LIB_VERSION
 echo Ogg Vorbis file support .: $have_ogg
 echo Ogg Speex file support ..: $have_speex
 echo FLAC file support .......: $have_flac
-echo MP4 file support ........: $have_taglib
+echo MP4 file support ........: $have_libmp4v2
 echo WavPack support .........: $have_wavpack
 echo NLS/gettext .............: $USE_NLS
 echo Tests during make check .: $testing_utilities

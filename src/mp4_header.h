@@ -25,6 +25,7 @@
 
 
 #include "et_core.h"
+#include "mp4_tag.h"
 
 /****************
  * Declarations *
@@ -35,8 +36,9 @@
  * Prototypes *
  **************/
 
-gboolean Mp4_Header_Read_File_Info          (gchar *filename, ET_File_Info *ETFileInfo);
-gboolean Mp4_Header_Display_File_Info_To_UI (gchar *filename, ET_File_Info *ETFileInfo);
-
+gboolean Mp4_Header_Read_File_Info (EtMP4Tag *tag, const gchar *filename,
+                                    ET_File_Info *ETFileInfo);
+gboolean Mp4_Header_Display_File_Info_To_UI (const gchar *filename,
+                                             ET_File_Info *ETFileInfo);
 
 #endif /* __MP4_HEADER_H__ */

@@ -20,6 +20,7 @@ easytag_CPPFLAGS = \
 	-I$(top_srcdir) \
 	-I$(top_builddir) \
 	$(DEPRECATED_CPPFLAGS) \
+	-DLIBDIR=\"$(LIBDIR)\" \
 	-DLOCALEDIR=\"$(localedir)\" \
 	-DPACKAGE_DATA_DIR=\"$(pkgdatadir)\"
 easytag_CFLAGS = \
@@ -94,6 +95,7 @@ easytag_headers = \
 	src/mpeg_header.h \
 	src/mp4_header.h \
 	src/mp4_tag.h \
+	src/mp4_tag_private.h \
 	src/musepack_header.h \
 	src/ogg_header.h \
 	src/ogg_tag.h \
