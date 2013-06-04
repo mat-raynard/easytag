@@ -528,6 +528,8 @@ GList *ET_Add_File_To_File_List (gchar *filename)
                 {
                     g_warning ("Failed to load module");
                 }
+
+                g_object_unref (tag);
             }
             break;
 #endif
@@ -592,6 +594,8 @@ GList *ET_Add_File_To_File_List (gchar *filename)
                 {
                     g_warning ("Failed to load module");
                 }
+
+                g_object_unref (tag);
             }
             break;
 #endif
@@ -3895,6 +3899,8 @@ gboolean ET_Save_File_Tag_To_HD (ET_File *ETFile)
                     g_warning ("Failed to load module");
                     state = FALSE;
                 }
+
+                g_object_unref (tag);
             }
             break;
 #endif
