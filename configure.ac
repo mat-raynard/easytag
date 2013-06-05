@@ -336,7 +336,6 @@ echo ID3v2.3 tags support ....: $have_id3lib $ID3LIB_VERSION
 echo Ogg Vorbis file support .: $have_ogg
 echo Ogg Speex file support ..: $have_speex
 echo FLAC file support .......: $have_flac
-echo MP4 file support ........: $have_libmp4v2
 echo WavPack support .........: $have_wavpack
 echo NLS/gettext .............: $USE_NLS
 echo Tests during make check .: $testing_utilities
