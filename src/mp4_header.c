@@ -21,8 +21,6 @@
 
 #include <config.h> // For definition of ENABLE_MP4
 
-#ifdef ENABLE_MP4
-
 #include <gtk/gtk.h>
 #include <glib/gi18n-lib.h>
 #include <stdio.h>
@@ -39,8 +37,6 @@
 #include "charset.h"
 #include "mp4_tag_private.h"
 
-#include <mp4v2/mp4v2.h>
-
 
 /****************
  * Declarations *
@@ -48,7 +44,7 @@
 
 static const struct
 {
-    uint8_t profile;
+    guint8 profile;
     const char *format;
     const char *subformat;
 } MP4AudioProfileToName[] = {
@@ -82,7 +78,7 @@ static const struct
 
 static const struct
 {
-    uint8_t profile;
+    guint8 profile;
     const char *format;
     const char *subformat;
 } AudioProfileToName[] = {
@@ -121,8 +117,8 @@ static void getType(EtMP4Tag *tag, MP4FileHandle file, MP4TrackId trackId, const
 {
     EtMP4TagPrivate *priv = tag->priv;
     unsigned i;
-    const char *media_data_name = priv->mp4v2_gettrackmediadataname (file,
-                                                                     trackId);
+    const char *media_data_name = priv->mp4v2_get_track_media_data_name (file,
+                                                                         trackId);
 
     *format = _("Audio");
     *subformat = _("Unknown");
@@ -138,15 +134,16 @@ static void getType(EtMP4Tag *tag, MP4FileHandle file, MP4TrackId trackId, const
         *subformat = "AMR-WB";
     } else if (strcasecmp(media_data_name, "mp4a") == 0)
     {
-        u_int8_t type = priv->mp4v2_gettrackesdsobjecttypeid (file, trackId);
+        u_int8_t type = priv->mp4v2_get_track_esds_object_type_id (file,
+	                                                           trackId);
 
         if( type == MP4_MPEG4_AUDIO_TYPE )
         {
-            u_int8_t* pAacConfig = NULL;
-            u_int32_t aacConfigLength;
+            guint8* pAacConfig = NULL;
+            guint32 aacConfigLength;
 
-            priv->mp4v2_gettrackesconfiguration (file, trackId, &pAacConfig,
-                                                 &aacConfigLength);
+            priv->mp4v2_get_track_es_configuration (file, trackId, &pAacConfig,
+                                                    &aacConfigLength);
 
             if (pAacConfig != NULL)
             {
@@ -217,7 +214,7 @@ Mp4_Header_Read_File_Info (EtMP4Tag *tag, const gchar *filename,
     }
 
     /* Check for audio track */
-    if (priv->mp4v2_getnumberoftracks (file, MP4_AUDIO_TRACK_TYPE, 0) < 1)
+    if (priv->mp4v2_get_n_tracks (file, MP4_AUDIO_TRACK_TYPE, 0) < 1)
     {
         gchar *filename_utf8 = filename_to_display(filename);
         Log_Print(LOG_ERROR,_("ERROR while opening file: '%s' (%s)."),filename_utf8,("Contains no audio track"));
@@ -227,7 +224,7 @@ Mp4_Header_Read_File_Info (EtMP4Tag *tag, const gchar *filename,
     }
 
     /* Get the first track id (index 0) */
-    trackId = priv->mp4v2_findtrackid (file, 0, MP4_AUDIO_TRACK_TYPE, 0);
+    trackId = priv->mp4v2_find_track_id (file, 0, MP4_AUDIO_TRACK_TYPE, 0);
 
     /* Get format/subformat */
     {
@@ -241,12 +238,13 @@ Mp4_Header_Read_File_Info (EtMP4Tag *tag, const gchar *filename,
     ETFileInfo->layer = 14;
 
     ETFileInfo->variable_bitrate = TRUE;
-    ETFileInfo->bitrate = priv->mp4v2_gettrackbitrate (file, trackId) / 1000;
-    ETFileInfo->samplerate = priv->mp4v2_gettracktimescale (file, trackId);
-    ETFileInfo->mode = priv->mp4v2_gettrackaudiochannels (file, trackId);
-    ETFileInfo->duration = priv->mp4v2_convertfromtrackduration (file, trackId,
-                                                                 priv->mp4v2_gettrackduration (file, trackId),
-                                                                 MP4_SECS_TIME_SCALE);
+    ETFileInfo->bitrate = priv->mp4v2_get_track_bitrate (file, trackId) / 1000;
+    ETFileInfo->samplerate = priv->mp4v2_get_track_timescale (file, trackId);
+    ETFileInfo->mode = priv->mp4v2_get_track_audio_channels (file, trackId);
+    ETFileInfo->duration = priv->mp4v2_convert_from_track_duration (file,
+                                                                    trackId,
+                                                                    priv->mp4v2_get_track_duration (file, trackId),
+                                                                    1 /* TODO: seconds per second? */);
 
     priv->mp4v2_close (file, 0);
     return TRUE;
@@ -318,5 +316,3 @@ Mp4_Header_Display_File_Info_To_UI (const gchar *filename,
 
     return TRUE;
 }
-
-#endif

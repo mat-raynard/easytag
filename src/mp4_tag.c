@@ -23,8 +23,6 @@
 /* Portions of this code was borrowed from the MPEG4IP tools project */
 #include "config.h" /* For definition of ENABLE_MP4. */
 
-#ifdef ENABLE_MP4
-
 #include <gtk/gtk.h>
 #include <glib/gi18n-lib.h>
 #include <stdio.h>
@@ -44,8 +42,6 @@
 #include "et_core.h"
 #include "charset.h"
 #include "mp4_tag_private.h"
-
-#include <mp4v2/mp4v2.h>
 
 G_DEFINE_TYPE (EtMP4Tag, et_mp4_tag, G_TYPE_OBJECT);
 
@@ -113,34 +109,34 @@ et_mp4_tag_load_symbols (EtMP4Tag *tag)
         { "MP4Read", (gpointer *)&priv->mp4v2_read },
         { "MP4Modify", (gpointer *)&priv->mp4v2_modify },
         { "MP4Close", (gpointer *)&priv->mp4v2_close },
-        { "MP4TagsAlloc", (gpointer *)&priv->mp4v2_tagsalloc },
-        { "MP4TagsFetch", (gpointer *)&priv->mp4v2_tagsfetch },
-        { "MP4TagsFree", (gpointer *)&priv->mp4v2_tagsfree },
-        { "MP4TagsStore", (gpointer *)&priv->mp4v2_tagsstore },
-        { "MP4TagsSetName", (gpointer *)&priv->mp4v2_tagssetname },
-        { "MP4TagsSetArtist", (gpointer *)&priv->mp4v2_tagssetartist },
-        { "MP4TagsSetAlbum", (gpointer *)&priv->mp4v2_tagssetalbum },
-        { "MP4TagsSetAlbumArtist", (gpointer *)&priv->mp4v2_tagssetalbumartist },
-        { "MP4TagsSetDisk", (gpointer *)&priv->mp4v2_tagssetdisk },
-        { "MP4TagsSetReleaseDate", (gpointer *)&priv->mp4v2_tagssetreleasedate },
-        { "MP4TagsSetTrack", (gpointer *)&priv->mp4v2_tagssettrack },
-        { "MP4TagsSetGenre", (gpointer *)&priv->mp4v2_tagssetgenre },
-        { "MP4TagsSetComments", (gpointer *)&priv->mp4v2_tagssetcomments },
-        { "MP4TagsSetComposer", (gpointer *)&priv->mp4v2_tagssetcomposer },
-        { "MP4TagsSetEncodedBy", (gpointer *)&priv->mp4v2_tagssetencodedby },
-        { "MP4TagsAddArtwork", (gpointer *)&priv->mp4v2_addartwork },
-        { "MP4TagsSetArtwork", (gpointer *)&priv->mp4v2_setartwork },
-        { "MP4TagsRemoveArtwork", (gpointer *)&priv->mp4v2_removeartwork },
-        { "MP4GetTrackMediaDataName", (gpointer *)&priv->mp4v2_gettrackmediadataname },
-        { "MP4GetTrackEsdsObjectTypeId", (gpointer *)&priv->mp4v2_gettrackesdsobjecttypeid },
-        { "MP4GetTrackESConfiguration", (gpointer *)&priv->mp4v2_gettrackesconfiguration },
-        { "MP4GetNumberOfTracks", (gpointer *)&priv->mp4v2_getnumberoftracks },
-        { "MP4FindTrackId", (gpointer *)&priv->mp4v2_findtrackid },
-        { "MP4GetTrackBitRate", (gpointer *)&priv->mp4v2_gettrackbitrate },
-        { "MP4GetTrackTimeScale", (gpointer *)&priv->mp4v2_gettracktimescale },
-        { "MP4GetTrackAudioChannels", (gpointer *)&priv->mp4v2_gettrackaudiochannels },
-        { "MP4GetTrackDuration", (gpointer *)&priv->mp4v2_gettrackduration },
-        { "MP4ConvertFromTrackDuration", (gpointer *)&priv->mp4v2_convertfromtrackduration },
+        { "MP4TagsAlloc", (gpointer *)&priv->mp4v2_tags_alloc },
+        { "MP4TagsFetch", (gpointer *)&priv->mp4v2_tags_fetch },
+        { "MP4TagsFree", (gpointer *)&priv->mp4v2_tags_free },
+        { "MP4TagsStore", (gpointer *)&priv->mp4v2_tags_store },
+        { "MP4TagsSetName", (gpointer *)&priv->mp4v2_tags_set_title },
+        { "MP4TagsSetArtist", (gpointer *)&priv->mp4v2_tags_set_artist },
+        { "MP4TagsSetAlbum", (gpointer *)&priv->mp4v2_tags_set_album },
+        { "MP4TagsSetAlbumArtist", (gpointer *)&priv->mp4v2_tags_set_album_artist },
+        { "MP4TagsSetDisk", (gpointer *)&priv->mp4v2_tags_set_disk },
+        { "MP4TagsSetReleaseDate", (gpointer *)&priv->mp4v2_tags_set_release_date },
+        { "MP4TagsSetTrack", (gpointer *)&priv->mp4v2_tags_set_track },
+        { "MP4TagsSetGenre", (gpointer *)&priv->mp4v2_tags_set_genre },
+        { "MP4TagsSetComments", (gpointer *)&priv->mp4v2_tags_set_comments },
+        { "MP4TagsSetComposer", (gpointer *)&priv->mp4v2_tags_set_composer },
+        { "MP4TagsSetEncodedBy", (gpointer *)&priv->mp4v2_tags_set_encoded_by },
+        { "MP4TagsAddArtwork", (gpointer *)&priv->mp4v2_tags_add_artwork },
+        { "MP4TagsSetArtwork", (gpointer *)&priv->mp4v2_tags_set_artwork },
+        { "MP4TagsRemoveArtwork", (gpointer *)&priv->mp4v2_tags_remove_artwork },
+        { "MP4GetTrackMediaDataName", (gpointer *)&priv->mp4v2_get_track_media_data_name },
+        { "MP4GetTrackEsdsObjectTypeId", (gpointer *)&priv->mp4v2_get_track_esds_object_type_id },
+        { "MP4GetTrackESConfiguration", (gpointer *)&priv->mp4v2_get_track_es_configuration },
+        { "MP4GetNumberOfTracks", (gpointer *)&priv->mp4v2_get_n_tracks },
+        { "MP4FindTrackId", (gpointer *)&priv->mp4v2_find_track_id },
+        { "MP4GetTrackBitRate", (gpointer *)&priv->mp4v2_get_track_bitrate },
+        { "MP4GetTrackAudioChannels", (gpointer *)&priv->mp4v2_get_track_audio_channels },
+        { "MP4GetTrackTimeScale", (gpointer *)&priv->mp4v2_get_track_timescale },
+        { "MP4GetTrackDuration", (gpointer *)&priv->mp4v2_get_track_duration },
+        { "MP4ConvertFromTrackDuration", (gpointer *)&priv->mp4v2_convert_from_track_duration },
     };
 
     for (i = 0; i < G_N_ELEMENTS (symbols); i++)
@@ -225,8 +221,8 @@ Mp4tag_Read_File_Tag (EtMP4Tag *tag, gchar *filename, File_Tag *FileTag)
     EtMP4TagPrivate *priv;
     MP4FileHandle mp4file = NULL;
     const MP4Tags *mp4tags = NULL;
-    uint16_t track, track_total;
-    uint16_t disk, disktotal;
+    guint16 track, track_total;
+    guint16 disk, disktotal;
     Picture *prev_pic = NULL;
     gint pic_num;
     const MP4TagArtwork *mp4artwork = NULL;
@@ -246,8 +242,8 @@ Mp4tag_Read_File_Tag (EtMP4Tag *tag, gchar *filename, File_Tag *FileTag)
         return FALSE;
     }
 
-    mp4tags = priv->mp4v2_tagsalloc ();
-    if (!priv->mp4v2_tagsfetch (mp4tags, mp4file))
+    mp4tags = priv->mp4v2_tags_alloc ();
+    if (!priv->mp4v2_tags_fetch (mp4tags, mp4file))
     {
         gchar *filename_utf8 = filename_to_display(filename);
         Log_Print(LOG_ERROR,_("ERROR reading tags from file: '%s' (%s)."),filename_utf8,_("MP4 format invalid"));
@@ -370,7 +366,7 @@ Mp4tag_Read_File_Tag (EtMP4Tag *tag, gchar *filename, File_Tag *FileTag)
 
 
     /* Free allocated data */
-    priv->mp4v2_tagsfree (mp4tags);
+    priv->mp4v2_tags_free (mp4tags);
     priv->mp4v2_close (mp4file, 0);
 
     return TRUE;
@@ -422,8 +418,8 @@ Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
         return FALSE;
     }
 
-    mp4tags = priv->mp4v2_tagsalloc ();
-    if (!priv->mp4v2_tagsfetch (mp4tags, mp4file))
+    mp4tags = priv->mp4v2_tags_alloc ();
+    if (!priv->mp4v2_tags_fetch (mp4tags, mp4file))
     {
         Log_Print(LOG_ERROR,_("ERROR reading tags from file: '%s' (%s)."),filename_utf8,_("MP4 format invalid"));
         return FALSE;
@@ -434,10 +430,10 @@ Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
      *********/
     if (FileTag->title && g_utf8_strlen(FileTag->title, -1) > 0)
     {
-        priv->mp4v2_tagssetname (mp4tags, FileTag->title);
+        priv->mp4v2_tags_set_title (mp4tags, FileTag->title);
     }else
     {
-        priv->mp4v2_tagssetname (mp4tags, "");
+        priv->mp4v2_tags_set_title (mp4tags, "");
     }
 
     /**********
@@ -445,10 +441,10 @@ Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
      **********/
     if (FileTag->artist && g_utf8_strlen(FileTag->artist, -1) > 0)
     {
-        priv->mp4v2_tagssetartist (mp4tags, FileTag->artist);
+        priv->mp4v2_tags_set_artist (mp4tags, FileTag->artist);
     }else
     {
-        priv->mp4v2_tagssetartist (mp4tags, "");
+        priv->mp4v2_tags_set_artist (mp4tags, "");
     }
 
     /*********
@@ -456,10 +452,10 @@ Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
      *********/
     if (FileTag->album && g_utf8_strlen(FileTag->album, -1) > 0)
     {
-        priv->mp4v2_tagssetalbum (mp4tags, FileTag->album);
+        priv->mp4v2_tags_set_album (mp4tags, FileTag->album);
     }else
     {
-        priv->mp4v2_tagssetalbum (mp4tags, "");
+        priv->mp4v2_tags_set_album (mp4tags, "");
     }
 
     /****************
@@ -467,10 +463,10 @@ Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
      ****************/
     if (FileTag->album_artist && g_utf8_strlen(FileTag->album_artist, -1) > 0)
     {
-        priv->mp4v2_tagssetalbumartist (mp4tags, FileTag->album_artist);
+        priv->mp4v2_tags_set_album_artist (mp4tags, FileTag->album_artist);
     }else
     {
-        priv->mp4v2_tagssetalbumartist (mp4tags, "");
+        priv->mp4v2_tags_set_album_artist (mp4tags, "");
     }
 
     /**********************
@@ -506,17 +502,17 @@ Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
             mp4disk.total = atoi(FileTag->disc_number_total);
         */
     }
-    priv->mp4v2_tagssetdisk (mp4tags, &mp4disk);
+    priv->mp4v2_tags_set_disk (mp4tags, &mp4disk);
 
     /********
      * Year *
      ********/
     if (FileTag->year && g_utf8_strlen(FileTag->year, -1) > 0)
     {
-        priv->mp4v2_tagssetreleasedate (mp4tags, FileTag->year);
+        priv->mp4v2_tags_set_release_date (mp4tags, FileTag->year);
     }else
     {
-        priv->mp4v2_tagssetreleasedate (mp4tags, "");
+        priv->mp4v2_tags_set_release_date (mp4tags, "");
     }
 
     /*************************
@@ -530,18 +526,18 @@ Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
         if (FileTag->track_total)
             mp4track.total = atoi(FileTag->track_total);
     }
-    priv->mp4v2_tagssettrack (mp4tags, &mp4track);
+    priv->mp4v2_tags_set_track (mp4tags, &mp4track);
 
     /*********
      * Genre *
      *********/
     if (FileTag->genre && g_utf8_strlen(FileTag->genre, -1) > 0 )
     {
-        priv->mp4v2_tagssetgenre (mp4tags, FileTag->genre);
+        priv->mp4v2_tags_set_genre (mp4tags, FileTag->genre);
     }else
     {
         //MP4DeleteMetadataGenre(mp4tags);
-        priv->mp4v2_tagssetgenre (mp4tags, "");
+        priv->mp4v2_tags_set_genre (mp4tags, "");
     }
 
     /***********
@@ -549,10 +545,10 @@ Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
      ***********/
     if (FileTag->comment && g_utf8_strlen(FileTag->comment, -1) > 0)
     {
-        priv->mp4v2_tagssetcomments (mp4tags, FileTag->comment);
+        priv->mp4v2_tags_set_comments (mp4tags, FileTag->comment);
     }else
     {
-        priv->mp4v2_tagssetcomments (mp4tags, "");
+        priv->mp4v2_tags_set_comments (mp4tags, "");
     }
 
     /**********************
@@ -560,10 +556,10 @@ Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
      **********************/
     if (FileTag->composer && g_utf8_strlen(FileTag->composer, -1) > 0)
     {
-        priv->mp4v2_tagssetcomposer (mp4tags, FileTag->composer);
+        priv->mp4v2_tags_set_composer (mp4tags, FileTag->composer);
     }else
     {
-        priv->mp4v2_tagssetcomposer (mp4tags, "");
+        priv->mp4v2_tags_set_composer (mp4tags, "");
     }
 
     /*****************
@@ -571,10 +567,10 @@ Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
      *****************/
     if (FileTag->encoded_by && g_utf8_strlen(FileTag->encoded_by, -1) > 0)
     {
-        priv->mp4v2_tagssetencodedby (mp4tags, FileTag->encoded_by);
+        priv->mp4v2_tags_set_encoded_by (mp4tags, FileTag->encoded_by);
     }else
     {
-        priv->mp4v2_tagssetencodedby (mp4tags, "");
+        priv->mp4v2_tags_set_encoded_by (mp4tags, "");
     }
 
     /***********
@@ -584,8 +580,8 @@ Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
         // Can handle only one picture...
         Picture *pic;
         if (mp4tags->artworkCount && mp4tags->artwork)
-            priv->mp4v2_removeartwork (mp4tags, 0);
-        priv->mp4v2_setartwork (mp4tags, 0, NULL);
+            priv->mp4v2_tags_remove_artwork (mp4tags, 0);
+        priv->mp4v2_tags_set_artwork (mp4tags, 0, NULL);
         for (pic = FileTag->picture; pic; pic = pic->next)
         {
             if (pic->type == ET_PICTURE_TYPE_FRONT_COVER)
@@ -594,29 +590,26 @@ Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
                  mp4artwork.size = pic->size;
                  switch (pic->type) {
                   case PICTURE_FORMAT_JPEG:
-                     mp4artwork.type = MP4_ART_JPEG;
+                     mp4artwork.type = MP4_TAG_ARTWORK_TYPE_JPEG;
                      break;
                   case PICTURE_FORMAT_PNG:
-                     mp4artwork.type = MP4_ART_PNG;
+                     mp4artwork.type = MP4_TAG_ARTWORK_TYPE_PNG;
                      break;
                   default:
-                     mp4artwork.type = MP4_ART_UNDEFINED;
+                     mp4artwork.type = MP4_TAG_ARTWORK_TYPE_UNDEFINED;
                  }
                  if (mp4tags->artworkCount)
-                     priv->mp4v2_setartwork (mp4tags, 0, &mp4artwork);
+                     priv->mp4v2_tags_set_artwork (mp4tags, 0, &mp4artwork);
                  else
-                     priv->mp4v2_addartwork (mp4tags, &mp4artwork);
+                     priv->mp4v2_tags_add_artwork (mp4tags, &mp4artwork);
             }
         }
     }
 
-    priv->mp4v2_tagsstore (mp4tags, mp4file);
-    priv->mp4v2_tagsfree (mp4tags);
+    priv->mp4v2_tags_store (mp4tags, mp4file);
+    priv->mp4v2_tags_free (mp4tags);
     priv->mp4v2_close (mp4file, 0);
 
     if (error) return FALSE;
     else       return TRUE;
 }
-
-
-#endif /* ENABLE_MP4 */

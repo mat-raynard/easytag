@@ -4004,7 +4004,6 @@ void Tag_Area_Display_Controls (ET_File *ETFile)
             gtk_widget_hide (GTK_WIDGET (image_properties_toolitem));
             break;
 
-#ifdef ENABLE_MP4
         case MP4_TAG:
             gtk_widget_show (GTK_WIDGET (DiscNumberLabel));
             gtk_widget_show (GTK_WIDGET (DiscNumberEntry));
@@ -4025,7 +4024,6 @@ void Tag_Area_Display_Controls (ET_File *ETFile)
             gtk_widget_show (GTK_WIDGET (save_image_toolitem));
             gtk_widget_show (GTK_WIDGET (image_properties_toolitem));
             break;
-#endif
 
 #ifdef ENABLE_WAVPACK
         case WAVPACK_TAG:

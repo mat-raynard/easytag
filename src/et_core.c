@@ -50,10 +50,8 @@
 #   include "flac_header.h"
 #   include "flac_tag.h"
 #endif
-#ifdef ENABLE_MP4
-#   include "mp4_header.h"
-#   include "mp4_tag.h"
-#endif
+#include "mp4_header.h"
+#include "mp4_tag.h"
 #ifdef ENABLE_WAVPACK
 #   include "wavpack_header.h"
 #   include "wavpack_tag.h"
@@ -515,7 +513,6 @@ GList *ET_Add_File_To_File_List (gchar *filename)
         case APE_TAG:
             Ape_Tag_Read_File_Tag(filename,FileTag);
             break;
-#ifdef ENABLE_MP4
         case MP4_TAG:
             {
                 EtMP4Tag *tag = ET_MP4_TAG (g_object_new (ET_TYPE_MP4_TAG,
@@ -532,7 +529,6 @@ GList *ET_Add_File_To_File_List (gchar *filename)
                 g_object_unref (tag);
             }
             break;
-#endif
 #ifdef ENABLE_WAVPACK
         case WAVPACK_TAG:
             Wavpack_Tag_Read_File_Tag(filename, FileTag);
@@ -581,7 +577,6 @@ GList *ET_Add_File_To_File_List (gchar *filename)
             Wavpack_Header_Read_File_Info(filename, ETFileInfo);
             break;
 #endif
-#ifdef ENABLE_MP4
         case MP4_FILE:
             {
                 EtMP4Tag *tag = ET_MP4_TAG (g_object_new (ET_TYPE_MP4_TAG,
@@ -598,7 +593,6 @@ GList *ET_Add_File_To_File_List (gchar *filename)
                 g_object_unref (tag);
             }
             break;
-#endif
         case UNKNOWN_FILE:
         default:
             Log_Print(LOG_ERROR,"ETFileInfo: Undefined file type (%d) for file %s",ETFileDescription->FileType,filename_utf8);
@@ -2662,12 +2656,10 @@ void ET_Display_File_Data_To_UI (ET_File *ETFile)
             gtk_frame_set_label(GTK_FRAME(TagFrame),_("APE Tag"));
             ET_Display_File_Tag_To_UI(ETFile);
             break;
-#ifdef ENABLE_MP4
         case MP4_TAG:
             gtk_frame_set_label(GTK_FRAME(TagFrame),_("MP4/M4A/AAC Tag"));
             ET_Display_File_Tag_To_UI(ETFile);
             break;
-#endif
 #ifdef ENABLE_WAVPACK
         case WAVPACK_TAG:
             gtk_frame_set_label(GTK_FRAME(TagFrame),_("Wavpack Tag"));
@@ -2724,12 +2716,10 @@ void ET_Display_File_Data_To_UI (ET_File *ETFile)
             gtk_frame_set_label(GTK_FRAME(FileFrame),_("Monkey's Audio File"));
             Mac_Header_Display_File_Info_To_UI(cur_filename,ETFile->ETFileInfo);
             break;
-#ifdef ENABLE_MP4
         case MP4_FILE:
             gtk_frame_set_label(GTK_FRAME(FileFrame),_("MP4/AAC File"));
             Mp4_Header_Display_File_Info_To_UI(cur_filename,ETFile->ETFileInfo);
             break;
-#endif
 #ifdef ENABLE_WAVPACK
         case WAVPACK_FILE:
             gtk_frame_set_label(GTK_FRAME(FileFrame),_("Wavpack File"));
@@ -3210,9 +3200,7 @@ void ET_Save_File_Data_From_UI (ET_File *ETFile)
 #ifdef ENABLE_FLAC
         case FLAC_TAG:
 #endif
-#ifdef ENABLE_MP4
         case MP4_TAG:
-#endif
 #ifdef ENABLE_WAVPACK
         case WAVPACK_TAG:
 #endif
@@ -3885,7 +3873,6 @@ gboolean ET_Save_File_Tag_To_HD (ET_File *ETFile)
         case APE_TAG:
             state = Ape_Tag_Write_File_Tag(ETFile);
             break;
-#ifdef ENABLE_MP4
         case MP4_TAG:
             {
                 EtMP4Tag *tag = ET_MP4_TAG (g_object_new (ET_TYPE_MP4_TAG,
@@ -3903,7 +3890,6 @@ gboolean ET_Save_File_Tag_To_HD (ET_File *ETFile)
                 g_object_unref (tag);
             }
             break;
-#endif
 #ifdef ENABLE_WAVPACK
         case WAVPACK_TAG:
             state = Wavpack_Tag_Write_File_Tag(ETFile);

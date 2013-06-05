@@ -237,19 +237,9 @@ AS_IF([test "x$have_mp3" = "xyes" -a "x$enable_id3v23" != "xno"],
       [have_id3lib=no])
 
 dnl ################################################
-dnl # libmp4v2 headers
+dnl # libmp4v2 dynamic loader
 dnl ################################################
 GMODULE_DEPS="gmodule-2.0"
-AS_IF([test "x$enable_mp4" != "xno"],
-      [AC_CHECK_HEADER([mp4v2/mp4v2.h], [have_libmp4v2=yes],
-                       [have_libmp4v2=no])],
-      [have_libmp4v2=no])
-
-AS_IF([test "x$have_libmp4v2" != "xno"],
-      [AC_DEFINE([ENABLE_MP4], [], [Define for libmp4v2 MP4 support])],
-      [GMODULE_DEPS=""
-       AS_IF([test "x$enable_mp4" = "xyes"],
-             [AC_MSG_ERROR([libmp4v2 support requested but required headers were not found])])])
 
 dnl ################################################
 dnl # WavPack library

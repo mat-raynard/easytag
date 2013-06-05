@@ -248,11 +248,9 @@ static const ET_File_Description ETFileDescription[] =
     {MAC_FILE,     ".mac",  APE_TAG},  // Implemented by Artur Polaczynski
     {OFR_FILE,     ".ofr",  APE_TAG},
     {OFR_FILE,     ".ofs",  APE_TAG},
-#ifdef ENABLE_MP4
     {MP4_FILE,     ".mp4",  MP4_TAG},  // Implemented by Michael Ihde
     {MP4_FILE,     ".m4a",  MP4_TAG},  // Implemented by Michael Ihde
     {MP4_FILE,     ".m4p",  MP4_TAG},  // Implemented by Michael Ihde
-#endif
 #ifdef ENABLE_WAVPACK
     {WAVPACK_FILE, ".wv",   WAVPACK_TAG}, // Implemented by Maarten Maathuis
 #endif
