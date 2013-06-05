@@ -123,6 +123,7 @@ et_mp4_tag_load_symbols (EtMP4Tag *tag)
         { "MP4TagsSetGenre", (gpointer *)&priv->mp4v2_tags_set_genre },
         { "MP4TagsSetComments", (gpointer *)&priv->mp4v2_tags_set_comments },
         { "MP4TagsSetComposer", (gpointer *)&priv->mp4v2_tags_set_composer },
+        { "MP4TagsSetCopyright", (gpointer *)&priv->mp4v2_tags_set_copyright },
         { "MP4TagsSetEncodedBy", (gpointer *)&priv->mp4v2_tags_set_encoded_by },
         { "MP4TagsAddArtwork", (gpointer *)&priv->mp4v2_tags_add_artwork },
         { "MP4TagsSetArtwork", (gpointer *)&priv->mp4v2_tags_set_artwork },
@@ -329,6 +330,12 @@ Mp4tag_Read_File_Tag (EtMP4Tag *tag, gchar *filename, File_Tag *FileTag)
      **********************/
     if (mp4tags->composer)
         FileTag->composer = g_strdup(mp4tags->composer);
+
+    /* Copyright. */
+    if (mp4tags->copyright)
+    {
+        FileTag->copyright = g_strdup (mp4tags->copyright);
+    }
 
     /*****************
      * Encoding Tool *
@@ -560,6 +567,16 @@ Mp4tag_Write_File_Tag (EtMP4Tag *tag, ET_File *ETFile)
     }else
     {
         priv->mp4v2_tags_set_composer (mp4tags, "");
+    }
+
+    /* Copyright. */
+    if (FileTag->copyright && g_utf8_strlen (FileTag->copyright, -1) > 0)
+    {
+        priv->mp4v2_tags_set_copyright (mp4tags, FileTag->copyright);
+    }
+    else
+    {
+        priv->mp4v2_tags_set_copyright (mp4tags, "");
     }
 
     /*****************

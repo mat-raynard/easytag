@@ -4011,8 +4011,8 @@ void Tag_Area_Display_Controls (ET_File *ETFile)
             gtk_widget_show (GTK_WIDGET (ComposerEntry));
             gtk_widget_hide(GTK_WIDGET(OrigArtistLabel));
             gtk_widget_hide(GTK_WIDGET(OrigArtistEntry));
-            gtk_widget_hide(GTK_WIDGET(CopyrightLabel));
-            gtk_widget_hide(GTK_WIDGET(CopyrightEntry));
+            gtk_widget_show (GTK_WIDGET (CopyrightLabel));
+            gtk_widget_show (GTK_WIDGET (CopyrightEntry));
             gtk_widget_hide(GTK_WIDGET(URLLabel));
             gtk_widget_hide(GTK_WIDGET(URLEntry));
             gtk_widget_show (GTK_WIDGET (EncodedByLabel));

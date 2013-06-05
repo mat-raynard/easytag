@@ -175,6 +175,8 @@ typedef gboolean (*_mp4v2_tags_set_comments) (const MP4Tags *tags,
                                               const gchar *comments);
 typedef gboolean (*_mp4v2_tags_set_composer) (const MP4Tags *tags,
                                               const gchar *composer);
+typedef gboolean (*_mp4v2_tags_set_copyright) (const MP4Tags *tags,
+                                               const gchar *copyright);
 typedef gboolean (*_mp4v2_tags_set_encoded_by) (const MP4Tags *tags,
                                                 const gchar *encoded_by);
 typedef gboolean (*_mp4v2_tags_add_artwork) (const MP4Tags *tags,
@@ -234,6 +236,7 @@ struct _EtMP4TagPrivate
     _mp4v2_tags_set_genre mp4v2_tags_set_genre;
     _mp4v2_tags_set_comments mp4v2_tags_set_comments;
     _mp4v2_tags_set_composer mp4v2_tags_set_composer;
+    _mp4v2_tags_set_copyright mp4v2_tags_set_copyright;
     _mp4v2_tags_set_encoded_by mp4v2_tags_set_encoded_by;
     _mp4v2_tags_add_artwork mp4v2_tags_add_artwork;
     _mp4v2_tags_remove_artwork mp4v2_tags_remove_artwork;
