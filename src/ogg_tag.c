@@ -309,12 +309,27 @@ ogg_tag_read_file_tag (gchar *filename, File_Tag *FileTag, GError **error)
         g_free(string);
     }
 
-    /*******************************
-     * Disc Number (Part of a Set) *
-     *******************************/
+    /**********************************************
+     * Disc Number (Part of a Set) and Disc Total *
+     **********************************************/
     if ( (string = vorbis_comment_query(vc,"DISCNUMBER",0)) != NULL && g_utf8_strlen(string, -1) > 0 )
     {
         FileTag->disc_number = g_strdup(string);
+    }
+
+    if ( (string = vorbis_comment_query(vc,"DISCNUMBER",0)) != NULL && g_utf8_strlen(string, -1) > 0 )
+    {
+        // Ckeck if DISCTOTAL used, else takes it in DISCNUMBER
+        if ((string1 = vorbis_comment_query(vc, "DISCTOTAL", 0)) != NULL && g_utf8_strlen(string1, -1) > 0)
+        {
+            FileTag->discs = et_format_disc_number(atoi(string1));
+        }
+        else if ((string1 = g_utf8_strchr(string, -1, '/')))
+        {
+            FileTag->discs = et_format_disc_number(atoi(string1 + 1));
+            *string1 = '\0';
+        }
+        FileTag->disc_number = et_format_disc_number(atoi(string));
     }
 
     /********
@@ -785,6 +800,8 @@ ogg_tag_write_file_tag (ET_File *ETFile, GError **error)
      * Disc Number *
      ***************/
     Ogg_Set_Tag(vc,"DISCNUMBER=",FileTag->disc_number,FALSE);
+	if (STORE_TOTAL_NUMBER_OF_DISCS)
+	    Ogg_Set_Tag(vc,"DISCTOTAL=",FileTag->discs,FALSE);
 
     /********
      * Year *
