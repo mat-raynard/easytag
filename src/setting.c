@@ -137,6 +137,7 @@ static const tConfigVariable Config_Variables[] =
     {"number_track_formated_spin_button",    CV_TYPE_INT,     &NUMBER_TRACK_FORMATED_SPIN_BUTTON        },
     {"number_disc_formated",                 CV_TYPE_BOOL,    &NUMBER_DISC_FORMATED                     },
     {"number_disc_formated_spin_button",     CV_TYPE_INT,     &NUMBER_DISC_FORMATED_SPIN_BUTTON         },
+    {"store_total_number_of_discs",          CV_TYPE_BOOL,    &STORE_TOTAL_NUMBER_OF_DISCS              },
     {"set_focus_to_same_tag_field",          CV_TYPE_BOOL,    &SET_FOCUS_TO_SAME_TAG_FIELD              },
     {"set_focus_to_first_tag_field",         CV_TYPE_BOOL,    &SET_FOCUS_TO_FIRST_TAG_FIELD             },
     {"sorting_file_mode",                    CV_TYPE_INT,     &SORTING_FILE_MODE                        },
@@ -384,6 +385,7 @@ void Init_Config_Variables (void)
     NUMBER_TRACK_FORMATED_SPIN_BUTTON       = 2;
     NUMBER_DISC_FORMATED                    = 1;
     NUMBER_DISC_FORMATED_SPIN_BUTTON        = 1;
+    STORE_TOTAL_NUMBER_OF_DISCS             = 0;
     SET_FOCUS_TO_SAME_TAG_FIELD             = 1;
     SET_FOCUS_TO_FIRST_TAG_FIELD            = 0;
     SORTING_FILE_MODE                       = SORTING_BY_ASCENDING_FILENAME;
@@ -677,6 +679,7 @@ Apply_Changes_Of_Preferences_Window (void)
         NUMBER_TRACK_FORMATED_SPIN_BUTTON      = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(NumberTrackFormatedSpinButton));
         NUMBER_DISC_FORMATED                   = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(NumberDiscFormated));
         NUMBER_DISC_FORMATED_SPIN_BUTTON       = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(NumberDiscFormatedSpinButton));
+        STORE_TOTAL_NUMBER_OF_DISCS            = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(StoreTotalNumberOfDiscs));
         SORTING_FILE_CASE_SENSITIVE            = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(SortingFileCaseSensitive));
         SET_FOCUS_TO_SAME_TAG_FIELD            = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(SetFocusToSameTagField));
         SET_FOCUS_TO_FIRST_TAG_FIELD           = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(SetFocusToFirstTagField));

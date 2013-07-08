@@ -593,6 +593,15 @@ void Open_OptionsWindow (void)
     g_signal_connect_swapped(G_OBJECT(NumberDiscFormatedSpinButton),"changed",G_CALLBACK(Number_Disc_Formatted_Spin_Button_Changed),G_OBJECT(Label));
     g_signal_emit_by_name(G_OBJECT(NumberDiscFormatedSpinButton),"changed",NULL);
 
+    // store total number of discs
+    hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, BOX_SPACING);
+    gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,0);
+
+    StoreTotalNumberOfDiscs = gtk_check_button_new_with_label(_("Write total number of discs to the file"));
+    gtk_box_pack_start(GTK_BOX(vbox),StoreTotalNumberOfDiscs,FALSE,FALSE,0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(StoreTotalNumberOfDiscs),STORE_TOTAL_NUMBER_OF_DISCS);
+    gtk_widget_set_tooltip_text(DateAutoCompletion,_("If enabled, the total number of discs will be written to the disc field of the file, e.g. '1/3' instead of only '1'."));
+
     // Separator line
     Separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
     gtk_box_pack_start(GTK_BOX(vbox),Separator,FALSE,FALSE,0);

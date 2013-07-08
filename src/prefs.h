@@ -109,6 +109,7 @@ GtkWidget *NumberTrackFormated;
 GtkWidget *NumberTrackFormatedSpinButton;
 GtkWidget *NumberDiscFormated;
 GtkWidget *NumberDiscFormatedSpinButton;
+GtkWidget *StoreTotalNumberOfDiscs;
 GtkWidget *SetFocusToSameTagField;
 GtkWidget *SetFocusToFirstTagField;
 GtkWidget *LogMaxLinesSpinButton;
