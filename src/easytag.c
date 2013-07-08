@@ -4674,3 +4674,15 @@ et_tag_field_on_key_press_event (GtkEntry *entry, GdkEventKey *event,
             return FALSE;
     }
 }
+
+gchar
+*et_format_track_number(const gint track_number)
+{
+    if (NUMBER_TRACK_FORMATED)
+    {
+        return g_strdup_printf("%.*d", NUMBER_TRACK_FORMATED_SPIN_BUTTON, track_number);
+    }
+
+    return g_strdup_printf("%d", track_number);
+}
+

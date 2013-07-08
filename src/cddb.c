@@ -3873,15 +3873,15 @@ Cddb_Set_Track_Infos_To_File_List (void)
 
                 if (cddbsettoallfields || cddbsettotrack)
                 {
-                    if (NUMBER_TRACK_FORMATED) snprintf(buffer,sizeof(buffer),"%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,cddbtrackalbum->track_number);
-                    else                       snprintf(buffer,sizeof(buffer),"%d",  cddbtrackalbum->track_number);
+                    snprintf(buffer,sizeof(buffer),"%s",et_format_track_number(cddbtrackalbum->track_number));
+
                     ET_Set_Field_File_Tag_Item(&FileTag->track,buffer);
                 }
 
                 if (cddbsettoallfields || cddbsettotracktotal)
                 {
-                    if (NUMBER_TRACK_FORMATED) snprintf(buffer,sizeof(buffer),"%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,list_length);
-                    else                       snprintf(buffer,sizeof(buffer),"%d",  list_length);
+                    snprintf(buffer,sizeof(buffer),"%s", et_format_track_number(list_length));
+
                     ET_Set_Field_File_Tag_Item(&FileTag->track_total,buffer);
                 }
 
@@ -3906,8 +3906,7 @@ Cddb_Set_Track_Infos_To_File_List (void)
                 FileName = ET_File_Name_Item_New();
 
                 // Build the filename with the path
-                if (NUMBER_TRACK_FORMATED) snprintf(buffer,sizeof(buffer),"%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,cddbtrackalbum->track_number);
-                else                       snprintf(buffer,sizeof(buffer),"%d",  cddbtrackalbum->track_number);
+                snprintf(buffer,sizeof(buffer),"%s", et_format_track_number(cddbtrackalbum->track_number));
 
                 filename_generated_utf8 = g_strconcat(buffer," - ",cddbtrackalbum->track_name,NULL);
                 ET_File_Name_Convert_Character(filename_generated_utf8); // Replace invalid characters
@@ -3959,15 +3958,15 @@ Cddb_Set_Track_Infos_To_File_List (void)
 
                 if (cddbsettoallfields || cddbsettotrack)
                 {
-                    if (NUMBER_TRACK_FORMATED) snprintf(buffer,sizeof(buffer),"%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,cddbtrackalbum->track_number);
-                    else                       snprintf(buffer,sizeof(buffer),"%d",  cddbtrackalbum->track_number);
+                    snprintf(buffer,sizeof(buffer),"%s", et_format_track_number(cddbtrackalbum->track_number));
+
                     ET_Set_Field_File_Tag_Item(&FileTag->track,buffer);
                 }
 
                 if (cddbsettoallfields || cddbsettotracktotal)
                 {
-                    if (NUMBER_TRACK_FORMATED) snprintf(buffer,sizeof(buffer),"%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,list_length);
-                    else                       snprintf(buffer,sizeof(buffer),"%d",  list_length);
+                    snprintf(buffer,sizeof(buffer),"%s", et_format_track_number(list_length));
+
                     ET_Set_Field_File_Tag_Item(&FileTag->track_total,buffer);
                 }
 
@@ -3992,8 +3991,7 @@ Cddb_Set_Track_Infos_To_File_List (void)
                 FileName = ET_File_Name_Item_New();
 
                 // Build the filename with the path
-                if (NUMBER_TRACK_FORMATED) snprintf(buffer,sizeof(buffer),"%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,cddbtrackalbum->track_number);
-                else                       snprintf(buffer,sizeof(buffer),"%d",  cddbtrackalbum->track_number);
+                snprintf(buffer,sizeof(buffer),"%s", et_format_track_number(cddbtrackalbum->track_number));
 
                 filename_generated_utf8 = g_strconcat(buffer," - ",cddbtrackalbum->track_name,NULL);
                 ET_File_Name_Convert_Character(filename_generated_utf8); // Replace invalid characters

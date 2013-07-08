@@ -175,5 +175,7 @@ void Clear_File_Entry_Field (void);
 void Clear_Tag_Entry_Fields (void);
 void Clear_Header_Fields    (void);
 
+// TODO: Those need to be moved to a better place
+gchar *et_format_track_number(const gint track_number);
 
 #endif /* __EASYTAG_H__ */

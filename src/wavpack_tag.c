@@ -169,11 +169,13 @@ gboolean Wavpack_Tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
         field2++;
     }
 
-    if ( field2 && FileTag->track_total == NULL ) {
-        FileTag->track_total = Try_To_Validate_Utf8_String(field2);
+    if (field2 && FileTag->track_total == NULL)
+    {
+        FileTag->track_total = et_format_track_number(atoi(Try_To_Validate_Utf8_String(field2)));
     }
-    if ( length > 0 && FileTag->track == NULL ) {
-        FileTag->track = Try_To_Validate_Utf8_String(field);
+    if (length > 0 && FileTag->track == NULL)
+    {
+        FileTag->track = et_format_track_number(atoi(Try_To_Validate_Utf8_String(field)));
     }
 
     g_free (field);

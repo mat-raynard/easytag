@@ -506,15 +506,7 @@ void Load_Track_List_To_UI (void)
     /* Create list of tracks. */
     for (i = 1; i <= len; i++)
     {
-
-        if (NUMBER_TRACK_FORMATED)
-        {
-            text = g_strdup_printf ("%.*" G_GSIZE_FORMAT,
-                                    NUMBER_TRACK_FORMATED_SPIN_BUTTON, i);
-        } else
-        {
-            text = g_strdup_printf ("%.2" G_GSIZE_FORMAT, i);
-        }
+        text = et_format_track_number(i);
 
         gtk_list_store_insert_with_values (GTK_LIST_STORE (TrackEntryComboModel),
                                            NULL, G_MAXINT, MISC_COMBO_TEXT,
