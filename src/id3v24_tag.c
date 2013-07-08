@@ -232,8 +232,22 @@ gboolean Id3tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
     /************************
      * Part of a set (TPOS) *
      ************************/
-    if ( (frame = id3_tag_findframe(tag,"TPOS", 0)) )
-        update |= libid3tag_Get_Frame_Str(frame, ~0, &FileTag->disc_number);
+    if ( (frame = id3_tag_findframe(tag, "TPOS", 0)) )
+    {
+        update |= libid3tag_Get_Frame_Str(frame, ~0, &string1);
+        if ( string1 )
+        {
+            string2 = g_utf8_strchr(string1,-1,'/');
+
+            if (string2)
+            {
+                FileTag->discs = et_format_disc_number(atoi(string2+1));
+                *string2 = '\0'; // To cut string1
+            }
+            FileTag->disc_number = et_format_disc_number(atoi(string1));
+            g_free(string1);
+        }
+    }
 
     /********************
      * Year (TYER/TDRC) *
@@ -875,7 +889,13 @@ gboolean Id3tag_Write_File_v24Tag (ET_File *ETFile)
     /***************
      * Part of set *
      ***************/
-    etag_set_tags(FileTag->disc_number, "TPOS", ID3_FIELD_TYPE_STRINGLIST, NULL, v2tag, &strip_tags);
+    if (STORE_TOTAL_NUMBER_OF_DISCS && FileTag->disc_number && FileTag->discs && *FileTag->discs)
+        string1 = g_strconcat(FileTag->disc_number,"/",FileTag->discs,NULL);
+    else
+        string1 = g_strdup(FileTag->disc_number);
+
+    etag_set_tags(string1, "TPOS", ID3_FIELD_TYPE_STRINGLIST, NULL, v2tag, &strip_tags);
+    g_free(string1);
 
     /********
      * Year *
