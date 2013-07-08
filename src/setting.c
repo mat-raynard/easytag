@@ -221,10 +221,12 @@ static const tConfigVariable Config_Variables[] =
     {"process_encoded_by_field",                CV_TYPE_BOOL,    &PROCESS_ENCODED_BY_FIELD               },
     {"process_fields_convert_from",             CV_TYPE_STRING,  &PROCESS_FIELDS_CONVERT_FROM            },
     {"process_fields_convert_to",               CV_TYPE_STRING,  &PROCESS_FIELDS_CONVERT_TO              },
+    {"process_fields_fill_field_pattern",       CV_TYPE_STRING,  &PROCESS_FIELDS_FILL_FIELD_PATTERN      },
 
     {"pf_convert_into_space",                   CV_TYPE_BOOL,    &PF_CONVERT_INTO_SPACE                  },
     {"pf_convert_space",                        CV_TYPE_BOOL,    &PF_CONVERT_SPACE                       },
     {"pf_convert",                              CV_TYPE_BOOL,    &PF_CONVERT                             },
+    {"pf_fill_field",                           CV_TYPE_BOOL,    &PF_FILL_FIELD                          },
     {"pf_convert_all_uppercase",                CV_TYPE_BOOL,    &PF_CONVERT_ALL_UPPERCASE               },
     {"pf_convert_all_downcase",                 CV_TYPE_BOOL,    &PF_CONVERT_ALL_DOWNCASE                },
     {"pf_convert_first_letter_uppercase",       CV_TYPE_BOOL,    &PF_CONVERT_FIRST_LETTER_UPPERCASE      },
@@ -494,6 +496,8 @@ void Init_Config_Variables (void)
 
     PROCESS_FIELDS_CONVERT_FROM        = NULL;
     PROCESS_FIELDS_CONVERT_TO          = NULL;
+
+    PROCESS_FIELDS_FILL_FIELD_PATTERN  = NULL;
 
     PF_CONVERT_INTO_SPACE              = 1;
     PF_CONVERT_SPACE                   = 0;

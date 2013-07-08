@@ -81,6 +81,8 @@ static GtkWidget *ProcessFieldsConvert = NULL;
 static GtkWidget *ProcessFieldsConvertLabelTo;
 static GtkWidget *ProcessFieldsConvertTo = NULL;
 static GtkWidget *ProcessFieldsConvertFrom = NULL;
+static GtkWidget *ProcessFieldsFillField = NULL;
+static GtkWidget *ProcessFieldsFillFieldPattern = NULL;
 static GtkWidget *ProcessFieldsAllUppercase = NULL;
 static GtkWidget *ProcessFieldsAllDowncase = NULL;
 static GtkWidget *ProcessFieldsFirstLetterUppercase = NULL;
@@ -231,15 +233,16 @@ static void Scan_Rename_File_Prefix_Path (void);
 static void Scan_Free_File_Rename_List (GList *list);
 static void Scan_Free_File_Fill_Tag_List (GList *list);
 
-static gchar **Scan_Return_File_Tag_Field_From_Mask_Code (File_Tag *FileTag,
+static gchar **Scan_Return_File_Tag_Field_From_Mask_Code (ET_File *File, File_Tag *FileTag,
                                                           gchar code);
-static void Scan_Process_Fields_Functions (gchar **string);
+static void Scan_Process_Fields_Functions (gchar **string, ET_File *ETFile);
 
 static gint Scan_Word_Is_Roman_Numeral (const gchar *text);
 
 static void Process_Fields_Check_Button_Toggled (GtkWidget *object,
                                                  GList *list);
 static void Process_Fields_Convert_Check_Button_Toggled (GtkWidget *object);
+static void Process_Fields_Fill_Field_Check_Button_Toggled (GtkWidget *object);
 static void Process_Fields_First_Letters_Check_Button_Toggled (GtkWidget *object);
 static void Select_Fields_Invert_Selection (void);
 static void Select_Fields_Select_Unselect_All (void);
@@ -269,6 +272,7 @@ static const char *int2roman (int num);
 static char *int2roman_r (int num, char * str, size_t len);
 
 static void Scan_Convert_Character (gchar **string);
+static void Scan_Fill_Field (gchar **string, ET_File *ETFile);
 static GList *Scan_Generate_New_Tag_From_Mask (ET_File *ETFile, gchar *mask);
 static void Scan_Set_Scanner_Window_Init_Position (void);
 
@@ -319,7 +323,7 @@ Scan_Tag_With_Mask (ET_File *ETFile)
         Scan_Mask_Item *mask_item = l->data;
 
         // Get the target entry for this code
-        dest = Scan_Return_File_Tag_Field_From_Mask_Code(FileTag,mask_item->code);
+        dest = Scan_Return_File_Tag_Field_From_Mask_Code(ETFile, FileTag,mask_item->code);
 
         // We display the text affected to the code
         if ( dest && ( OVERWRITE_TAG_FIELD || *dest==NULL || strlen(*dest)==0 ) )
@@ -788,7 +792,7 @@ gchar *Scan_Generate_New_Filename_From_Mask (ET_File *ETFile, gchar *mask, gbool
         }
 
         // Now, parses the code to get the corresponding string (from tag)
-        source = Scan_Return_File_Tag_Field_From_Mask_Code((File_Tag *)ETFile->FileTag->data,tmp[1]);
+        source = Scan_Return_File_Tag_Field_From_Mask_Code(ETFile, (File_Tag *)ETFile->FileTag->data,tmp[1]);
         mask_item = g_malloc0(sizeof(File_Mask_Item));
         if (source && *source && strlen(*source)>0)
         {
@@ -1132,7 +1136,7 @@ Scan_Process_Fields (ET_File *ETFile)
             // Remove the extension to set it to lower case (to avoid problem with undo)
             if ((pos=strrchr(string,'.'))!=NULL) *pos = 0;
 
-            Scan_Process_Fields_Functions(&string);
+            Scan_Process_Fields_Functions(&string, ETFile);
 
             string_utf8 = ET_File_Name_Generate(ETFile,string);
             ET_Set_Filename_File_Name_Item(FileName,string_utf8,NULL);
@@ -1155,7 +1159,7 @@ Scan_Process_Fields (ET_File *ETFile)
 
             string = g_strdup(st_filetag->title);
 
-            Scan_Process_Fields_Functions(&string);
+            Scan_Process_Fields_Functions(&string, ETFile);
 
             ET_Set_Field_File_Tag_Item(&FileTag->title,string);
 
@@ -1173,7 +1177,7 @@ Scan_Process_Fields (ET_File *ETFile)
 
             string = g_strdup(st_filetag->artist);
 
-            Scan_Process_Fields_Functions(&string);
+            Scan_Process_Fields_Functions(&string, ETFile);
 
             ET_Set_Field_File_Tag_Item(&FileTag->artist,string);
 
@@ -1191,7 +1195,7 @@ Scan_Process_Fields (ET_File *ETFile)
 
             string = g_strdup(st_filetag->album_artist);
 
-            Scan_Process_Fields_Functions(&string);
+            Scan_Process_Fields_Functions(&string, ETFile);
 
             ET_Set_Field_File_Tag_Item(&FileTag->album_artist,string);
 
@@ -1208,7 +1212,7 @@ Scan_Process_Fields (ET_File *ETFile)
 
             string = g_strdup(st_filetag->album);
 
-            Scan_Process_Fields_Functions(&string);
+            Scan_Process_Fields_Functions(&string, ETFile);
 
             ET_Set_Field_File_Tag_Item(&FileTag->album,string);
 
@@ -1226,7 +1230,7 @@ Scan_Process_Fields (ET_File *ETFile)
 
             string = g_strdup(st_filetag->genre);
 
-            Scan_Process_Fields_Functions(&string);
+            Scan_Process_Fields_Functions(&string, ETFile);
 
             ET_Set_Field_File_Tag_Item(&FileTag->genre,string);
 
@@ -1244,7 +1248,7 @@ Scan_Process_Fields (ET_File *ETFile)
 
             string = g_strdup(st_filetag->comment);
 
-            Scan_Process_Fields_Functions(&string);
+            Scan_Process_Fields_Functions(&string, ETFile);
 
             ET_Set_Field_File_Tag_Item(&FileTag->comment,string);
 
@@ -1262,7 +1266,7 @@ Scan_Process_Fields (ET_File *ETFile)
 
             string = g_strdup(st_filetag->composer);
 
-            Scan_Process_Fields_Functions(&string);
+            Scan_Process_Fields_Functions(&string, ETFile);
 
             ET_Set_Field_File_Tag_Item(&FileTag->composer,string);
 
@@ -1280,7 +1284,7 @@ Scan_Process_Fields (ET_File *ETFile)
 
             string = g_strdup(st_filetag->orig_artist);
 
-            Scan_Process_Fields_Functions(&string);
+            Scan_Process_Fields_Functions(&string, ETFile);
 
             ET_Set_Field_File_Tag_Item(&FileTag->orig_artist,string);
 
@@ -1298,7 +1302,7 @@ Scan_Process_Fields (ET_File *ETFile)
 
             string = g_strdup(st_filetag->copyright);
 
-            Scan_Process_Fields_Functions(&string);
+            Scan_Process_Fields_Functions(&string, ETFile);
 
             ET_Set_Field_File_Tag_Item(&FileTag->copyright,string);
 
@@ -1316,7 +1320,7 @@ Scan_Process_Fields (ET_File *ETFile)
 
             string = g_strdup(st_filetag->url);
 
-            Scan_Process_Fields_Functions(&string);
+            Scan_Process_Fields_Functions(&string, ETFile);
 
             ET_Set_Field_File_Tag_Item(&FileTag->url,string);
 
@@ -1334,7 +1338,7 @@ Scan_Process_Fields (ET_File *ETFile)
 
             string = g_strdup(st_filetag->encoded_by);
 
-            Scan_Process_Fields_Functions(&string);
+            Scan_Process_Fields_Functions(&string, ETFile);
 
             ET_Set_Field_File_Tag_Item(&FileTag->encoded_by,string);
 
@@ -1354,7 +1358,7 @@ Scan_Process_Fields (ET_File *ETFile)
 
 
 static void
-Scan_Process_Fields_Functions (gchar **string)
+Scan_Process_Fields_Functions (gchar **string, ET_File *ETFile)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvertIntoSpace)))
     {
@@ -1373,6 +1377,9 @@ Scan_Process_Fields_Functions (gchar **string)
 
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvert)))
         Scan_Convert_Character(string);
+
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsFillField)))
+        Scan_Fill_Field(string, ETFile);
 
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsAllUppercase)))
         Scan_Process_Fields_All_Uppercase(*string);
@@ -1824,6 +1831,99 @@ handle_error:
 }
 
 /*
+ * Fill a field with the values taken from the tags.
+ */
+static void
+Scan_Fill_Field (gchar **string, ET_File *ETFile)
+{
+    gchar *pattern = gtk_editable_get_chars(GTK_EDITABLE(ProcessFieldsFillFieldPattern), 0, -1);
+
+    File_Mask_Item *mask_item = NULL;
+    GList          *mask_list = NULL;
+
+    gchar **source = NULL;
+    gchar *tmp     = NULL;
+
+    gchar *result     = NULL;
+    gchar *result_tmp = NULL;
+
+    /*
+     * Parse the codes to generate a list (1rst item = 1rst code)
+     */
+		while (pattern != NULL && (tmp = strrchr(pattern, '%')) != NULL && strlen(pattern) > 1)
+    {
+			 // pattern contains some characters after the code ('%b__')
+				if (strlen(tmp) > 2)
+				{
+						mask_item = g_malloc0(sizeof(File_Mask_Item));
+
+						mask_item->type = TRAILING_SEPARATOR;
+						mask_item->string = g_strdup(tmp+2);
+
+						mask_list = g_list_prepend(mask_list,mask_item);
+				}
+
+        // Now, parses the code to get the corresponding string (from tag)
+        source    = Scan_Return_File_Tag_Field_From_Mask_Code(ETFile, (File_Tag *)ETFile->FileTag->data, tmp[1]);
+        mask_item = g_malloc0(sizeof(File_Mask_Item));
+
+        if (source && *source && strlen(*source) > 0)
+        {
+            mask_item->type   = FIELD;
+            mask_item->string = g_strdup(*source);
+        }else
+        {
+            mask_item->type   = EMPTY_FIELD;
+            mask_item->string = NULL;
+        }
+
+        mask_list = g_list_prepend(mask_list, mask_item);
+        *tmp = '\0'; // Cut parsed data of mask
+    }
+
+    // It may have some characters before the last remaining code ('__%a')
+		if (pattern != NULL && strlen(pattern) > 0)
+    {
+        mask_item = g_malloc0(sizeof(File_Mask_Item));
+
+        mask_item->type   = LEADING_SEPARATOR;
+        mask_item->string = g_strdup(pattern);
+
+        mask_list = g_list_prepend(mask_list,mask_item);
+    }
+
+    /*
+     * Build the new value with items placed into the list
+     * (read the list from the end to the beginning)
+     */
+    mask_list = g_list_last(mask_list);
+    result    = g_strdup("");
+
+		while (mask_list) {
+			mask_item = mask_list->data;
+
+			if (mask_item->type == EMPTY_FIELD) {
+				// skip empty fields
+			} else {
+				result_tmp = result;
+				result     = g_strconcat(mask_item->string, result, NULL);
+				g_free(result_tmp);
+			}
+
+			if (!mask_list->prev) break;
+			mask_list = mask_list->prev;
+		}
+
+    // Free the list
+    Scan_Free_File_Rename_List(mask_list);
+
+		*string = g_strdup(result);
+
+		g_free(result);
+		g_free(pattern);
+}
+
+/*
  * Quick roman numeral check (non-roman numerals may also return true)
  * Patch from Slash Bunny (2007.08.12)
  * (http://home.hiwaay.net/~lkseitz/math/roman/numerals.shtml)
@@ -2250,7 +2350,7 @@ roman2int (const char *str)
  * Return the field of a 'File_Tag' structure corresponding to the mask code
  */
 static gchar
-**Scan_Return_File_Tag_Field_From_Mask_Code (File_Tag *FileTag, gchar code)
+**Scan_Return_File_Tag_Field_From_Mask_Code (ET_File *File, File_Tag *FileTag, gchar code)
 {
     switch (code)
     {
@@ -2284,6 +2384,10 @@ static gchar
             return &FileTag->encoded_by;
         case 'z':    /* Album Artist */
             return &FileTag->album_artist;
+        case 'k':    /* Incremented Value */
+            return &File->IndexString;
+        case 'm':     /* Incremented Value */
+            return &ETCore->ETFileDisplayedList_Length_String;
         case 'i':    /* Ignored */
             return NULL;
         default:
@@ -2681,19 +2785,39 @@ void Open_ScannerWindow (gint scanner_type)
         gtk_entry_set_text(GTK_ENTRY(ProcessFieldsConvertFrom),PROCESS_FIELDS_CONVERT_FROM);
     if (PROCESS_FIELDS_CONVERT_TO)
         gtk_entry_set_text(GTK_ENTRY(ProcessFieldsConvertTo),PROCESS_FIELDS_CONVERT_TO);
+    ProcessFieldsFillField        = gtk_check_button_new_with_label(_("Fill field:"));
+    ProcessFieldsFillFieldPattern = gtk_entry_new();
+
+    gtk_widget_set_size_request(ProcessFieldsFillFieldPattern,350,-1);
+
+    hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,2);
+    gtk_box_pack_start(GTK_BOX(VBox),hbox,FALSE,FALSE,0);
+
+    gtk_box_pack_start(GTK_BOX(hbox), ProcessFieldsFillField,        FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), ProcessFieldsFillFieldPattern, FALSE, FALSE, 0);
+
+    if (PROCESS_FIELDS_FILL_FIELD_PATTERN)
+        gtk_entry_set_text(GTK_ENTRY(ProcessFieldsFillFieldPattern),PROCESS_FIELDS_FILL_FIELD_PATTERN);
+
     /* List creation for check buttons in group */
     pf_cb_group1 = g_list_append (pf_cb_group1,ProcessFieldsConvertIntoSpace);
     pf_cb_group1 = g_list_append (pf_cb_group1,ProcessFieldsConvertSpace);
     pf_cb_group1 = g_list_append (pf_cb_group1,ProcessFieldsConvert);
+    pf_cb_group1 = g_list_append (pf_cb_group1,ProcessFieldsFillField);
+
     /* Toggled signals */
     g_signal_connect(G_OBJECT(ProcessFieldsConvertIntoSpace),"toggled",G_CALLBACK(Process_Fields_Check_Button_Toggled),pf_cb_group1);
     g_signal_connect(G_OBJECT(ProcessFieldsConvertSpace),    "toggled",G_CALLBACK(Process_Fields_Check_Button_Toggled),pf_cb_group1);
     g_signal_connect(G_OBJECT(ProcessFieldsConvert),         "toggled",G_CALLBACK(Process_Fields_Check_Button_Toggled),pf_cb_group1);
+    g_signal_connect(G_OBJECT(ProcessFieldsFillField),       "toggled",G_CALLBACK(Process_Fields_Check_Button_Toggled),pf_cb_group1);
     g_signal_connect(G_OBJECT(ProcessFieldsConvert),         "toggled",G_CALLBACK(Process_Fields_Convert_Check_Button_Toggled),NULL);
+    g_signal_connect(G_OBJECT(ProcessFieldsFillField),       "toggled",G_CALLBACK(Process_Fields_Fill_Field_Check_Button_Toggled),NULL);
+
     /* Set check buttons to init value */
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvertIntoSpace),PF_CONVERT_INTO_SPACE);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvertSpace),PF_CONVERT_SPACE);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvert),PF_CONVERT);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsFillField),PF_FILL_FIELD);
     /* Tooltips */
     gtk_widget_set_tooltip_text(ProcessFieldsConvertIntoSpace,
         _("The underscore character or the string '%20' are replaced by one space. "
@@ -2703,6 +2827,8 @@ void Open_ScannerWindow (gint scanner_type)
           "Example, before: 'Text In An Entry', after: 'Text_In_An_Entry'."));
     gtk_widget_set_tooltip_text(ProcessFieldsConvert,
         _("Replace a string by another one. Note that the search is case sensitive."));
+    gtk_widget_set_tooltip_text(ProcessFieldsFillField,
+        _("Fill the filed with a string composed of tag values (%t, %a, etc)."));
 
     /* Separator line */
     Separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
@@ -2846,10 +2972,16 @@ void Open_ScannerWindow (gint scanner_type)
     Label = gtk_label_new(_("%u: URL"));
     et_grid_attach_margins (GTK_GRID (Table), Label, 2, 2, 1, 1, 6, 0);
     gtk_misc_set_alignment(GTK_MISC(Label),0,0.5);
-    Label = gtk_label_new(_("%y: year"));
-    et_grid_attach_margins (GTK_GRID (Table), Label, 2, 3, 1, 1, 6, 0);
     gtk_misc_set_alignment(GTK_MISC(Label),0,0.5);
-
+    Label = gtk_label_new(_("%k: incremented value"));
+    et_grid_attach_margins (GTK_GRID (Table), Label, 2, 4, 1, 1, 6, 0);
+    gtk_misc_set_alignment(GTK_MISC(Label),0,0.5);
+    Label = gtk_label_new(_("%y: year"));
+    et_grid_attach_margins (GTK_GRID (Table), Label, 2, 5, 1, 1, 6, 0);
+    gtk_misc_set_alignment(GTK_MISC(Label),0,0.5);
+    Label = gtk_label_new(_("%m: number of files"));
+    et_grid_attach_margins (GTK_GRID (Table), Label, 3, 0, 1, 1, 6, 0);
+    gtk_misc_set_alignment(GTK_MISC(Label),0,0.5);
     /*
      * Masks Editor
      */
@@ -2987,6 +3119,7 @@ void Open_ScannerWindow (gint scanner_type)
     g_signal_emit_by_name(G_OBJECT(LegendButton),"toggled");        /* To hide legend frame */
     g_signal_emit_by_name(G_OBJECT(MaskEditorButton),"toggled");    /* To hide mask editor frame */
     g_signal_emit_by_name(G_OBJECT(ProcessFieldsConvert),"toggled");/* To enable / disable entries */
+    g_signal_emit_by_name(G_OBJECT(ProcessFieldsFillField),"toggled");/* To enable / disable entries */
     g_signal_emit_by_name(G_OBJECT(ProcessFieldsDetectRomanNumerals),"toggled");/* To enable / disable entries */
 
     // Activate the current menu in the option menu
@@ -3081,6 +3214,7 @@ ScannerWindow_Quit (void)
         LegendFrame                   = NULL;
         ProcessFieldsConvertIntoSpace = NULL;
         ProcessFieldsConvertSpace     = NULL;
+        ProcessFieldsFillField        = NULL;
         FillTagPreviewLabel           = NULL;
         RenameFilePreviewLabel        = NULL;
     }
@@ -3135,10 +3269,14 @@ void ScannerWindow_Apply_Changes (void)
         if (PROCESS_FIELDS_CONVERT_TO) g_free(PROCESS_FIELDS_CONVERT_TO);
         PROCESS_FIELDS_CONVERT_TO   = g_strdup(gtk_entry_get_text(GTK_ENTRY(ProcessFieldsConvertTo)));
 
+        if (PROCESS_FIELDS_FILL_FIELD_PATTERN) g_free(PROCESS_FIELDS_FILL_FIELD_PATTERN);
+        PROCESS_FIELDS_FILL_FIELD_PATTERN   = g_strdup(gtk_entry_get_text(GTK_ENTRY(ProcessFieldsFillFieldPattern)));
+
         /* Group: convert one character */
         PF_CONVERT_INTO_SPACE     = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvertIntoSpace));
         PF_CONVERT_SPACE          = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvertSpace));
         PF_CONVERT                = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvert));
+        PF_FILL_FIELD             = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsFillField));
 
         /* Group: capitalize */
         PF_CONVERT_ALL_UPPERCASE           = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsAllUppercase));
@@ -3389,6 +3527,12 @@ Process_Fields_Convert_Check_Button_Toggled (GtkWidget *object)
 }
 
 static void
+Process_Fields_Fill_Field_Check_Button_Toggled (GtkWidget *object)
+{
+    gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsFillFieldPattern),gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(object)));
+}
+
+static void
 Process_Fields_First_Letters_Check_Button_Toggled (GtkWidget *object)
 {
     gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsDetectRomanNumerals),gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(object)));
@@ -3476,6 +3620,12 @@ Select_Fields_Set_Sensitive (void)
             gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsConvertTo),        TRUE);
             gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsConvertFrom),      TRUE);
         }
+        gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsFillField),            TRUE);
+				// Activate the pattern entry only if the check box is activated, else it them disabled
+				if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(ProcessFieldsFillField)))
+				{
+						gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsFillFieldPattern), TRUE);
+				}
         gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsAllUppercase),         TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsAllDowncase),          TRUE);
         gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsFirstLetterUppercase), TRUE);
@@ -3492,6 +3642,8 @@ Select_Fields_Set_Sensitive (void)
         gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsConvertTo),            FALSE);
         gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsConvertLabelTo),       FALSE);
         gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsConvertFrom),          FALSE);
+        gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsFillField),            FALSE);
+        gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsFillFieldPattern),     FALSE);
         gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsAllUppercase),         FALSE);
         gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsAllDowncase),          FALSE);
         gtk_widget_set_sensitive(GTK_WIDGET(ProcessFieldsFirstLetterUppercase), FALSE);

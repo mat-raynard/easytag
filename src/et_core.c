@@ -243,6 +243,7 @@ void ET_Core_Initialize (void)
     ETCore->ETFileDisplayedList               = NULL;
     ETCore->ETFileDisplayedListPtr            = NULL;
     ETCore->ETFileDisplayedList_Length        = 0;
+    ETCore->ETFileDisplayedList_Length_String = NULL;
     ETCore->ETFileDisplayedList_TotalSize     = 0;
     ETCore->ETFileDisplayedList_TotalDuration = 0;
     ETCore->ETFileDisplayed                   = NULL;
@@ -401,6 +402,7 @@ ET_Initialize_File_Item (ET_File *ETFile)
     if (ETFile)
     {
         ETFile->IndexKey          = 0;
+        ETFile->IndexString       = NULL;
         ETFile->ETFileKey         = 0;
         ETFile->ETFileDescription = NULL;
         ETFile->ETFileInfo        = NULL;
@@ -593,6 +595,7 @@ GList *ET_Add_File_To_File_List (gchar *filename)
     /* Attach all data defined above to this ETFile item */
     ETFile = ET_File_Item_New();
     ETFile->IndexKey             = 0; // Will be renumered after...
+    ETFile->IndexString          = 0;
     ETFile->ETFileKey            = ETFileKey;
     ETFile->FileModificationTime = statbuf.st_mtime;
     ETFile->ETFileDescription    = ETFileDescription;
@@ -2007,10 +2010,17 @@ ET_Displayed_File_List_Number (void)
     GList *l = NULL;
     guint i = 1;
 
+    guint max_number_of_digits;
+
+    gchar *temp = g_strdup_printf("%d", ETCore->ETFileDisplayedList_Length);
+    max_number_of_digits = strlen(g_strdup_printf("%d", ETCore->ETFileDisplayedList_Length));
+    g_free(temp);
+
     for (l = g_list_first (ETCore->ETFileDisplayedList); l != NULL;
          l = g_list_next (l))
     {
         ((ET_File *)l->data)->IndexKey = i++;
+        ((ET_File *) l->data)->IndexString = g_strdup_printf("%.*d", max_number_of_digits, ((ET_File *) l->data)->IndexKey);
     }
 }
 
@@ -2039,6 +2049,10 @@ gboolean ET_Set_Displayed_File_List (GList *ETFileList)
 
     //ETCore->ETFileDisplayedListPtr = ETCore->ETFileDisplayedList;
     ETCore->ETFileDisplayedList_Length = ET_Displayed_File_List_Get_Length();
+
+    g_free(ETCore->ETFileDisplayedList_Length_String);
+
+    ETCore->ETFileDisplayedList_Length_String = g_strdup_printf("%u", ETCore->ETFileDisplayedList_Length);
     ETCore->ETFileDisplayedList_TotalSize     = 0;
     ETCore->ETFileDisplayedList_TotalDuration = 0;
 

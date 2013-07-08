@@ -270,6 +270,8 @@ typedef struct _ET_File ET_File;
 struct _ET_File
 {
     guint IndexKey;           /* Value used to display the position in the list (and in the BrowserList) - Must be renumered after resorting the list - This value varies when resorting list */
+    // TODO: This should be removed and created when needed
+    gchar *IndexString;       /* Value used to display the position in the list (and in the BrowserList) - Must be renumered after resorting the list - This value varies when resorting list */
 
     guint ETFileKey;          /* Primary key to identify each item of the list (no longer used?) */
 
@@ -320,6 +322,8 @@ struct _ET_Core
     GList *ETFileDisplayedList;                 // List of files displayed (List of ET_File from ETFileList / ATArtistAlbumFileList) | !! May not point to the first item!!
     GList *ETFileDisplayedListPtr;              // Pointer to the current item of ETFileDisplayedList used with ET_Displayed_File_List_First, ET_Displayed_File_List_Previous
     guint  ETFileDisplayedList_Length;          // Contains the length of the displayed list
+    // TODO: This should be removed and created when needed
+    gchar *ETFileDisplayedList_Length_String;   // Contains the length of the displayed list, as a string
     gfloat ETFileDisplayedList_TotalSize;       // Total of the size of files in displayed list (in bytes)
     gulong ETFileDisplayedList_TotalDuration;   // Total of duration of files in displayed list (in seconds)
     
