@@ -221,9 +221,10 @@ common_init (GApplication *application)
     Init_OptionsWindow();
     Init_ScannerWindow();
     Init_CddbWindow();
-    BrowserEntryModel    = NULL;
-    TrackEntryComboModel = NULL;
-    GenreComboModel      = NULL;
+    BrowserEntryModel         = NULL;
+    TrackEntryComboModel      = NULL;
+    DiscNumberEntryComboModel = NULL;
+    GenreComboModel           = NULL;
 
     /* The main window */
     MainWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -710,7 +711,6 @@ Create_File_Area (void)
 static GtkWidget *
 Create_Tag_Area (void)
 {
-    GtkWidget *Separator;
     GtkWidget *Table;
     GtkWidget *Label;
     GtkWidget *Icon;
@@ -732,6 +732,8 @@ Create_Tag_Area (void)
     GtkTreeViewColumn *column;
     GtkTreeSelection *selection;
 
+    // for positioning within the Table
+    int row = 0;
 
     /* Main Frame */
     TagFrame = gtk_frame_new(_("Tag"));
@@ -763,15 +765,16 @@ Create_Tag_Area (void)
     gtk_container_set_border_width(GTK_CONTAINER(Table),2);
 
     /* Title */
+    row = 0;
     TitleLabel = gtk_label_new(_("Title:"));
-    et_grid_attach_full (GTK_GRID (Table), TitleLabel, 0, 0, 1, 1, FALSE,
+    et_grid_attach_full (GTK_GRID (Table), TitleLabel, 0, row, 1, 1, FALSE,
                          FALSE, TablePadding, TablePadding);
     gtk_misc_set_alignment(GTK_MISC(TitleLabel),1,0.5);
 
     TitleEntry = gtk_entry_new();
     gtk_entry_set_icon_from_icon_name (GTK_ENTRY (TitleEntry),
                                        GTK_ENTRY_ICON_SECONDARY, "insert-text");
-    et_grid_attach_full (GTK_GRID (Table), TitleEntry, 1, 0, 9, 1, TRUE, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), TitleEntry, 1, row, 9, 1, TRUE, TRUE,
                          TablePadding, TablePadding);
 
     et_tag_field_connect_signals (GTK_ENTRY (TitleEntry));
@@ -782,15 +785,16 @@ Create_Tag_Area (void)
     Attach_Popup_Menu_To_Tag_Entries(GTK_ENTRY(TitleEntry));
 
     /* Artist */
+    row++;
     ArtistLabel = gtk_label_new(_("Artist:"));
-    et_grid_attach_full (GTK_GRID (Table), ArtistLabel, 0, 1, 1, 1, FALSE,
+    et_grid_attach_full (GTK_GRID (Table), ArtistLabel, 0, row, 1, 1, FALSE,
                          FALSE, TablePadding, TablePadding);
     gtk_misc_set_alignment(GTK_MISC(ArtistLabel),1,0.5);
 
     ArtistEntry = gtk_entry_new();
     gtk_entry_set_icon_from_icon_name (GTK_ENTRY (ArtistEntry),
                                        GTK_ENTRY_ICON_SECONDARY, "insert-text");
-    et_grid_attach_full (GTK_GRID (Table), ArtistEntry, 1, 1, 9, 1, TRUE, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), ArtistEntry, 1, row, 9, 1, TRUE, TRUE,
                          TablePadding,TablePadding);
 
     et_tag_field_connect_signals (GTK_ENTRY (ArtistEntry));
@@ -801,15 +805,16 @@ Create_Tag_Area (void)
     Attach_Popup_Menu_To_Tag_Entries(GTK_ENTRY(ArtistEntry));
 
     /* Album Artist */
+    row++;
     AlbumArtistLabel = gtk_label_new(_("Album artist:"));
-    et_grid_attach_full (GTK_GRID (Table), AlbumArtistLabel, 0, 2, 1, 1, FALSE,
+    et_grid_attach_full (GTK_GRID (Table), AlbumArtistLabel, 0, row, 1, 1, FALSE,
                          FALSE, TablePadding, TablePadding);
     gtk_misc_set_alignment(GTK_MISC(AlbumArtistLabel),1,0.5);
 
     AlbumArtistEntry = gtk_entry_new();
     gtk_entry_set_icon_from_icon_name (GTK_ENTRY (AlbumArtistEntry),
                                        GTK_ENTRY_ICON_SECONDARY, "insert-text");
-    et_grid_attach_full (GTK_GRID (Table), AlbumArtistEntry, 1, 2, 9, 1, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), AlbumArtistEntry, 1, row, 9, 1, TRUE,
                          TRUE, TablePadding, TablePadding);
 
     et_tag_field_connect_signals (GTK_ENTRY (AlbumArtistEntry));
@@ -820,15 +825,16 @@ Create_Tag_Area (void)
     Attach_Popup_Menu_To_Tag_Entries(GTK_ENTRY(AlbumArtistEntry));
 
     /* Album */
+    row++;
     AlbumLabel = gtk_label_new(_("Album:"));
-    et_grid_attach_full (GTK_GRID (Table), AlbumLabel, 0, 3, 1, 1, FALSE,
+    et_grid_attach_full (GTK_GRID (Table), AlbumLabel, 0, row, 1, 1, FALSE,
                          FALSE, TablePadding, TablePadding);
     gtk_misc_set_alignment(GTK_MISC(AlbumLabel),1,0.5);
 
     AlbumEntry = gtk_entry_new();
     gtk_entry_set_icon_from_icon_name (GTK_ENTRY (AlbumEntry),
                                        GTK_ENTRY_ICON_SECONDARY, "insert-text");
-    et_grid_attach_full (GTK_GRID (Table), AlbumEntry, 1, 3, 6, 1, TRUE, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), AlbumEntry, 1, row, 9, 1, TRUE, TRUE,
                          TablePadding,TablePadding);
 
     et_tag_field_connect_signals (GTK_ENTRY (AlbumEntry));
@@ -838,31 +844,10 @@ Create_Tag_Area (void)
 
     Attach_Popup_Menu_To_Tag_Entries(GTK_ENTRY(AlbumEntry));
 
-    /* Disc Number */
-    DiscNumberLabel = gtk_label_new(_("CD:"));
-    et_grid_attach_full (GTK_GRID (Table), DiscNumberLabel, 8, 3, 1, 1, FALSE,
-                         FALSE, TablePadding, TablePadding);
-    gtk_misc_set_alignment(GTK_MISC(DiscNumberLabel),1,0.5);
-
-    DiscNumberEntry = gtk_entry_new();
-    gtk_entry_set_icon_from_icon_name (GTK_ENTRY (DiscNumberEntry),
-                                       GTK_ENTRY_ICON_SECONDARY, "insert-text");
-    et_grid_attach_full (GTK_GRID (Table), DiscNumberEntry, 9, 3, 1, 1, TRUE,
-                         TRUE, TablePadding, TablePadding);
-    gtk_entry_set_width_chars (GTK_ENTRY (DiscNumberEntry), 3);
-    /* FIXME should allow to type only something like : 1/3. */
-    /*g_signal_connect(G_OBJECT(GTK_ENTRY(DiscNumberEntry)),"insert_text",G_CALLBACK(Insert_Only_Digit),NULL); */
-
-    et_tag_field_connect_signals (GTK_ENTRY (DiscNumberEntry));
-    gtk_entry_set_icon_tooltip_text (GTK_ENTRY (DiscNumberEntry),
-                                     GTK_ENTRY_ICON_SECONDARY,
-                                     _("Tag selected files with this disc number"));
-
-    Attach_Popup_Menu_To_Tag_Entries(GTK_ENTRY(DiscNumberEntry));
-
     /* Year */
+    row++;
     YearLabel = gtk_label_new(_("Year:"));
-    et_grid_attach_full (GTK_GRID (Table), YearLabel, 0, 4, 1, 1, FALSE, FALSE,
+    et_grid_attach_full (GTK_GRID (Table), YearLabel, 0, row, 1, 1, FALSE, FALSE,
                          TablePadding, TablePadding);
     gtk_misc_set_alignment(GTK_MISC(YearLabel),1,0.5);
 
@@ -870,7 +855,7 @@ Create_Tag_Area (void)
     gtk_entry_set_max_length(GTK_ENTRY(YearEntry), 4);
     gtk_entry_set_icon_from_icon_name (GTK_ENTRY (YearEntry),
                                        GTK_ENTRY_ICON_SECONDARY, "insert-text");
-    et_grid_attach_full (GTK_GRID (Table), YearEntry, 1, 4, 1, 1, TRUE, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), YearEntry, 1, row, 9, 1, TRUE, TRUE,
                          TablePadding, TablePadding);
     gtk_entry_set_width_chars (GTK_ENTRY (YearEntry), 5);
     g_signal_connect (G_OBJECT (YearEntry), "insert-text",
@@ -883,16 +868,86 @@ Create_Tag_Area (void)
                                      GTK_ENTRY_ICON_SECONDARY,
                                      _("Tag selected files with this year"));
 
-    /* Small vertical separator */
-    Separator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
-    et_grid_attach_full (GTK_GRID (Table), Separator, 3, 4, 1, 1, FALSE, FALSE,
-                         TablePadding,TablePadding);
+    /* Disc Number */
+    row++;
+    DiscNumberLabel = gtk_label_new(_("CD:"));
+    et_grid_attach_full(GTK_GRID (Table), DiscNumberLabel, 0, row, 1, 1, FALSE,
+            FALSE, TablePadding, TablePadding);
+    gtk_misc_set_alignment(GTK_MISC(DiscNumberLabel),1,0.5);
 
+
+    DiscNumberMButtonSequence = gtk_button_new();
+    gtk_widget_set_size_request(DiscNumberMButtonSequence,MButtonSize,MButtonSize);
+    et_grid_attach_full (GTK_GRID (Table), DiscNumberMButtonSequence, 1, row, 1, 1,
+                         FALSE, FALSE, TablePadding, TablePadding);
+    g_signal_connect(G_OBJECT(DiscNumberMButtonSequence),"clicked",G_CALLBACK(Mini_Button_Clicked),NULL);
+    gtk_widget_set_tooltip_text(DiscNumberMButtonSequence,_("Number the disc of selected tracks sequentially. The number will be incremented for each folder found in the selected directory."));
+    // Pixmap into DiscNumberMButtonSequence button
+    Icon = Create_Xpm_Image((const char **)sequence_track_xpm);
+    gtk_container_add(GTK_CONTAINER(DiscNumberMButtonSequence),Icon);
+    gtk_widget_set_can_default(DiscNumberMButtonSequence,TRUE); // To have enough space to display the icon
+    gtk_widget_set_can_focus(DiscNumberMButtonSequence,FALSE);   // To have enough space to display the icon
+
+    if (DiscNumberEntryComboModel != NULL) {
+    		gtk_list_store_clear(DiscNumberEntryComboModel);
+    }
+    else
+    	DiscNumberEntryComboModel = gtk_list_store_new(MISC_COMBO_COUNT, G_TYPE_STRING);
+
+    DiscNumberEntryCombo = gtk_combo_box_new_with_model_and_entry(GTK_TREE_MODEL(DiscNumberEntryComboModel));
+    gtk_combo_box_set_entry_text_column(GTK_COMBO_BOX(DiscNumberEntryCombo),MISC_COMBO_TEXT);
+    et_grid_attach_full (GTK_GRID (Table), DiscNumberEntryCombo, 2, row, 1, 1, TRUE,
+                         TRUE, TablePadding, TablePadding);
+    gtk_combo_box_set_wrap_width(GTK_COMBO_BOX(DiscNumberEntryCombo),3); // Three columns to display track numbers list
+
+    gtk_entry_set_width_chars (GTK_ENTRY (gtk_bin_get_child (GTK_BIN (DiscNumberEntryCombo))),
+                               2);
+    g_signal_connect(G_OBJECT(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(DiscNumberEntryCombo)))),"insert_text",
+        G_CALLBACK(Insert_Only_Digit),NULL);
+
+
+    Label = gtk_label_new("/");
+    et_grid_attach_full (GTK_GRID (Table), Label, 3, row, 1, 1, FALSE, FALSE,
+                         TablePadding, TablePadding);
+    gtk_misc_set_alignment(GTK_MISC(Label),0.5,0.5);
+
+
+    DiscNumberMButtonNbrFolders = gtk_button_new();
+    gtk_widget_set_size_request(DiscNumberMButtonNbrFolders,MButtonSize,MButtonSize);
+    et_grid_attach_full (GTK_GRID (Table), DiscNumberMButtonNbrFolders, 4, row, 1, 1,
+                         FALSE, FALSE, TablePadding, TablePadding);
+    g_signal_connect(G_OBJECT(DiscNumberMButtonNbrFolders),"clicked",G_CALLBACK(Mini_Button_Clicked),NULL);
+    gtk_widget_set_tooltip_text(DiscNumberMButtonNbrFolders,_("Set the number of folders, in the selected directory, to the selected tracks."));
+    // Pixmap into DiscNumberMButtonNbrFolders button
+    Icon = Create_Xpm_Image((const char **)sequence_track_xpm);
+    gtk_container_add(GTK_CONTAINER(DiscNumberMButtonNbrFolders),Icon);
+    gtk_widget_set_can_default(DiscNumberMButtonNbrFolders,TRUE); // To have enough space to display the icon
+    gtk_widget_set_can_focus(DiscNumberMButtonNbrFolders,FALSE); // To have enough space to display the icon
+
+    DiscNumberTotalEntry = gtk_entry_new();
+    gtk_entry_set_icon_from_icon_name (GTK_ENTRY (DiscNumberTotalEntry),
+                                       GTK_ENTRY_ICON_SECONDARY, "insert-text");
+    et_grid_attach_full (GTK_GRID (Table), DiscNumberTotalEntry, 5, row, 1, 1, TRUE,
+                         TRUE, TablePadding, TablePadding);
+    gtk_entry_set_width_chars (GTK_ENTRY (DiscNumberTotalEntry), 3);
+    g_signal_connect (G_OBJECT (GTK_ENTRY (DiscNumberTotalEntry)), "insert-text",
+                      G_CALLBACK (Insert_Only_Digit), NULL);
+
+    et_tag_field_connect_signals (GTK_ENTRY (DiscNumberTotalEntry));
+    gtk_entry_set_icon_tooltip_text (GTK_ENTRY (DiscNumberTotalEntry),
+                                     GTK_ENTRY_ICON_SECONDARY,
+                                     _("Tag selected files with this disc number"));
 
     /* Track and Track total */
+    row++;
+    TrackLabel = gtk_label_new(_("Track #:"));
+    et_grid_attach_full (GTK_GRID (Table), TrackLabel, 0, row, 1, 1, FALSE,
+                         FALSE, TablePadding, TablePadding);
+    gtk_misc_set_alignment(GTK_MISC(TrackLabel),1,0.5);
+
     TrackMButtonSequence = gtk_button_new();
     gtk_widget_set_size_request(TrackMButtonSequence,MButtonSize,MButtonSize);
-    et_grid_attach_full (GTK_GRID (Table), TrackMButtonSequence, 4, 4, 1, 1,
+    et_grid_attach_full (GTK_GRID (Table), TrackMButtonSequence, 1, row, 1, 1,
                          FALSE, FALSE, TablePadding, TablePadding);
     g_signal_connect(G_OBJECT(TrackMButtonSequence),"clicked",G_CALLBACK(Mini_Button_Clicked),NULL);
     gtk_widget_set_tooltip_text(TrackMButtonSequence,_("Number selected tracks sequentially. "
@@ -904,10 +959,6 @@ Create_Tag_Area (void)
     gtk_widget_set_can_default(TrackMButtonSequence,TRUE); // To have enough space to display the icon
     gtk_widget_set_can_focus(TrackMButtonSequence,FALSE);   // To have enough space to display the icon
 
-    TrackLabel = gtk_label_new(_("Track #:"));
-    et_grid_attach_full (GTK_GRID (Table), TrackLabel, 5, 4, 1, 1, FALSE,
-                         FALSE, TablePadding, TablePadding);
-    gtk_misc_set_alignment(GTK_MISC(TrackLabel),1,0.5);
 
     if (TrackEntryComboModel != NULL)
         gtk_list_store_clear(TrackEntryComboModel);
@@ -916,7 +967,7 @@ Create_Tag_Area (void)
 
     TrackEntryCombo = gtk_combo_box_new_with_model_and_entry(GTK_TREE_MODEL(TrackEntryComboModel));
     gtk_combo_box_set_entry_text_column(GTK_COMBO_BOX(TrackEntryCombo),MISC_COMBO_TEXT);
-    et_grid_attach_full (GTK_GRID (Table), TrackEntryCombo, 6, 4, 1, 1, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), TrackEntryCombo, 2, row, 1, 1, TRUE,
                          TRUE, TablePadding, TablePadding);
     gtk_combo_box_set_wrap_width(GTK_COMBO_BOX(TrackEntryCombo),3); // Three columns to display track numbers list
 
@@ -926,13 +977,13 @@ Create_Tag_Area (void)
         G_CALLBACK(Insert_Only_Digit),NULL);
 
     Label = gtk_label_new("/");
-    et_grid_attach_full (GTK_GRID (Table), Label, 7, 4, 1, 1, FALSE, FALSE,
+    et_grid_attach_full (GTK_GRID (Table), Label, 3, row, 1, 1, FALSE, FALSE,
                          TablePadding, TablePadding);
     gtk_misc_set_alignment(GTK_MISC(Label),0.5,0.5);
 
     TrackMButtonNbrFiles = gtk_button_new();
     gtk_widget_set_size_request(TrackMButtonNbrFiles,MButtonSize,MButtonSize);
-    et_grid_attach_full (GTK_GRID (Table), TrackMButtonNbrFiles, 8, 4, 1, 1,
+    et_grid_attach_full (GTK_GRID (Table), TrackMButtonNbrFiles, 4, row, 1, 1,
                          FALSE, FALSE, TablePadding, TablePadding);
     g_signal_connect(G_OBJECT(TrackMButtonNbrFiles),"clicked",G_CALLBACK(Mini_Button_Clicked),NULL);
     gtk_widget_set_tooltip_text(TrackMButtonNbrFiles,_("Set the number of files, in the same directory of the displayed file, to the selected tracks."));
@@ -946,7 +997,7 @@ Create_Tag_Area (void)
     TrackTotalEntry = gtk_entry_new();
     gtk_entry_set_icon_from_icon_name (GTK_ENTRY (TrackTotalEntry),
                                        GTK_ENTRY_ICON_SECONDARY, "insert-text");
-    et_grid_attach_full (GTK_GRID (Table), TrackTotalEntry, 9, 4, 1, 1, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), TrackTotalEntry, 5, row, 1, 1, TRUE,
                          TRUE, TablePadding, TablePadding);
     gtk_entry_set_width_chars (GTK_ENTRY (TrackTotalEntry), 3);
     g_signal_connect (G_OBJECT (GTK_ENTRY (TrackTotalEntry)), "insert-text",
@@ -959,8 +1010,9 @@ Create_Tag_Area (void)
 
 
     /* Genre */
+    row++;
     GenreLabel = gtk_label_new(_("Genre:"));
-    et_grid_attach_full (GTK_GRID (Table), GenreLabel, 0, 5, 1, 1, FALSE,
+    et_grid_attach_full (GTK_GRID (Table), GenreLabel, 0, row, 1, 1, FALSE,
                          FALSE, TablePadding, TablePadding);
     gtk_misc_set_alignment(GTK_MISC(GenreLabel),1,0.5);
 
@@ -979,7 +1031,7 @@ Create_Tag_Area (void)
     gtk_entry_completion_set_text_column(completion, 0);
     gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(GenreComboModel), MISC_COMBO_TEXT, Combo_Alphabetic_Sort, NULL, NULL);
     gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(GenreComboModel), MISC_COMBO_TEXT, GTK_SORT_ASCENDING);
-    et_grid_attach_full (GTK_GRID (Table), GenreCombo, 1, 5, 9, 1, TRUE, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), GenreCombo, 1, row, 9, 1, TRUE, TRUE,
                          TablePadding, TablePadding);
     Load_Genres_List_To_UI();
     gtk_combo_box_set_wrap_width(GTK_COMBO_BOX(GenreCombo),2); // Two columns to display genres list
@@ -992,15 +1044,16 @@ Create_Tag_Area (void)
     Attach_Popup_Menu_To_Tag_Entries(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(GenreCombo))));
 
     /* Comment */
+    row++;
     CommentLabel = gtk_label_new(_("Comment:"));
-    et_grid_attach_full (GTK_GRID (Table), CommentLabel, 0, 6, 1, 1, FALSE,
+    et_grid_attach_full (GTK_GRID (Table), CommentLabel, 0, row, 1, 1, FALSE,
                          FALSE, TablePadding, TablePadding);
     gtk_misc_set_alignment(GTK_MISC(CommentLabel),1,0.5);
 
     CommentEntry = gtk_entry_new();
     gtk_entry_set_icon_from_icon_name (GTK_ENTRY (CommentEntry),
                                        GTK_ENTRY_ICON_SECONDARY, "insert-text");
-    et_grid_attach_full (GTK_GRID (Table), CommentEntry, 1, 6, 9, 1, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), CommentEntry, 1, row, 9, 1, TRUE,
                          TRUE, TablePadding, TablePadding);
 
     // Use of a text view instead of an entry...
@@ -1026,15 +1079,16 @@ Create_Tag_Area (void)
 
 
     /* Composer (name of the composers) */
+    row++;
     ComposerLabel = gtk_label_new(_("Composer:"));
-    et_grid_attach_full (GTK_GRID (Table), ComposerLabel, 0, 7, 1, 1, FALSE,
+    et_grid_attach_full (GTK_GRID (Table), ComposerLabel, 0, row, 1, 1, FALSE,
                          FALSE, TablePadding, TablePadding);
     gtk_misc_set_alignment(GTK_MISC(ComposerLabel),1,0.5);
 
     ComposerEntry = gtk_entry_new();
     gtk_entry_set_icon_from_icon_name (GTK_ENTRY (ComposerEntry),
                                        GTK_ENTRY_ICON_SECONDARY, "insert-text");
-    et_grid_attach_full (GTK_GRID (Table), ComposerEntry, 1, 7, 9, 1, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), ComposerEntry, 1, row, 9, 1, TRUE,
                          TRUE, TablePadding, TablePadding);
 
     et_tag_field_connect_signals (GTK_ENTRY (ComposerEntry));
@@ -1047,15 +1101,16 @@ Create_Tag_Area (void)
 
     /* Translators: Original Artist / Performer. Please try to keep this string
      * as short as possible, as it must fit into a narrow column. */
+    row++;
     OrigArtistLabel = gtk_label_new(_("Orig. artist:"));
-    et_grid_attach_full (GTK_GRID (Table), OrigArtistLabel, 0, 8, 1, 1, FALSE,
+    et_grid_attach_full (GTK_GRID (Table), OrigArtistLabel, 0, row, 1, 1, FALSE,
                          FALSE, TablePadding, TablePadding);
     gtk_misc_set_alignment(GTK_MISC(OrigArtistLabel),1,0.5);
 
     OrigArtistEntry = gtk_entry_new();
     gtk_entry_set_icon_from_icon_name (GTK_ENTRY (OrigArtistEntry),
                                        GTK_ENTRY_ICON_SECONDARY, "insert-text");
-    et_grid_attach_full (GTK_GRID (Table), OrigArtistEntry, 1, 8, 9, 1, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), OrigArtistEntry, 1, row, 9, 1, TRUE,
                          TRUE,TablePadding,TablePadding);
 
     et_tag_field_connect_signals (GTK_ENTRY (OrigArtistEntry));
@@ -1067,15 +1122,16 @@ Create_Tag_Area (void)
 
 
     /* Copyright */
+    row++;
     CopyrightLabel = gtk_label_new(_("Copyright:"));
-    et_grid_attach_full (GTK_GRID (Table), CopyrightLabel, 0, 9, 1, 1, FALSE,
+    et_grid_attach_full (GTK_GRID (Table), CopyrightLabel, 0, row, 1, 1, FALSE,
                          FALSE, TablePadding, TablePadding);
     gtk_misc_set_alignment(GTK_MISC(CopyrightLabel),1,0.5);
 
     CopyrightEntry = gtk_entry_new();
     gtk_entry_set_icon_from_icon_name (GTK_ENTRY (CopyrightEntry),
                                        GTK_ENTRY_ICON_SECONDARY, "insert-text");
-    et_grid_attach_full (GTK_GRID (Table), CopyrightEntry, 1, 9, 9, 1, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), CopyrightEntry, 1, row, 9, 1, TRUE,
                          TRUE, TablePadding, TablePadding);
 
     et_tag_field_connect_signals (GTK_ENTRY (CopyrightEntry));
@@ -1087,15 +1143,16 @@ Create_Tag_Area (void)
 
 
     /* URL */
+    row++;
     URLLabel = gtk_label_new(_("URL:"));
-    et_grid_attach_full (GTK_GRID (Table), URLLabel, 0, 10, 1, 1, FALSE, FALSE,
+    et_grid_attach_full (GTK_GRID (Table), URLLabel, 0, row, 1, 1, FALSE, FALSE,
                          TablePadding, TablePadding);
     gtk_misc_set_alignment(GTK_MISC(URLLabel),1,0.5);
 
     URLEntry = gtk_entry_new();
     gtk_entry_set_icon_from_icon_name (GTK_ENTRY (URLEntry),
                                        GTK_ENTRY_ICON_SECONDARY, "insert-text");
-    et_grid_attach_full (GTK_GRID (Table), URLEntry, 1, 10, 9, 1, TRUE, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), URLEntry, 1, row, 9, 1, TRUE, TRUE,
                          TablePadding, TablePadding);
 
     et_tag_field_connect_signals (GTK_ENTRY (URLEntry));
@@ -1107,15 +1164,16 @@ Create_Tag_Area (void)
 
 
     /* Encoded by */
+    row++;
     EncodedByLabel = gtk_label_new(_("Encoded by:"));
-    et_grid_attach_full (GTK_GRID (Table), EncodedByLabel, 0, 11, 1, 1, FALSE,
+    et_grid_attach_full (GTK_GRID (Table), EncodedByLabel, 0, row, 1, 1, FALSE,
                          FALSE, TablePadding, TablePadding);
     gtk_misc_set_alignment(GTK_MISC(EncodedByLabel),1,0.5);
 
     EncodedByEntry = gtk_entry_new();
     gtk_entry_set_icon_from_icon_name (GTK_ENTRY (EncodedByEntry),
                                        GTK_ENTRY_ICON_SECONDARY, "insert-text");
-    et_grid_attach_full (GTK_GRID (Table), EncodedByEntry, 1, 11, 9, 1, TRUE,
+    et_grid_attach_full (GTK_GRID (Table), EncodedByEntry, 1, row, 9, 1, TRUE,
                          TRUE, TablePadding, TablePadding);
 
     et_tag_field_connect_signals (GTK_ENTRY (EncodedByEntry));
@@ -1131,8 +1189,9 @@ Create_Tag_Area (void)
     focusable_widgets_list = g_list_prepend(focusable_widgets_list,ArtistEntry);
     focusable_widgets_list = g_list_prepend(focusable_widgets_list,AlbumArtistEntry);
     focusable_widgets_list = g_list_prepend(focusable_widgets_list,AlbumEntry);
-    focusable_widgets_list = g_list_prepend(focusable_widgets_list,DiscNumberEntry);
     focusable_widgets_list = g_list_prepend(focusable_widgets_list,YearEntry);
+    focusable_widgets_list = g_list_prepend(focusable_widgets_list,DiscNumberEntryCombo);
+    focusable_widgets_list = g_list_prepend(focusable_widgets_list,DiscNumberTotalEntry);
     //focusable_widgets_list = g_list_prepend(focusable_widgets_list,TrackMButtonSequence); // Doesn't work as focus disabled for this widget to have enought space to display icon
     focusable_widgets_list = g_list_prepend(focusable_widgets_list,TrackEntryCombo);
     //focusable_widgets_list = g_list_prepend(focusable_widgets_list,TrackMButtonNbrFiles);
@@ -1395,9 +1454,126 @@ Mini_Button_Clicked (GObject *object)
         else
             msg = g_strdup(_("Removed album name from selected files."));
     }
-    else if (object == G_OBJECT (DiscNumberEntry))
+    else if (object==G_OBJECT(DiscNumberMButtonSequence))
     {
-        string_to_set = gtk_editable_get_chars(GTK_EDITABLE(DiscNumberEntry),0,-1);
+        /* This part doesn't set the same disc number to all files, but sequence the discs.
+         * So we must browse the whole 'etfilelistfull' to get position of each selected file.
+         * Note : 'etfilelistfull' and 'etfilelist' must be sorted in the same order */
+        GList *etfilelistfull = NULL;
+        gchar *path = NULL;
+        gchar *path1 = NULL;
+        gint i = 1;
+
+        etfilelistfull = g_list_first(ETCore->ETFileList);
+
+        // Sort 'etfilelistfull' and 'etfilelist' in the same order
+        etfilelist     = ET_Sort_File_List(etfilelist,SORTING_FILE_MODE);
+        etfilelistfull = ET_Sort_File_List(etfilelistfull,SORTING_FILE_MODE);
+
+        while (etfilelist && etfilelistfull)
+        {
+            // To get the path of the file
+            File_Name *FileNameCur = (File_Name *)((ET_File *)etfilelistfull->data)->FileNameCur->data;
+            // The ETFile in the selected file list
+            etfile = etfilelist->data;
+
+            // Increment the counter when entering a new directory
+            g_free(path1);
+            path1 = g_path_get_dirname(FileNameCur->value);
+            if (path && path1 && strcmp(path, path1) != 0)
+                i++;
+
+            string_to_set = et_format_disc_number(i);
+
+            // The file is in the selection?
+            if ( (ET_File *)etfilelistfull->data == etfile )
+            {
+                FileTag = ET_File_Tag_Item_New();
+                ET_Copy_File_Tag_Item(etfile,FileTag);
+                ET_Set_Field_File_Tag_Item(&FileTag->disc_number,string_to_set);
+                ET_Manage_Changes_Of_File_Data(etfile,NULL,FileTag);
+
+                if (!etfilelist->next) break;
+                etfilelist = g_list_next(etfilelist);
+            }
+
+            g_free(string_to_set);
+            g_free(path);
+            path = g_strdup(path1);
+
+            etfilelistfull = g_list_next(etfilelistfull);
+        }
+        g_free(path);
+        g_free(path1);
+        msg = g_strdup_printf(_("Selected discs numbered sequentially."));
+    }
+    else if (object==G_OBJECT(DiscNumberMButtonNbrFolders))
+    {
+        // count the number of folders in the selected directory
+        // only folders containing a file in the list will be counted
+        GList *etfilelistfull = NULL;
+        gchar *path           = NULL;
+        gchar *path1          = NULL;
+
+        int number_of_folders = 1;
+
+        etfilelistfull = g_list_first(ETCore->ETFileList);
+
+        // Sort 'etfilelistfull'
+        etfilelistfull = ET_Sort_File_List(etfilelistfull,SORTING_FILE_MODE);
+
+        while (etfilelistfull)
+        {
+            // To get the path of the file
+            File_Name *FileNameCur = (File_Name *)((ET_File *)etfilelistfull->data)->FileNameCur->data;
+            // The ETFile in the selected file list
+            etfile = etfilelist->data;
+
+            // Increment the counter when entering a new directory
+            g_free(path1);
+            path1 = g_path_get_dirname(FileNameCur->value);
+            if (path && path1 && strcmp(path, path1) != 0)
+                number_of_folders++;
+
+            g_free(path);
+            path = g_strdup(path1);
+
+            etfilelistfull = g_list_next(etfilelistfull);
+        }
+        g_free(path);
+        g_free(path1);
+
+
+        while (etfilelist)
+        {
+            etfile = (ET_File *)etfilelist->data;
+
+            string_to_set = et_format_disc_number(number_of_folders);
+
+            if (!string_to_set1)
+                string_to_set1 = g_strdup(string_to_set); // Just for the message below...
+
+            FileTag = ET_File_Tag_Item_New();
+            ET_Copy_File_Tag_Item(etfile,FileTag);
+            ET_Set_Field_File_Tag_Item(&FileTag->discs,string_to_set);
+            ET_Manage_Changes_Of_File_Data(etfile,NULL,FileTag);
+
+            if (!etfilelist->next) break;
+            etfilelist = g_list_next(etfilelist);
+        }
+
+        if ( string_to_set1 != NULL && g_utf8_strlen(string_to_set1, -1)>0 ) //&& atoi(string_to_set1)>0 )
+        {
+            msg = g_strdup_printf(_("Selected files tagged with disc like 'xx/%s'."),string_to_set1);
+        }else
+        {
+            msg = g_strdup(_("Removed total disc number from selected files."));
+        }
+    }
+    else if (object == G_OBJECT (DiscNumberTotalEntry))
+    {
+        string_to_set = g_strdup(gtk_entry_get_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(DiscNumberEntryCombo)))));
+        string_to_set1 = gtk_editable_get_chars(GTK_EDITABLE(DiscNumberTotalEntry),0,-1);
 
         for (l = etfilelist; l != NULL; l = g_list_next (l))
         {
@@ -1405,12 +1581,23 @@ Mini_Button_Clicked (GObject *object)
             FileTag = ET_File_Tag_Item_New();
             ET_Copy_File_Tag_Item(etfile,FileTag);
             ET_Set_Field_File_Tag_Item(&FileTag->disc_number,string_to_set);
+            ET_Set_Field_File_Tag_Item(&FileTag->discs,string_to_set1);
             ET_Manage_Changes_Of_File_Data(etfile,NULL,FileTag);
         }
-        if (string_to_set != NULL && g_utf8_strlen(string_to_set, -1)>0)
-            msg = g_strdup_printf(_("Selected files tagged with disc number '%s'."),string_to_set);
-        else
-            msg = g_strdup(_("Removed disc number from selected files."));
+
+        if ( string_to_set != NULL && g_utf8_strlen(string_to_set, -1) > 0 )
+        {
+            if ( string_to_set1 != NULL && g_utf8_strlen(string_to_set1, -1)>0 )
+            {
+                msg = g_strdup_printf(_("Selected files tagged with disc number 'xx/%s'."),string_to_set1);
+            }else
+            {
+                msg = g_strdup_printf(_("Selected files tagged with disc number like 'xx'."));
+            }
+        }else
+        {
+            msg = g_strdup(_("Removed disc number number from selected files."));
+        }
     }
     else if (object == G_OBJECT (YearEntry))
     {
@@ -3375,6 +3562,8 @@ gboolean Read_Directory (gchar *path_real)
 
         /* Load the list attached to the TrackEntry */
         Load_Track_List_To_UI();
+        /* Load the list attached to the DiscNumberEntryCombo */
+        Load_Disc_List_To_UI();
 
         /* Display the first file */
         //No need to select first item, because Browser_Display_Tree_Or_Artist_Album_List() does this
@@ -3941,7 +4130,10 @@ void Tag_Area_Display_Controls (ET_File *ETFile)
             {
                 // ID3v1 : Hide specifics ID3v2 fields if not activated!
                 gtk_widget_hide(GTK_WIDGET(DiscNumberLabel));
-                gtk_widget_hide(GTK_WIDGET(DiscNumberEntry));
+                gtk_widget_hide(GTK_WIDGET(DiscNumberMButtonSequence));
+                gtk_widget_hide(GTK_WIDGET(DiscNumberEntryCombo));
+                gtk_widget_hide(GTK_WIDGET(DiscNumberMButtonNbrFolders));
+                gtk_widget_hide(GTK_WIDGET(DiscNumberTotalEntry));
                 gtk_widget_hide(GTK_WIDGET(ComposerLabel));
                 gtk_widget_hide(GTK_WIDGET(ComposerEntry));
                 gtk_widget_hide(GTK_WIDGET(OrigArtistLabel));
@@ -3961,7 +4153,10 @@ void Tag_Area_Display_Controls (ET_File *ETFile)
             }else
             {
                 gtk_widget_show(GTK_WIDGET(DiscNumberLabel));
-                gtk_widget_show(GTK_WIDGET(DiscNumberEntry));
+                gtk_widget_show(GTK_WIDGET(DiscNumberMButtonSequence));
+                gtk_widget_show(GTK_WIDGET(DiscNumberEntryCombo));
+                gtk_widget_show(GTK_WIDGET(DiscNumberMButtonNbrFolders));
+                gtk_widget_show(GTK_WIDGET(DiscNumberTotalEntry));
                 gtk_widget_show(GTK_WIDGET(ComposerLabel));
                 gtk_widget_show(GTK_WIDGET(ComposerEntry));
                 gtk_widget_show(GTK_WIDGET(OrigArtistLabel));
@@ -3984,7 +4179,10 @@ void Tag_Area_Display_Controls (ET_File *ETFile)
 #ifdef ENABLE_OGG
         case OGG_TAG:
             gtk_widget_show(GTK_WIDGET(DiscNumberLabel));
-            gtk_widget_show(GTK_WIDGET(DiscNumberEntry));
+            gtk_widget_show(GTK_WIDGET(DiscNumberMButtonSequence));
+            gtk_widget_show(GTK_WIDGET(DiscNumberEntryCombo));
+            gtk_widget_show(GTK_WIDGET(DiscNumberMButtonNbrFolders));
+            gtk_widget_show(GTK_WIDGET(DiscNumberTotalEntry));
             gtk_widget_show(GTK_WIDGET(ComposerLabel));
             gtk_widget_show(GTK_WIDGET(ComposerEntry));
             gtk_widget_show(GTK_WIDGET(OrigArtistLabel));
@@ -4007,7 +4205,10 @@ void Tag_Area_Display_Controls (ET_File *ETFile)
 #ifdef ENABLE_FLAC
         case FLAC_TAG:
             gtk_widget_show(GTK_WIDGET(DiscNumberLabel));
-            gtk_widget_show(GTK_WIDGET(DiscNumberEntry));
+            gtk_widget_show(GTK_WIDGET(DiscNumberMButtonSequence));
+            gtk_widget_show(GTK_WIDGET(DiscNumberEntryCombo));
+            gtk_widget_show(GTK_WIDGET(DiscNumberMButtonNbrFolders));
+            gtk_widget_show(GTK_WIDGET(DiscNumberTotalEntry));
             gtk_widget_show(GTK_WIDGET(ComposerLabel));
             gtk_widget_show(GTK_WIDGET(ComposerEntry));
             gtk_widget_show(GTK_WIDGET(OrigArtistLabel));
@@ -4029,7 +4230,10 @@ void Tag_Area_Display_Controls (ET_File *ETFile)
 
         case APE_TAG:
             gtk_widget_show(GTK_WIDGET(DiscNumberLabel));
-            gtk_widget_show(GTK_WIDGET(DiscNumberEntry));
+            gtk_widget_show(GTK_WIDGET(DiscNumberMButtonSequence));
+            gtk_widget_show(GTK_WIDGET(DiscNumberEntryCombo));
+            gtk_widget_show(GTK_WIDGET(DiscNumberMButtonNbrFolders));
+            gtk_widget_show(GTK_WIDGET(DiscNumberTotalEntry));
             gtk_widget_show(GTK_WIDGET(ComposerLabel));
             gtk_widget_show(GTK_WIDGET(ComposerEntry));
             gtk_widget_show(GTK_WIDGET(OrigArtistLabel));
@@ -4051,7 +4255,10 @@ void Tag_Area_Display_Controls (ET_File *ETFile)
 #ifdef ENABLE_MP4
         case MP4_TAG:
             gtk_widget_hide(GTK_WIDGET(DiscNumberLabel));
-            gtk_widget_hide(GTK_WIDGET(DiscNumberEntry));
+            gtk_widget_hide(GTK_WIDGET(DiscNumberMButtonSequence));
+            gtk_widget_hide(GTK_WIDGET(DiscNumberEntryCombo));
+            gtk_widget_hide(GTK_WIDGET(DiscNumberMButtonNbrFolders));
+            gtk_widget_hide(GTK_WIDGET(DiscNumberTotalEntry));
             gtk_widget_hide(GTK_WIDGET(ComposerLabel));
             gtk_widget_hide(GTK_WIDGET(ComposerEntry));
             gtk_widget_hide(GTK_WIDGET(OrigArtistLabel));
@@ -4074,7 +4281,10 @@ void Tag_Area_Display_Controls (ET_File *ETFile)
 #ifdef ENABLE_WAVPACK
         case WAVPACK_TAG:
             gtk_widget_show(GTK_WIDGET(DiscNumberLabel));
-            gtk_widget_show(GTK_WIDGET(DiscNumberEntry));
+            gtk_widget_show(GTK_WIDGET(DiscNumberMButtonSequence));
+            gtk_widget_show(GTK_WIDGET(DiscNumberEntryCombo));
+            gtk_widget_show(GTK_WIDGET(DiscNumberMButtonNbrFolders));
+            gtk_widget_show(GTK_WIDGET(DiscNumberTotalEntry));
             gtk_widget_show(GTK_WIDGET(ComposerLabel));
             gtk_widget_show(GTK_WIDGET(ComposerEntry));
             gtk_widget_show(GTK_WIDGET(OrigArtistLabel));
@@ -4097,7 +4307,10 @@ void Tag_Area_Display_Controls (ET_File *ETFile)
         case UNKNOWN_TAG:
         default:
             gtk_widget_hide(GTK_WIDGET(DiscNumberLabel));
-            gtk_widget_hide(GTK_WIDGET(DiscNumberEntry));
+            gtk_widget_hide(GTK_WIDGET(DiscNumberMButtonSequence));
+            gtk_widget_hide(GTK_WIDGET(DiscNumberEntryCombo));
+            gtk_widget_hide(GTK_WIDGET(DiscNumberMButtonNbrFolders));
+            gtk_widget_hide(GTK_WIDGET(DiscNumberTotalEntry));
             gtk_widget_hide(GTK_WIDGET(ComposerLabel));
             gtk_widget_hide(GTK_WIDGET(ComposerEntry));
             gtk_widget_hide(GTK_WIDGET(OrigArtistLabel));
@@ -4132,7 +4345,8 @@ void Clear_Tag_Entry_Fields (void)
     gtk_entry_set_text(GTK_ENTRY(ArtistEntry),                      "");
     gtk_entry_set_text(GTK_ENTRY(AlbumArtistEntry),                 "");
     gtk_entry_set_text(GTK_ENTRY(AlbumEntry),                       "");
-    gtk_entry_set_text(GTK_ENTRY(DiscNumberEntry),                  "");
+    gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(DiscNumberEntryCombo))), "");
+    gtk_entry_set_text(GTK_ENTRY(DiscNumberTotalEntry),                             "");
     gtk_entry_set_text(GTK_ENTRY(YearEntry),                        "");
     gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(TrackEntryCombo))),  "");
     gtk_entry_set_text(GTK_ENTRY(TrackTotalEntry),                  "");

@@ -76,7 +76,9 @@ GtkWidget    *TitleEntry;
 GtkWidget    *ArtistEntry;
 GtkWidget    *AlbumArtistEntry;
 GtkWidget    *AlbumEntry;
-GtkWidget    *DiscNumberEntry;
+GtkWidget    *DiscNumberEntryCombo;
+GtkListStore *DiscNumberEntryComboModel;
+GtkWidget    *DiscNumberTotalEntry;
 GtkWidget    *YearEntry;
 GtkWidget    *TrackEntryCombo;
 GtkListStore *TrackEntryComboModel;
@@ -110,6 +112,8 @@ GtkWidget    *EncodedByLabel;
 // Mini buttons
 GtkWidget    *TrackMButtonSequence;
 GtkWidget    *TrackMButtonNbrFiles;
+GtkWidget    *DiscNumberMButtonSequence;
+GtkWidget    *DiscNumberMButtonNbrFolders;
 
 /* Other for picture. */
 GtkToolItem *remove_image_toolitem;

@@ -369,6 +369,7 @@ ET_Initialize_File_Tag_Item (File_Tag *FileTag)
         FileTag->album_artist= NULL;
         FileTag->album       = NULL;
         FileTag->disc_number = NULL;
+        FileTag->discs       = NULL;
         FileTag->track       = NULL;
         FileTag->track_total = NULL;
         FileTag->year        = NULL;
@@ -2209,6 +2210,7 @@ gboolean ET_Free_File_Tag_Item (File_Tag *FileTag)
     g_free(FileTag->album_artist);
     g_free(FileTag->album);
     g_free(FileTag->disc_number);
+    g_free(FileTag->discs);
     g_free(FileTag->year);
     g_free(FileTag->track);
     g_free(FileTag->track_total);
@@ -2400,6 +2402,15 @@ gboolean ET_Copy_File_Tag_Item (ET_File *ETFile, File_Tag *FileTag)
         g_free(FileTag->disc_number);
         FileTag->disc_number = NULL;
     }
+
+    if (FileTagCur->discs)
+    {
+        FileTag->discs = g_strdup(FileTagCur->discs);
+		 }else
+		 {
+				 g_free(FileTag->discs);
+				 FileTag->discs = NULL;
+		 }
 
     if (FileTagCur->year)
     {
@@ -2949,10 +2960,19 @@ ET_Display_File_Tag_To_UI (ET_File *ETFile)
     if (FileTag && FileTag->disc_number)
     {
         gchar *tmp = Try_To_Validate_Utf8_String(FileTag->disc_number);
-        gtk_entry_set_text(GTK_ENTRY(DiscNumberEntry), tmp);
+        gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(DiscNumberEntryCombo))), tmp);
         g_free(tmp);
     }else
-        gtk_entry_set_text(GTK_ENTRY(DiscNumberEntry),"");
+        gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(DiscNumberEntryCombo))),"");
+
+    /* Show number of dicsc of the album */
+    if (FileTag && FileTag->discs)
+    {
+        gchar *tmp = Try_To_Validate_Utf8_String(FileTag->discs);
+        gtk_entry_set_text(GTK_ENTRY(DiscNumberTotalEntry),tmp);
+        g_free(tmp);
+    }else
+        gtk_entry_set_text(GTK_ENTRY(DiscNumberTotalEntry),"");
 
     /* Show year */
     if (FileTag && FileTag->year)
@@ -3446,7 +3466,7 @@ ET_Save_File_Tag_From_UI (File_Tag *FileTag)
     }
 
     /* Disc Number */
-    buffer = g_strdup(gtk_entry_get_text(GTK_ENTRY(DiscNumberEntry)));
+    buffer = g_strdup(gtk_entry_get_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(DiscNumberEntryCombo)))));
     Strip_String(buffer);
 
     if ( g_utf8_strlen(buffer, -1) > 0 )
@@ -3454,6 +3474,20 @@ ET_Save_File_Tag_From_UI (File_Tag *FileTag)
     else
     {
         FileTag->disc_number = NULL;
+        g_free(buffer);
+    }
+
+    /* Discs Total */
+    buffer = g_strdup(gtk_entry_get_text(GTK_ENTRY(DiscNumberTotalEntry)));
+    Strip_String(buffer);
+
+    if ( g_utf8_strlen(buffer, -1) > 0  )
+    {
+        FileTag->discs = et_format_disc_number(atoi(buffer));
+        g_free(buffer);
+    } else
+    {
+        FileTag->discs = NULL;
         g_free(buffer);
     }
 
@@ -3680,6 +3714,17 @@ ET_Save_File_Tag_Internal (ET_File *ETFile, File_Tag *FileTag)
     } else
     {
         FileTag->disc_number = NULL;
+    }
+
+
+    /* Discs Total */
+    if ( FileTagCur->discs && g_utf8_strlen(FileTagCur->discs, -1)>0 )
+    {
+        FileTag->discs = et_format_disc_number(atoi(FileTagCur->discs));
+        Strip_String(FileTag->discs);
+    } else
+    {
+        FileTag->discs = NULL;
     }
 
 
@@ -4133,6 +4178,11 @@ gboolean ET_Detect_Changes_Of_File_Tag (File_Tag *FileTag1, File_Tag *FileTag2)
     if ( FileTag1->disc_number && !FileTag2->disc_number && g_utf8_strlen(FileTag1->disc_number, -1)>0 ) return TRUE;
     if (!FileTag1->disc_number &&  FileTag2->disc_number && g_utf8_strlen(FileTag2->disc_number, -1)>0 ) return TRUE;
     if ( FileTag1->disc_number &&  FileTag2->disc_number && g_utf8_collate(FileTag1->disc_number,FileTag2->disc_number)!=0 ) return TRUE;
+
+    /* Discs Total */
+    if ( FileTag1->discs && !FileTag2->discs && g_utf8_strlen(FileTag1->discs, -1)>0 ) return TRUE;
+    if (!FileTag1->discs &&  FileTag2->discs && g_utf8_strlen(FileTag2->discs, -1)>0 ) return TRUE;
+    if ( FileTag1->discs &&  FileTag2->discs && g_utf8_collate(FileTag1->discs,FileTag2->discs)!=0 ) return TRUE;
 
     /* Year */
     if ( FileTag1->year && !FileTag2->year && g_utf8_strlen(FileTag1->year, -1)>0 ) return TRUE;
