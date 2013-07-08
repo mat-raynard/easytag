@@ -2362,6 +2362,8 @@ static gchar
             return &FileTag->album;
         case 'd':    /* Disc Number */
             return &FileTag->disc_number;
+        case 'x':    /* Totla number of discs */
+            return &FileTag->discs;
         case 'y':    /* Year */
             return &FileTag->year;
         case 'n':    /* Track */
@@ -2785,6 +2787,7 @@ void Open_ScannerWindow (gint scanner_type)
         gtk_entry_set_text(GTK_ENTRY(ProcessFieldsConvertFrom),PROCESS_FIELDS_CONVERT_FROM);
     if (PROCESS_FIELDS_CONVERT_TO)
         gtk_entry_set_text(GTK_ENTRY(ProcessFieldsConvertTo),PROCESS_FIELDS_CONVERT_TO);
+
     ProcessFieldsFillField        = gtk_check_button_new_with_label(_("Fill field:"));
     ProcessFieldsFillFieldPattern = gtk_entry_new();
 
@@ -2818,6 +2821,7 @@ void Open_ScannerWindow (gint scanner_type)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvertSpace),PF_CONVERT_SPACE);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsConvert),PF_CONVERT);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ProcessFieldsFillField),PF_FILL_FIELD);
+
     /* Tooltips */
     gtk_widget_set_tooltip_text(ProcessFieldsConvertIntoSpace,
         _("The underscore character or the string '%20' are replaced by one space. "
@@ -2972,6 +2976,8 @@ void Open_ScannerWindow (gint scanner_type)
     Label = gtk_label_new(_("%u: URL"));
     et_grid_attach_margins (GTK_GRID (Table), Label, 2, 2, 1, 1, 6, 0);
     gtk_misc_set_alignment(GTK_MISC(Label),0,0.5);
+    Label = gtk_label_new(_("%x: number of discs"));
+    et_grid_attach_margins (GTK_GRID (Table), Label, 2, 3, 1, 1, 6, 0);
     gtk_misc_set_alignment(GTK_MISC(Label),0,0.5);
     Label = gtk_label_new(_("%k: incremented value"));
     et_grid_attach_margins (GTK_GRID (Table), Label, 2, 4, 1, 1, 6, 0);
