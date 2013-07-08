@@ -4683,3 +4683,13 @@ gchar
     return g_strdup_printf("%d", track_number);
 }
 
+gchar
+*et_format_disc_number(const gint disc_number)
+{
+    if (NUMBER_DISC_FORMATED)
+    {
+        return g_strdup_printf("%.*d", NUMBER_DISC_FORMATED_SPIN_BUTTON, disc_number);
+    }
+
+    return g_strdup_printf("%d", disc_number);
+}
