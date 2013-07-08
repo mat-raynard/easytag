@@ -3685,10 +3685,8 @@ ET_Save_File_Tag_Internal (ET_File *ETFile, File_Tag *FileTag)
     {
         gchar *tmp_str;
 
-        if (NUMBER_TRACK_FORMATED)
-            FileTag->track = g_strdup_printf("%.*d",NUMBER_TRACK_FORMATED_SPIN_BUTTON,atoi(FileTagCur->track));
-        else
-            FileTag->track = g_strdup(FileTagCur->track);
+        FileTag->track = et_format_track_number(atoi(FileTagCur->track));
+
         // This field must contain only digits
         tmp_str = FileTag->track;
         while (isdigit((guchar)*tmp_str)) tmp_str++;
