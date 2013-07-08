@@ -272,9 +272,32 @@ gboolean Flac_Tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
                     }
                 }
 
-                /***************
-                 * Disc Number *
-                 ***************/
+                /******************************
+                 * Disc Number and Disc Total *
+                 ******************************/
+                if ( (field_num = FLAC__metadata_object_vorbiscomment_find_entry_from(block,0,"DISCTOTAL")) >= 0 )
+                {
+                    /* Extract field value */
+                    field = &vc->comments[field_num];
+                    field_value = memchr(field->entry, '=', field->length);
+
+                    if (field_value)
+                    {
+                        field_value++;
+                        if ( field_value && g_utf8_strlen(field_value, -1) > 0 )
+                        {
+                            field_len = field->length - (field_value - (gchar*) field->entry);
+                            field_value_tmp = g_strndup(field_value, field_len);
+                            field_value = Try_To_Validate_Utf8_String(field_value_tmp);
+                            g_free(field_value_tmp);
+
+                            FileTag->discs = et_format_disc_number(atoi(field_value));
+                            g_free(field_value);
+                        }
+                    }
+                    // Below is also filled discs if not done here
+                }
+
                 if ( (field_num = FLAC__metadata_object_vorbiscomment_find_entry_from(block,0,"DISCNUMBER")) >= 0 )
                 {
                     /* Extract field value */
@@ -290,7 +313,16 @@ gboolean Flac_Tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
                             field_value_tmp = g_strndup(field_value, field_len);
                             field_value = Try_To_Validate_Utf8_String(field_value_tmp);
                             g_free(field_value_tmp);
-                            FileTag->disc_number = field_value;
+                            string = g_utf8_strchr(field_value, -1, '/');
+
+                            if (string && !FileTag->discs)
+                            {
+                                FileTag->discs = et_format_disc_number(atoi(string+1));
+                                *string = '\0';
+                            }
+                            FileTag->disc_number = et_format_disc_number(atoi(field_value));
+
+                            g_free(field_value);
                         }
                     }
                 }
@@ -913,10 +945,12 @@ gboolean Flac_Tag_Write_File_Tag (ET_File *ETFile)
          *********/
         Flac_Set_Tag(vc_block,"ALBUM=",FileTag->album,VORBIS_SPLIT_FIELD_ALBUM);
 
-        /***************
-         * Disc Number *
-         ***************/
+        /******************************
+         * Disc Number and Disc Total *
+         ******************************/
         Flac_Set_Tag(vc_block,"DISCNUMBER=",FileTag->disc_number,FALSE);
+        if (STORE_TOTAL_NUMBER_OF_DISCS)
+	        Flac_Set_Tag(vc_block,"DISCTOTAL=",FileTag->discs,FALSE);
 
         /********
          * Year *
