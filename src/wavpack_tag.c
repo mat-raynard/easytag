@@ -35,7 +35,7 @@
 #include "vcedit.h"
 #include "et_core.h"
 #include "picture.h"
-//#include "setting.h"
+#include "setting.h"
 #include "charset.h"
 #include "wavpack_tag.h"
 
@@ -133,13 +133,25 @@ gboolean Wavpack_Tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
     g_free (field);
 
     /*
-     * Discnumber
+     * Discnumber + Disctotal
      */
     field = g_malloc0(sizeof(char) * MAXLEN);
     length = WavpackGetTagItem(wpc, "part", field, MAXLEN);
+    field2 = g_utf8_strchr(field, -1, '/');
 
-    if ( length > 0 && FileTag->disc_number == NULL ) {
-        FileTag->disc_number = Try_To_Validate_Utf8_String(field);
+    /* Need to cut off the total tracks if present */
+    if (field2) {
+        *field2 = 0;
+        field2++;
+    }
+
+    if (field2 && FileTag->discs == NULL)
+    {
+        FileTag->discs = et_format_disc_number(atoi(Try_To_Validate_Utf8_String(field2)));
+    }
+    if (length > 0 && FileTag->disc_number == NULL)
+    {
+        FileTag->disc_number = et_format_disc_number(atoi(Try_To_Validate_Utf8_String(field)));
     }
 
     g_free (field);
@@ -312,8 +324,19 @@ gboolean Wavpack_Tag_Write_File_Tag (ET_File *ETFile)
     /*
      * Discnumber
     */
-    if (FileTag->disc_number && WavpackAppendTagItem(wpc, "part", FileTag->disc_number, strlen(FileTag->disc_number)) == 0) {
-        return FALSE;
+	if (STORE_TOTAL_NUMBER_OF_DISCS && FileTag->disc_number && FileTag->discs) {
+        buffer = g_strdup_printf("%s/%s", FileTag->disc_number, FileTag->discs);
+        
+        if (FileTag->track && WavpackAppendTagItem(wpc, "part", buffer, strlen(buffer)) == 0) {
+            g_free(buffer);
+            return FALSE;
+        } else {
+            g_free(buffer);
+        }
+    } else {
+        if (FileTag->track && WavpackAppendTagItem(wpc, "part", FileTag->disc_number, strlen(FileTag->disc_number)) == 0) {
+            return FALSE;
+        }
     }
 
     /*
