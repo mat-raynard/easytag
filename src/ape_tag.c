@@ -88,12 +88,28 @@ gboolean Ape_Tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
     if (FileTag->album == NULL)
         FileTag->album = Try_To_Validate_Utf8_String(string);
 
-    /***************
-     * Disc Number *
-     ***************/
-    string = apefrm_getstr(ape_cnt, "Part");
-    if (FileTag->disc_number == NULL)
-        FileTag->disc_number = Try_To_Validate_Utf8_String(string);
+    /******************************
+     * Disc Number and Disc Total *
+     ******************************/
+    string = apefrm_getstr(ape_cnt, APE_TAG_FIELD_PART);
+    if (string)
+		{
+				string = Try_To_Validate_Utf8_String(string);
+
+				string1 = g_utf8_strchr(string, -1, '/');    // strchr don't like NULL string
+
+				if (string1)
+                {
+                        FileTag->discs = et_format_disc_number(atoi(string1 + 1));
+                        *string1 = '\0';
+                }
+                FileTag->disc_number = et_format_disc_number(atoi(string));
+
+				g_free(string);
+		} else
+		{
+				FileTag->disc_number = FileTag->discs = NULL;
+		}
 
     /********
      * Year *
@@ -224,13 +240,20 @@ gboolean Ape_Tag_Write_File_Tag (ET_File *ETFile)
     else
         apefrm_remove(ape_mem,APE_TAG_FIELD_ALBUM);
 
-    /***************
-     * Disc Number *
-     ***************/
+    /*******************************
+     * Disc Number and Diasc Total *
+     *******************************/
     if ( FileTag->disc_number && g_utf8_strlen(FileTag->disc_number, -1) > 0)
-        apefrm_add(ape_mem, 0, "Part", FileTag->disc_number);
-    else
-        apefrm_remove(ape_mem,"Part");
+    {
+        if (STORE_TOTAL_NUMBER_OF_DISCS && FileTag->discs && g_utf8_strlen(FileTag->discs, -1) > 0)
+            string = g_strconcat(FileTag->disc_number, "/", FileTag->discs, NULL);
+        else
+            string = g_strconcat(FileTag->disc_number, NULL);
+
+        apefrm_add(ape_mem, 0, APE_TAG_FIELD_PART, string);
+        g_free(string);
+    } else
+        apefrm_remove(ape_mem,APE_TAG_FIELD_PART);
 
     /********
      * Year *
