@@ -81,6 +81,431 @@ static int    etag_set_tags             (const gchar *str, const char *frame_nam
 static int etag_write_tags (const gchar *filename, struct id3_tag const *v1tag,
                             struct id3_tag const *v2tag, gboolean strip_tags);
 
+
+
+
+
+#define NONE 0
+#define NO_FORMAT NULL
+#define File_Tag_offsetof(MEMBER) offsetof(File_Tag, MEMBER)
+
+typedef enum _Version Version;
+enum _Version {
+    V1_ONLY,
+    V2_ONLY,
+    BOTH
+};
+
+typedef struct _ET_ID3Tag ET_ID3Tag;
+struct _ET_ID3Tag
+{
+    const Version             version;
+    const char*               field_name;
+    const enum id3_field_type field_type;
+    const int                 et_field_type;
+
+    const int file_tag_offset1;
+    const int file_tag_offset2;
+
+    gchar* (*format_func)(gchar* value);
+    gchar* (*unformat_func)(gchar* value);
+};
+
+void set_tag(const ET_ID3Tag* et_id3_tag, File_Tag* file_tag, struct id3_tag* tag, gboolean* strip_tags);
+gboolean get_tag(const ET_ID3Tag* et_id3_tag, File_Tag *file_tag, struct id3_tag *tag);
+
+
+gchar* format_genre(gchar* genre);
+
+gchar* format_track(gchar* track);
+gchar* format_disc(gchar* disc);
+
+gchar* format_genre(gchar* genre)
+{
+    /* Genre is written like this :
+     *    - "<genre_id>"    -> "3"
+     *    - "<genre_name>"  -> "EuroDance"
+     */
+    guchar genre_value  = ID3_INVALID_GENRE;
+    gchar* string_value = NULL;
+
+    if (genre)
+    {
+        genre_value = Id3tag_String_To_Genre(genre);
+    }
+
+    if ((genre_value == ID3_INVALID_GENRE) || (FILE_WRITING_ID3V2_TEXT_ONLY_GENRE))
+    {
+        string_value = g_strdup(genre);
+    }
+    else
+    {
+        string_value = g_strdup_printf("(%d)", genre_value);
+    }
+
+    g_printerr("formatted genre '%s' to '%s'\n", genre, string_value);
+
+    return string_value;
+}
+
+gchar* format_track(gchar* track) {
+//    return et_format_track_number(atoi(track));
+
+    gchar* result = g_strdup(track);
+
+    g_printerr("unformatted track '%s' to '%s'\n", track, result);
+
+    return result;
+}
+gchar* format_disc(gchar* disc) {
+//    return et_format_disc_number(atoi(disc));
+    gchar* result = g_strdup(disc);
+
+    g_printerr("unformatted disc '%s' to '%s'\n", disc, result);
+
+    return result;
+}
+
+
+const ET_ID3Tag TITLE =
+{
+        BOTH,
+        ID3_FRAME_TITLE,
+        ID3_FIELD_TYPE_STRINGLIST,
+        EASYTAG_ID3_FIELD_STRINGLIST,
+        File_Tag_offsetof(title),
+        NONE,
+        NO_FORMAT,
+        NO_FORMAT
+};
+const ET_ID3Tag ARTIST =
+{
+        BOTH,
+        ID3_FRAME_ARTIST,
+        ID3_FIELD_TYPE_STRINGLIST,
+        EASYTAG_ID3_FIELD_STRINGLIST,
+        File_Tag_offsetof(artist),
+        NONE,
+        NO_FORMAT,
+        NO_FORMAT
+};
+const ET_ID3Tag ALBUM_ARTIST =
+{
+        V2_ONLY,
+        "TPE2",
+        ID3_FIELD_TYPE_STRINGLIST,
+        EASYTAG_ID3_FIELD_STRINGLIST,
+        File_Tag_offsetof(album_artist),
+        NONE,
+        NO_FORMAT,
+        NO_FORMAT
+};
+const ET_ID3Tag ALBUM =
+{
+        BOTH,
+        ID3_FRAME_ALBUM,
+        ID3_FIELD_TYPE_STRINGLIST,
+        ~0,
+        File_Tag_offsetof(album),
+        NONE,
+        NO_FORMAT,
+        NO_FORMAT
+};
+const ET_ID3Tag PART_OF_SET_V2 =
+{
+        V2_ONLY,
+        "TPOS",
+        ID3_FIELD_TYPE_STRINGLIST,
+        ~0,
+        File_Tag_offsetof(disc_number),
+        File_Tag_offsetof(discs),
+        NO_FORMAT,
+        &format_disc
+};
+const ET_ID3Tag PART_OF_SET_V1 =
+{
+        V1_ONLY,
+        "TPOS",
+        ID3_FIELD_TYPE_STRINGLIST,
+        ~0,
+        File_Tag_offsetof(disc_number),
+        NONE,
+        NO_FORMAT,
+        &format_disc
+};
+const ET_ID3Tag YEAR =
+{
+        BOTH,
+        ID3_FRAME_YEAR,
+        ID3_FIELD_TYPE_STRINGLIST,
+        ~0,
+        File_Tag_offsetof(year),
+        NONE,
+        NO_FORMAT
+};
+const ET_ID3Tag TRACK_V2 =
+{
+        V2_ONLY,
+        ID3_FRAME_TRACK,
+        ID3_FIELD_TYPE_STRINGLIST,
+        ~0,
+        File_Tag_offsetof(track),
+        File_Tag_offsetof(track_total),
+        NO_FORMAT,
+        &format_track
+};
+const ET_ID3Tag TRACK_V1 =
+{
+        V1_ONLY,
+        ID3_FRAME_TRACK,
+        ID3_FIELD_TYPE_STRINGLIST,
+        ~0,
+        File_Tag_offsetof(track),
+        NONE,
+        NO_FORMAT,
+        &format_track
+};
+const ET_ID3Tag GENRE =
+{
+        BOTH,
+        ID3_FRAME_GENRE,
+        ID3_FIELD_TYPE_STRINGLIST,
+        ~0,
+        File_Tag_offsetof(genre),
+        NONE,
+        &format_genre,
+        NO_FORMAT
+};
+const ET_ID3Tag COMMENT =
+{
+        BOTH,
+        ID3_FRAME_COMMENT,
+        ID3_FIELD_TYPE_STRINGFULL,
+        EASYTAG_ID3_FIELD_STRINGFULL,
+        File_Tag_offsetof(comment),
+        NONE,
+        NO_FORMAT,
+        NO_FORMAT
+};
+const ET_ID3Tag COMPOSER =
+{
+        V2_ONLY,
+        "TCOM",
+        ID3_FIELD_TYPE_STRINGLIST,
+        ~0,
+        File_Tag_offsetof(composer),
+        NONE,
+        NO_FORMAT,
+        NO_FORMAT
+};
+const ET_ID3Tag ORIG_ARTIST =
+{
+        V2_ONLY,
+        "TOPE",
+        ID3_FIELD_TYPE_STRINGLIST,
+        ~0,
+        File_Tag_offsetof(orig_artist),
+        NONE,
+        NO_FORMAT,
+        NO_FORMAT
+};
+const ET_ID3Tag COPYRIGHT =
+{
+        V2_ONLY,
+        "TCOP",
+        ID3_FIELD_TYPE_STRINGLIST,
+        ~0,
+        File_Tag_offsetof(copyright),
+        NONE,
+        NO_FORMAT,
+        NO_FORMAT
+};
+const ET_ID3Tag URL =
+{
+        V2_ONLY,
+        "WXXX",
+        ID3_FIELD_TYPE_LATIN1,
+        EASYTAG_ID3_FIELD_LATIN1,
+        File_Tag_offsetof(copyright),
+        NONE,
+        NO_FORMAT,
+        NO_FORMAT
+};
+const ET_ID3Tag ENCODED_BY =
+{
+        V2_ONLY,
+        "TENC",
+        ID3_FIELD_TYPE_STRINGLIST,
+        ~0,
+        File_Tag_offsetof(encoded_by),
+        NONE,
+        NO_FORMAT,
+        NO_FORMAT
+};
+
+const ET_ID3Tag* const tags[] =
+{
+        &TITLE,
+        &ARTIST,
+        &ALBUM_ARTIST,
+        &ALBUM,
+        &PART_OF_SET_V2,
+        &PART_OF_SET_V1,
+        &YEAR,
+        &TRACK_V2,
+        &TRACK_V1,
+        &GENRE,
+        &COMMENT,
+        &COMPOSER,
+        &ORIG_ARTIST,
+        &COPYRIGHT,
+        &URL,
+        &ENCODED_BY
+};
+
+void set_tag(const ET_ID3Tag* et_id3_tag, File_Tag *file_tag, struct id3_tag *tag, gboolean *strip_tags)
+{
+    gchar* (*format)(gchar* value) = et_id3_tag->format_func;
+
+    gchar* value1 = NULL;
+    gchar* value2 = NULL;
+
+    gchar* composed = NULL;
+
+    if (et_id3_tag->file_tag_offset1)
+    {
+        value1 = *((gchar**) ((char*) file_tag + et_id3_tag->file_tag_offset1));
+    }
+
+    if (et_id3_tag->file_tag_offset2)
+    {
+        value2 = *((gchar**) ((char*) file_tag + et_id3_tag->file_tag_offset2));
+    }
+
+    if (value1 && value2)
+    {
+        // use special formatting function if present
+        if (format) {
+            gchar* formatted1 = format(value1);
+            gchar* formatted2 = format(value2);
+
+            composed = g_strconcat(formatted1, "/", formatted2, NULL);
+
+            g_free(formatted1);
+            g_free(formatted2);
+        } else {
+            composed = g_strconcat(value1, "/", value2, NULL);
+        }
+    } else
+    {
+        // use special formatting function if present
+        if (format) {
+            gchar* formatted = format(value1);
+
+            composed = g_strdup(formatted);
+
+            g_free(formatted);
+        } else {
+            composed = g_strdup(value1);
+        }
+    }
+
+    // decide which tags will be filled
+    if (et_id3_tag->version == V1_ONLY)
+    {
+        v1tag_to_use = v1tag;
+        v2tag_to_use = NULL;
+    }
+    else if (et_id3_tag->version == V2_ONLY)
+    {
+        v1tag_to_use = NULL;
+        v2tag_to_use = v2tag;
+    }
+    else
+    {
+        v1tag_to_use = v1tag;
+        v2tag_to_use = v2tag;
+    }
+
+    etag_set_tags(composed, et_id3_tag->field_name, et_id3_tag->field_type, v1tag_to_use, v2tag_to_use, strip_tags);
+
+    g_free(composed);
+}
+
+gboolean get_tag(const ET_ID3Tag* et_id3_tag, File_Tag *file_tag, struct id3_tag *tag)
+{
+    struct id3_frame *frame;
+
+    gchar* value1 = NULL;
+    gchar* value2 = NULL;
+
+    gboolean update = FALSE;
+
+    gchar* buffer = NULL;
+
+    gchar* (*unformat)(gchar* value) = et_id3_tag->unformat_func;
+
+    if ((frame = id3_tag_findframe(tag, et_id3_tag->field_name, 0)))
+    {
+        update |= libid3tag_Get_Frame_Str(frame, et_id3_tag->et_field_type, &buffer);
+    }
+
+    if (buffer && et_id3_tag->file_tag_offset2)
+    {
+        gchar* string2 = g_utf8_strchr(buffer, -1, '/');
+
+        if (string2)
+        {
+            value2 = g_strdup(string2 + 1);
+            // To cut off buffer
+            *string2 = '\0';
+        }
+    }
+
+    value1 = g_strdup(buffer);
+
+    g_printerr("get_tag '%s' (%d.%d): '%s' - '%s'\n", et_id3_tag->field_name, ID3_TAG_VERSION_MAJOR(tag->version), ID3_TAG_VERSION_MINOR(tag->version), value1, value2);
+
+    if (et_id3_tag->file_tag_offset1)
+    {
+        gchar** pointer = ((gchar**) ((char*) file_tag + et_id3_tag->file_tag_offset1));
+
+        g_free(*pointer);
+
+        if (unformat) {
+            gchar* formatted = unformat(value1);
+
+            *pointer = formatted;
+
+            g_free(value1);
+        } else {
+            *pointer = value1;
+        }
+    }
+
+    if (et_id3_tag->file_tag_offset2)
+    {
+        gchar** pointer = ((gchar**) ((char*) file_tag + et_id3_tag->file_tag_offset2));
+
+        g_free(*pointer);
+
+        if (unformat) {
+            gchar* formatted = unformat(value2);
+
+            *pointer = formatted;
+
+            g_free(value2);
+        } else {
+            *pointer = value2;
+        }
+    }
+
+    g_free(buffer);
+
+    return update;
+}
+
+
 /*************
  * Functions *
  *************/
@@ -203,6 +628,14 @@ gboolean Id3tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
         id3_file_close(file);
         return FALSE;
     }
+
+//    // write the values into v1tag and v2tag
+//    for (i = 0; i < G_N_ELEMENTS(tags); ++i) {
+//        const ET_ID3Tag* et_tag = tags[i];
+//
+//        get_tag(et_tag, FileTag, tag);
+//    }
+
 
 
     /****************
@@ -372,7 +805,7 @@ gboolean Id3tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
      *******************************/
     if ( (frame = id3_tag_findframe(tag, "TENC", 0)) )
         update |= libid3tag_Get_Frame_Str(frame, ~0, &FileTag->encoded_by);
-    
+
     /* Encoded by in TXXX frames */
     string1 = NULL;
     for (i = 0; (frame = id3_tag_findframe(tag, "TXX", i)); i++)
@@ -380,7 +813,7 @@ gboolean Id3tag_Read_File_Tag (gchar *filename, File_Tag *FileTag)
         // Do nothing if already read...
         if (FileTag->encoded_by)
             break;
-        
+
         tmpupdate = libid3tag_Get_Frame_Str(frame, ~0, &string1);
         if (string1)
         {
@@ -763,7 +1196,6 @@ libid3tag_Get_Frame_Str(const struct id3_frame *frame, unsigned etag_field_type,
     return retval;
 }
 
-
 /*
  * Write the ID3 tags to the file. Returns TRUE on success, else 0.
  */
@@ -775,11 +1207,11 @@ gboolean Id3tag_Write_File_v24Tag (ET_File *ETFile)
     struct id3_tag   *v1tag, *v2tag;
     struct id3_frame *frame;
     union id3_field  *field;
-    gchar            *string1;
     Picture          *pic;
     gint error = 0;
     gboolean strip_tags = TRUE;
-    guchar genre_value = ID3_INVALID_GENRE;
+
+    int i;
 
     g_return_val_if_fail (ETFile != NULL && ETFile->FileTag != NULL, FALSE);
 
@@ -788,6 +1220,7 @@ gboolean Id3tag_Write_File_v24Tag (ET_File *ETFile)
     filename_utf8 = ((File_Name *)ETFile->FileNameCur->data)->value_utf8;
 
     v1tag = v2tag = NULL;
+
 
     // Write ID3v2 tag
     if (FILE_WRITING_ID3V2_WRITE_TAG)
@@ -865,114 +1298,18 @@ gboolean Id3tag_Write_File_v24Tag (ET_File *ETFile)
         id3_tag_options(v1tag, ID3_TAG_OPTION_ID3V1, ~0);
     }
 
+    // write the values into v1tag and v2tag
+    for (i = 0; i < G_N_ELEMENTS(tags); ++i) {
+        const ET_ID3Tag* tag = tags[i];
 
-    /*********
-     * Title *
-     *********/
-    etag_set_tags(FileTag->title, ID3_FRAME_TITLE, ID3_FIELD_TYPE_STRINGLIST, v1tag, v2tag, &strip_tags);
+        set_tag(tag, FileTag, v1tag, v2tag, &strip_tags);
+    }
 
-    /**********
-     * Artist *
-     **********/
-    etag_set_tags(FileTag->artist, ID3_FRAME_ARTIST, ID3_FIELD_TYPE_STRINGLIST, v1tag, v2tag, &strip_tags);
-
-    /**********
-     * Album Artist *
-     **********/
-    etag_set_tags(FileTag->album_artist, "TPE2", ID3_FIELD_TYPE_STRINGLIST, NULL, v2tag, &strip_tags);
-
-    /*********
-     * Album *
-     *********/
-    etag_set_tags(FileTag->album, ID3_FRAME_ALBUM, ID3_FIELD_TYPE_STRINGLIST, v1tag, v2tag, &strip_tags);
-
-    /***************
-     * Part of set *
-     ***************/
-    if (STORE_TOTAL_NUMBER_OF_DISCS && FileTag->disc_number && FileTag->discs && *FileTag->discs)
-        string1 = g_strconcat(FileTag->disc_number,"/",FileTag->discs,NULL);
-    else
-        string1 = g_strdup(FileTag->disc_number);
-
-    etag_set_tags(string1, "TPOS", ID3_FIELD_TYPE_STRINGLIST, NULL, v2tag, &strip_tags);
-    g_free(string1);
-
-    /********
-     * Year *
-     ********/
-    etag_set_tags(FileTag->year, ID3_FRAME_YEAR, ID3_FIELD_TYPE_STRINGLIST, v1tag, v2tag, &strip_tags);
-
-    /*************************
-     * Track and Total Track *
-     *************************/
-    if ( FileTag->track 
-    &&   FileTag->track_total 
-    &&  *FileTag->track_total )
-        string1 = g_strconcat(FileTag->track,"/",FileTag->track_total,NULL);
-    else
-        string1 = NULL;
-
-    etag_set_tags(string1 ? string1 : FileTag->track, ID3_FRAME_TRACK, ID3_FIELD_TYPE_STRINGLIST, NULL, v2tag, &strip_tags);
-    etag_set_tags(FileTag->track, ID3_FRAME_TRACK, ID3_FIELD_TYPE_STRINGLIST, v1tag, NULL, &strip_tags);
-    g_free(string1);
-
-    /*********
-     * Genre *
-     *********/
-    /* Genre is written like this :
-     *    - "<genre_id>"    -> "3"
-     *    - "<genre_name>"  -> "EuroDance"
-     */
-    if (FileTag->genre)
-        genre_value = Id3tag_String_To_Genre(FileTag->genre);
-
-    if ((genre_value == ID3_INVALID_GENRE)||(FILE_WRITING_ID3V2_TEXT_ONLY_GENRE))
-        string1 = g_strdup(FileTag->genre);
-    else
-        string1 = g_strdup_printf("(%d)",genre_value);
-
-    etag_set_tags(string1, ID3_FRAME_GENRE, ID3_FIELD_TYPE_STRINGLIST, v1tag, v2tag, &strip_tags);
-    g_free(string1);
-
-    /***********
-     * Comment *
-     ***********/
-    etag_set_tags(FileTag->comment, ID3_FRAME_COMMENT, ID3_FIELD_TYPE_STRINGFULL, v1tag, v2tag, &strip_tags);
-
-    /************
-     * Composer *
-     ************/
-    etag_set_tags(FileTag->composer, "TCOM", ID3_FIELD_TYPE_STRINGLIST, NULL, v2tag, &strip_tags);
-
-    /*******************
-     * Original artist *
-     *******************/
-    etag_set_tags(FileTag->orig_artist, "TOPE", ID3_FIELD_TYPE_STRINGLIST, NULL, v2tag, &strip_tags);
-
-    /*************
-     * Copyright *
-     *************/
-    etag_set_tags(FileTag->copyright, "TCOP", ID3_FIELD_TYPE_STRINGLIST, NULL, v2tag, &strip_tags);
-
-    /*******
-     * URL *
-     *******/
-    etag_set_tags(FileTag->url, "WXXX", ID3_FIELD_TYPE_LATIN1, NULL, v2tag, &strip_tags);
-
-    /***************
-     * Encoded by  *
-     ***************/
-    //if ( v2tag && FileTag->encoded_by && *FileTag->encoded_by
-    //&& (frame = Id3tag_find_and_create_txxframe(v2tag, EASYTAG_STRING_ENCODEDBY)))
-    //{
-    //    id3taglib_set_field(frame, EASYTAG_STRING_ENCODEDBY, ID3_FIELD_TYPE_STRING, 0, 1, 0);
-    //    id3taglib_set_field(frame, FileTag->encoded_by, ID3_FIELD_TYPE_STRING, 1, 0, 0);
-    //    strip_tags = FALSE;
-    //}else
-    // Save encoder name in TENC frame instead of the TXX frame
-    etag_set_tags(FileTag->encoded_by, "TENC", ID3_FIELD_TYPE_STRINGLIST, NULL, v2tag, &strip_tags);
+    // remove TXX "encoded by" frames
     if (v2tag)
+    {
         Id3tag_delete_txxframes(v2tag, EASYTAG_STRING_ENCODEDBY, 0);
+    }
 
     /***********
      * Picture *
